@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { Card, CardHeader } from "@/components/ui";
 import { ImportUploadForm } from "../../ImportUploadForm";
 
@@ -12,11 +12,15 @@ export default async function ImportKeKampanyePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const campaign = await prisma.campaign.findUnique({
-    where: { id },
-    select: { id: true, namaProduk: true },
-  });
-  if (!campaign) notFound();
+  let campaign: { id: string; namaProduk: string };
+  try {
+    campaign = await api.get<{ id: string; namaProduk: string }>(
+      `/kampanye/${id}`,
+    );
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

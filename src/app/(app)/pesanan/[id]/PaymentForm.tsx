@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { Button, Field, FormError, Input, Select } from "@/components/ui";
 import { PAYMENT_TYPE_LABEL } from "@/lib/domain";
-import { PaymentScheme } from "@/generated/prisma";
+import { PaymentScheme } from "@/lib/types";
 import { addPayment, type PaymentFormState } from "../actions";
 
 export function PaymentForm({

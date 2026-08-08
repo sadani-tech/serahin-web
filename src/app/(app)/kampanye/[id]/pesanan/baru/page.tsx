@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { OrderForm } from "@/app/(app)/pesanan/OrderForm";
 import { createOrder } from "@/app/(app)/pesanan/actions";
-import { campaignMenerimaPesanan, ORDER_STATUS_NONAKTIF } from "@/lib/domain";
+import { campaignMenerimaPesanan } from "@/lib/domain";
 import { toNumber } from "@/lib/format";
+import type { CampaignStatus } from "@/lib/types";
 import { Card } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
+
+type CampaignDetail = {
+  namaProduk: string;
+  status: CampaignStatus;
+  variants: { id: string; namaVarian: string; sisa: number; harga: string }[];
+};
 
 export default async function TambahPesananPage({
   params,
@@ -16,33 +23,22 @@ export default async function TambahPesananPage({
 }) {
   const { id } = await params;
 
-  const campaign = await prisma.campaign.findUnique({
-    where: { id },
-    include: {
-      variants: {
-        orderBy: { createdAt: "asc" },
-        include: {
-          orderItems: {
-            where: { order: { status: { notIn: ORDER_STATUS_NONAKTIF } } },
-            select: { jumlah: true },
-          },
-        },
-      },
-    },
-  });
-  if (!campaign) notFound();
+  let campaign: CampaignDetail;
+  try {
+    campaign = await api.get<CampaignDetail>(`/kampanye/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const bisaPesan = campaignMenerimaPesanan(campaign.status);
 
-  const variantOptions = campaign.variants.map((v) => {
-    const terisi = v.orderItems.reduce((s, o) => s + o.jumlah, 0);
-    return {
-      id: v.id,
-      namaVarian: v.namaVarian,
-      sisa: v.kuotaMaks - terisi,
-      harga: toNumber(v.harga),
-    };
-  });
+  const variantOptions = campaign.variants.map((v) => ({
+    id: v.id,
+    namaVarian: v.namaVarian,
+    sisa: v.sisa,
+    harga: toNumber(v.harga),
+  }));
 
   const action = createOrder.bind(null, id);
 

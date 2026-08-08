@@ -1,18 +1,26 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { Card, EmptyState, LinkButton } from "@/components/ui";
 import { badge } from "@/lib/domain";
 import { formatWaktu } from "@/lib/format";
+import type { PageStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+type PageRow = {
+  id: string;
+  judul: string;
+  slug: string;
+  status: PageStatus;
+  updatedAt: string;
+};
+
 export default async function KontenPage() {
-  const [pages, faqCount] = await Promise.all([
-    prisma.staticPage.findMany({
-      orderBy: [{ urutan: "asc" }, { createdAt: "asc" }],
-    }),
-    prisma.faqEntry.count(),
+  const [pages, faqs] = await Promise.all([
+    api.get<PageRow[]>("/cms/pages"),
+    api.get<unknown[]>("/cms/faq"),
   ]);
+  const faqCount = faqs.length;
 
   return (
     <div className="space-y-8">

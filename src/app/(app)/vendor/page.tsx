@@ -1,20 +1,25 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { Card, EmptyState, LinkButton } from "@/components/ui";
 import { computeVendorStats, ratingStars } from "@/lib/vendor";
 
 export const dynamic = "force-dynamic";
 
+type VendorRow = {
+  id: string;
+  nama: string;
+  kontak: string | null;
+  spesialisasi: string | null;
+  _count: { campaigns: number };
+  evaluations: {
+    rating: number;
+    ketepatanWaktu: "TEPAT_WAKTU" | "TELAT";
+    jumlahHariTelat: number | null;
+  }[];
+};
+
 export default async function VendorListPage() {
-  const vendors = await prisma.vendor.findMany({
-    orderBy: { nama: "asc" },
-    include: {
-      _count: { select: { campaigns: true } },
-      evaluations: {
-        select: { rating: true, ketepatanWaktu: true, jumlahHariTelat: true },
-      },
-    },
-  });
+  const vendors = await api.get<VendorRow[]>("/vendor");
 
   return (
     <div>

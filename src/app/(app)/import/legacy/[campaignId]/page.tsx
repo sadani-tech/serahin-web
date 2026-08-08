@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { Card, CardHeader } from "@/components/ui";
 import { LegacyUploadForm } from "./LegacyUploadForm";
 
@@ -12,11 +12,14 @@ export default async function LegacyImportPage({
   params: Promise<{ campaignId: string }>;
 }) {
   const { campaignId } = await params;
-  const campaign = await prisma.campaign.findUnique({
-    where: { id: campaignId },
-    select: { id: true, namaProduk: true, _count: { select: { variants: true } } },
-  });
-  if (!campaign) notFound();
+  let campaign: { id: string; namaProduk: string; variants: unknown[] };
+  try {
+    campaign = await api.get(`/kampanye/${campaignId}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
+  const jumlahVarian = campaign.variants.length;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -36,7 +39,7 @@ export default async function LegacyImportPage({
         </p>
       </div>
 
-      {campaign._count.variants === 0 ? (
+      {jumlahVarian === 0 ? (
         <Card className="p-6">
           <p className="text-sm text-rose-700">
             Kampanye ini belum punya varian. Tambahkan varian dulu agar hasil

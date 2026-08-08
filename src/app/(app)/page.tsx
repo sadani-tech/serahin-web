@@ -9,7 +9,7 @@ import {
   NEAR_DEADLINE_DAYS,
   STALE_TIMELINE_DAYS,
 } from "@/lib/dashboard";
-import { CampaignStatus } from "@/generated/prisma";
+import { CampaignStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 

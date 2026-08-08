@@ -23,7 +23,7 @@ export default async function AppLayout({
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-slate-500 sm:inline">
-              {session?.user?.name ?? session?.user?.email}
+              {session?.name ?? session?.email}
             </span>
             <form action={logoutAction}>
               <Button variant="ghost" type="submit">

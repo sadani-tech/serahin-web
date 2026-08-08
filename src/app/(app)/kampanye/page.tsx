@@ -1,15 +1,25 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { CampaignBadge } from "@/components/badges";
 import { Card, EmptyState, LinkButton } from "@/components/ui";
 import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
-import { ORDER_STATUS_NONAKTIF } from "@/lib/domain";
-import { Prisma } from "@/generated/prisma";
+import type { CampaignStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+type CampaignRow = {
+  id: string;
+  namaProduk: string;
+  status: CampaignStatus;
+  tanggalTutup: string | null;
+  kuotaTotal: number;
+  terisi: number;
+  variants: { harga: string }[];
+  _count: { orders: number };
+};
+
 /** Rentang harga varian sebuah kampanye, mis. "Rp150.000 – Rp165.000". */
-function rentangHarga(variants: { harga: Prisma.Decimal }[]): string {
+function rentangHarga(variants: { harga: string }[]): string {
   if (variants.length === 0) return "-";
   const hargas = variants.map((v) => toNumber(v.harga));
   const min = Math.min(...hargas);
@@ -20,26 +30,7 @@ function rentangHarga(variants: { harga: Prisma.Decimal }[]): string {
 }
 
 export default async function KampanyeListPage() {
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      variants: { select: { kuotaMaks: true, harga: true } },
-      _count: { select: { orders: true } },
-    },
-  });
-
-  // Hitung kuota terisi per kampanye dari item pesanan aktif (v1.5).
-  const items = await prisma.orderItem.findMany({
-    where: { order: { status: { notIn: ORDER_STATUS_NONAKTIF } } },
-    select: { jumlah: true, order: { select: { campaignId: true } } },
-  });
-  const terisiMap = new Map<string, number>();
-  for (const it of items) {
-    terisiMap.set(
-      it.order.campaignId,
-      (terisiMap.get(it.order.campaignId) ?? 0) + it.jumlah,
-    );
-  }
+  const campaigns = await api.get<CampaignRow[]>("/kampanye");
 
   return (
     <div>
@@ -79,11 +70,8 @@ export default async function KampanyeListPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {campaigns.map((c) => {
-                  const kuotaTotal = c.variants.reduce(
-                    (s, v) => s + v.kuotaMaks,
-                    0,
-                  );
-                  const terisi = terisiMap.get(c.id) ?? 0;
+                  const kuotaTotal = c.kuotaTotal;
+                  const terisi = c.terisi;
                   return (
                     <tr key={c.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3">

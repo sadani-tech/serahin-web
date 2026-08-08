@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { KETEPATAN_LABEL, KUALITAS_LABEL } from "@/lib/vendor";
-import { KetepatanWaktu, KesesuaianKualitas } from "@/generated/prisma";
+import { KetepatanWaktu, KesesuaianKualitas } from "@/lib/types";
 import { saveEvaluation, type VendorFormState } from "@/app/(app)/vendor/actions";
 
 export function EvaluationForm({

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { OrderBadge, PaymentBadge } from "@/components/badges";
 import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
 import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
@@ -9,6 +9,12 @@ import {
   PAYMENT_TYPE_LABEL,
 } from "@/lib/domain";
 import { computeBilling } from "@/lib/billing";
+import type {
+  OrderStatus,
+  PaymentScheme,
+  PaymentType,
+  PaymentVerification,
+} from "@/lib/types";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { CancelOrderForm } from "./CancelOrderForm";
 import { PaymentForm } from "./PaymentForm";
@@ -17,6 +23,46 @@ import { CopyPortalLink } from "./CopyPortalLink";
 
 export const dynamic = "force-dynamic";
 
+type OrderDetail = {
+  id: string;
+  campaignId: string;
+  namaPembeli: string;
+  kontak: string;
+  status: OrderStatus;
+  catatan: string | null;
+  alasanBatal: string | null;
+  tokenAkses: string;
+  items: {
+    id: string;
+    jumlah: number;
+    hargaSaatPesan: string;
+    variant: { namaVarian: string; gambarUrl: string | null };
+  }[];
+  payments: {
+    id: string;
+    jenis: PaymentType;
+    jumlah: string;
+    tanggal: string;
+    buktiFile: string | null;
+    statusVerifikasi: PaymentVerification;
+  }[];
+  statusLogs: {
+    id: string;
+    statusLama: OrderStatus | null;
+    statusBaru: OrderStatus;
+    catatan: string | null;
+    createdAt: string;
+    dibuatOleh: { name: string } | null;
+  }[];
+  campaign: {
+    id: string;
+    namaProduk: string;
+    paymentScheme: PaymentScheme;
+    dpPercent: number | null;
+    deadlinePelunasan: string | null;
+  };
+};
+
 export default async function OrderDetailPage({
   params,
 }: {
@@ -24,19 +70,13 @@ export default async function OrderDetailPage({
 }) {
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      campaign: true,
-      items: { include: { variant: { select: { namaVarian: true, gambarUrl: true } } } },
-      payments: { orderBy: { createdAt: "desc" } },
-      statusLogs: {
-        orderBy: { createdAt: "desc" },
-        include: { dibuatOleh: { select: { name: true } } },
-      },
-    },
-  });
-  if (!order) notFound();
+  let order: OrderDetail;
+  try {
+    order = await api.get<OrderDetail>(`/pesanan/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const billing = computeBilling({
     items: order.items,
@@ -47,7 +87,9 @@ export default async function OrderDetailPage({
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
 
   const dibatalkan = order.status === "DIBATALKAN";
-  const deadline = order.campaign.deadlinePelunasan;
+  const deadline = order.campaign.deadlinePelunasan
+    ? new Date(order.campaign.deadlinePelunasan)
+    : null;
   const deadlineDekat =
     deadline &&
     !billing.lunas &&

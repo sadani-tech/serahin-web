@@ -1,11 +1,25 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { Card, EmptyState } from "@/components/ui";
 import { formatWaktu } from "@/lib/format";
-import { IMPORT_MODE_LABEL, IMPORT_STATUS_LABEL } from "@/lib/import/status";
+import { IMPORT_MODE_LABEL, IMPORT_STATUS_LABEL } from "@/lib/import-labels";
+import type { ImportMode, ImportStatus } from "@/lib/types";
 import { RollbackButton } from "./RollbackButton";
 
 export const dynamic = "force-dynamic";
+
+type CampaignRef = { id: string; namaProduk: string };
+type ImportLogRow = {
+  id: string;
+  mode: ImportMode;
+  status: ImportStatus;
+  namaFile: string;
+  jumlahSukses: number;
+  jumlahDilewati: number;
+  createdAt: string;
+  targetCampaign: CampaignRef | null;
+  createdCampaigns: CampaignRef[];
+};
 
 export default async function RiwayatImportPage({
   searchParams,
@@ -14,14 +28,7 @@ export default async function RiwayatImportPage({
 }) {
   const sp = await searchParams;
 
-  const logs = await prisma.importLog.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      targetCampaign: { select: { id: true, namaProduk: true } },
-      createdCampaigns: { select: { id: true, namaProduk: true } },
-      _count: { select: { orders: true } },
-    },
-  });
+  const logs = await api.get<ImportLogRow[]>("/import/riwayat");
 
   return (
     <div className="space-y-6">

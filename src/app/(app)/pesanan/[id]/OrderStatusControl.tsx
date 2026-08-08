@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Select, Textarea } from "@/components/ui";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
-import { OrderStatus } from "@/generated/prisma";
+import { OrderStatus } from "@/lib/types";
 import { changeOrderStatus } from "../actions";
 
 export function OrderStatusControl({

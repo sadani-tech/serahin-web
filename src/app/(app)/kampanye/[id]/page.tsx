@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { CampaignBadge, OrderBadge } from "@/components/badges";
 import { RichText } from "@/components/RichText";
 import {
@@ -27,7 +27,15 @@ import {
   KETEPATAN_LABEL,
   KUALITAS_LABEL,
 } from "@/lib/vendor";
-import { OrderStatus } from "@/generated/prisma";
+import type {
+  OrderStatus,
+  CampaignStatus,
+  PaymentScheme,
+  PaymentVerification,
+  KetepatanWaktu,
+  KesesuaianKualitas,
+} from "@/lib/types";
+import type { EvalInput } from "@/lib/vendor";
 import { StatusControl } from "./StatusControl";
 import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
@@ -36,6 +44,58 @@ import { EvaluationForm } from "./EvaluationForm";
 export const dynamic = "force-dynamic";
 
 type Tab = "info" | "pesanan" | "timeline";
+
+type CampaignDetail = {
+  namaProduk: string;
+  status: CampaignStatus;
+  harga: string;
+  paymentScheme: PaymentScheme;
+  dpPercent: number | null;
+  tanggalBuka: string;
+  tanggalTutup: string;
+  estimasiProduksi: string | null;
+  estimasiKirim: string | null;
+  deadlinePelunasan: string | null;
+  deskripsi: string | null;
+  formToken: string;
+  formAktif: boolean;
+  variants: {
+    id: string;
+    namaVarian: string;
+    kuotaMaks: number;
+    harga: string;
+    hargaPerluTinjau: boolean;
+  }[];
+  timelineEntries: {
+    id: string;
+    judulUpdate: string;
+    catatan: string | null;
+    otomatis: boolean;
+    createdAt: string;
+    dibuatOleh: { name: string } | null;
+  }[];
+  orders: {
+    id: string;
+    namaPembeli: string;
+    kontak: string;
+    status: OrderStatus;
+    items: {
+      variantId: string;
+      jumlah: number;
+      hargaSaatPesan: string;
+      variant: { id: string; namaVarian: string };
+    }[];
+    payments: { jumlah: string; statusVerifikasi: PaymentVerification }[];
+  }[];
+  vendor: { id: string; nama: string; evaluations: EvalInput[] } | null;
+  evaluation: {
+    ketepatanWaktu: KetepatanWaktu;
+    jumlahHariTelat: number | null;
+    kesesuaianKualitas: KesesuaianKualitas;
+    rating: number;
+    catatan: string | null;
+  } | null;
+};
 
 export default async function CampaignDetailPage({
   params,
@@ -50,35 +110,13 @@ export default async function CampaignDetailPage({
     ? sp.tab
     : "info") as Tab;
 
-  const campaign = await prisma.campaign.findUnique({
-    where: { id },
-    include: {
-      variants: { orderBy: { createdAt: "asc" } },
-      timelineEntries: {
-        orderBy: { createdAt: "desc" },
-        include: { dibuatOleh: { select: { name: true } } },
-      },
-      orders: {
-        orderBy: { createdAt: "desc" },
-        include: {
-          items: {
-            include: { variant: { select: { id: true, namaVarian: true } } },
-          },
-          payments: { select: { jumlah: true, statusVerifikasi: true } },
-        },
-      },
-      vendor: {
-        include: {
-          evaluations: {
-            select: { rating: true, ketepatanWaktu: true, jumlahHariTelat: true },
-          },
-        },
-      },
-      evaluation: true,
-    },
-  });
-
-  if (!campaign) notFound();
+  let campaign: CampaignDetail;
+  try {
+    campaign = await api.get<CampaignDetail>(`/kampanye/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   // Kuota terisi per varian (item pesanan aktif) — v1.5.
   const terisiPerVarian = new Map<string, number>();
@@ -108,8 +146,8 @@ export default async function CampaignDetailPage({
   });
 
   const deadlineLewat =
-    campaign.deadlinePelunasan &&
-    campaign.deadlinePelunasan.getTime() < Date.now();
+    !!campaign.deadlinePelunasan &&
+    new Date(campaign.deadlinePelunasan).getTime() < Date.now();
 
   const tabHref = (t: Tab) => `/kampanye/${id}?tab=${t}`;
 

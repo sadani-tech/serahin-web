@@ -1,21 +1,20 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { CampaignForm, type VendorOption } from "../CampaignForm";
 import { createCampaign } from "../actions";
-import { computeVendorStats } from "@/lib/vendor";
+import { computeVendorStats, type EvalInput } from "@/lib/vendor";
 
 export const dynamic = "force-dynamic";
 
+type VendorRow = {
+  id: string;
+  nama: string;
+  _count: { campaigns: number };
+  evaluations: EvalInput[];
+};
+
 export default async function KampanyeBaruPage() {
-  const vendors = await prisma.vendor.findMany({
-    orderBy: { nama: "asc" },
-    include: {
-      _count: { select: { campaigns: true } },
-      evaluations: {
-        select: { rating: true, ketepatanWaktu: true, jumlahHariTelat: true },
-      },
-    },
-  });
+  const vendors = await api.get<VendorRow[]>("/vendor");
 
   const vendorOptions: VendorOption[] = vendors.map((v) => {
     const stats = computeVendorStats(v.evaluations);

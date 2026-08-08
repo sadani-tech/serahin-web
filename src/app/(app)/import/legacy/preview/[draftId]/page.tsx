@@ -1,11 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { ORDER_STATUS_LABEL } from "@/lib/domain";
-import { OrderStatus } from "@/generated/prisma";
+import type { OrderStatus } from "@/lib/types";
 import { LegacyPreview, type LegacyPreviewRow } from "./LegacyPreview";
 
 export const dynamic = "force-dynamic";
+
+type LegacyDraftResponse = {
+  draft: { id: string; namaFile: string; targetCampaignId: string };
+  data: {
+    dpNominal: number;
+    defaultStatus: OrderStatus;
+    verifikasi: string;
+    rows: LegacyPreviewRow[];
+  };
+  variants: { id: string; namaVarian: string }[];
+};
 
 export default async function LegacyPreviewPage({
   params,
@@ -13,21 +24,15 @@ export default async function LegacyPreviewPage({
   params: Promise<{ draftId: string }>;
 }) {
   const { draftId } = await params;
-  const draft = await prisma.importDraft.findUnique({ where: { id: draftId } });
-  if (!draft || draft.mode !== "LEGACY" || !draft.targetCampaignId) notFound();
 
-  const data = draft.data as unknown as {
-    dpNominal: number;
-    defaultStatus: OrderStatus;
-    verifikasi: string;
-    rows: LegacyPreviewRow[];
-  };
-
-  const campaign = await prisma.campaign.findUnique({
-    where: { id: draft.targetCampaignId },
-    include: { variants: { select: { id: true, namaVarian: true } } },
-  });
-  if (!campaign) notFound();
+  let res: LegacyDraftResponse;
+  try {
+    res = await api.get<LegacyDraftResponse>(`/import/legacy/draft/${draftId}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
+  const { draft, data, variants } = res;
 
   return (
     <div className="space-y-6">
@@ -41,15 +46,13 @@ export default async function LegacyPreviewPage({
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
           Pratinjau Import Format Lawas
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {campaign.namaProduk} · {draft.namaFile}
-        </p>
+        <p className="mt-1 text-sm text-slate-500">{draft.namaFile}</p>
       </div>
 
       <LegacyPreview
         draftId={draftId}
         rows={data.rows}
-        variants={campaign.variants.map((v) => ({ id: v.id, nama: v.namaVarian }))}
+        variants={variants.map((v) => ({ id: v.id, nama: v.namaVarian }))}
         dpNominal={data.dpNominal}
         defaultStatusLabel={ORDER_STATUS_LABEL[data.defaultStatus]}
       />

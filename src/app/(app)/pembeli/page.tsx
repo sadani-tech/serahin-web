@@ -1,11 +1,21 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
 import { Card, EmptyState, Input } from "@/components/ui";
 import { formatTanggal } from "@/lib/format";
-import { Prisma } from "@/generated/prisma";
+import type { OrderStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+type PembeliOrder = {
+  id: string;
+  namaPembeli: string;
+  kontak: string;
+  status: OrderStatus;
+  createdAt: string;
+  campaign: { namaProduk: string };
+  items: { jumlah: number }[];
+};
 
 export default async function PembeliPage({
   searchParams,
@@ -15,24 +25,8 @@ export default async function PembeliPage({
   const { q } = await searchParams;
   const query = (q ?? "").trim();
 
-  const where: Prisma.OrderWhereInput = query
-    ? {
-        OR: [
-          { namaPembeli: { contains: query, mode: "insensitive" } },
-          { kontak: { contains: query, mode: "insensitive" } },
-        ],
-      }
-    : {};
-
   const orders = query
-    ? await prisma.order.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        include: {
-          campaign: { select: { namaProduk: true } },
-          items: { select: { jumlah: true } },
-        },
-      })
+    ? await api.get<PembeliOrder[]>("/pembeli", { q: query })
     : [];
 
   // Kelompokkan per pembeli (nama+kontak) untuk melihat riwayat lintas kampanye.

@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { Card, CardHeader } from "@/components/ui";
 import { ImportUploadForm } from "./ImportUploadForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function ImportPage() {
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { createdAt: "desc" },
-    select: { id: true, namaProduk: true },
-  });
+  const campaigns = await api.get<{ id: string; namaProduk: string }[]>(
+    "/kampanye",
+  );
 
   return (
     <div className="space-y-6">

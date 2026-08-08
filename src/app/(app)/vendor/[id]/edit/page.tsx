@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { VendorForm } from "../../VendorForm";
 import { updateVendor } from "../../actions";
 
 export const dynamic = "force-dynamic";
+
+type VendorDetail = {
+  nama: string;
+  kontak: string | null;
+  spesialisasi: string | null;
+  catatanUmum: string | null;
+};
 
 export default async function EditVendorPage({
   params,
@@ -12,8 +19,13 @@ export default async function EditVendorPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const vendor = await prisma.vendor.findUnique({ where: { id } });
-  if (!vendor) notFound();
+  let vendor: VendorDetail;
+  try {
+    vendor = await api.get<VendorDetail>(`/vendor/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const action = updateVendor.bind(null, id);
 

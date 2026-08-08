@@ -1,13 +1,43 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { CampaignForm, type VendorOption } from "../../CampaignForm";
 import { updateCampaign } from "../../actions";
 import { toDateInput, toNumber } from "@/lib/format";
-import { computeVendorStats } from "@/lib/vendor";
-import { terisiForVariants } from "@/lib/quota";
+import { computeVendorStats, type EvalInput } from "@/lib/vendor";
+import type { CampaignStatus, PaymentScheme } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+type CampaignDetail = {
+  vendorId: string | null;
+  namaProduk: string;
+  deskripsi: string | null;
+  tanggalBuka: string;
+  tanggalTutup: string;
+  estimasiProduksi: string | null;
+  estimasiKirim: string | null;
+  paymentScheme: PaymentScheme;
+  dpPercent: number | null;
+  deadlinePelunasan: string | null;
+  status: CampaignStatus;
+  variants: {
+    id: string;
+    namaVarian: string;
+    kuotaMaks: number;
+    harga: string;
+    gambarUrl: string | null;
+    hargaPerluTinjau: boolean;
+    terisi: number;
+  }[];
+};
+
+type VendorRow = {
+  id: string;
+  nama: string;
+  _count: { campaigns: number };
+  evaluations: EvalInput[];
+};
 
 export default async function EditCampaignPage({
   params,
@@ -16,29 +46,15 @@ export default async function EditCampaignPage({
 }) {
   const { id } = await params;
 
-  const campaign = await prisma.campaign.findUnique({
-    where: { id },
-    include: {
-      variants: { orderBy: { createdAt: "asc" } },
-    },
-  });
-  if (!campaign) notFound();
+  let campaign: CampaignDetail;
+  try {
+    campaign = await api.get<CampaignDetail>(`/kampanye/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
-  // Hitung terisi per varian untuk batas bawah kuota.
-  const terisiMap = await terisiForVariants(
-    prisma,
-    campaign.variants.map((v) => v.id),
-  );
-
-  const vendors = await prisma.vendor.findMany({
-    orderBy: { nama: "asc" },
-    include: {
-      _count: { select: { campaigns: true } },
-      evaluations: {
-        select: { rating: true, ketepatanWaktu: true, jumlahHariTelat: true },
-      },
-    },
-  });
+  const vendors = await api.get<VendorRow[]>("/vendor");
   const vendorOptions: VendorOption[] = vendors.map((v) => {
     const stats = computeVendorStats(v.evaluations);
     return {
@@ -88,7 +104,7 @@ export default async function EditCampaignPage({
             harga: toNumber(v.harga),
             gambarUrl: v.gambarUrl ?? undefined,
             perluTinjau: v.hargaPerluTinjau,
-            terisi: terisiMap.get(v.id) ?? 0,
+            terisi: v.terisi,
           })),
         }}
       />

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { formatRupiah } from "@/lib/format";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PortalLinkBox } from "./PortalLinkBox";
@@ -12,6 +12,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+type SuccessOrder = {
+  namaPembeli: string;
+  tokenAkses: string;
+  items: {
+    id: string;
+    jumlah: number;
+    hargaSaatPesan: string;
+    variant: { namaVarian: string };
+  }[];
+  campaign: { namaProduk: string };
+};
+
 export default async function PublicOrderSuccessPage({
   params,
 }: {
@@ -19,14 +31,13 @@ export default async function PublicOrderSuccessPage({
 }) {
   const { token } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { tokenAkses: token },
-    include: {
-      items: { include: { variant: { select: { namaVarian: true } } } },
-      campaign: { select: { namaProduk: true } },
-    },
-  });
-  if (!order) notFound();
+  let order: SuccessOrder;
+  try {
+    order = await api.get<SuccessOrder>(`/public/order/${token}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const total = order.items.reduce(
     (s, it) => s + Number(it.hargaSaatPesan) * it.jumlah,

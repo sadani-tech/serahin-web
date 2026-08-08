@@ -1,11 +1,35 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
-import { computeBilling } from "@/lib/billing";
+import type { Billing } from "@/lib/billing";
 import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
+import type { OrderStatus, PaymentScheme } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
+
+type PortalOrder = {
+  status: OrderStatus;
+  alasanBatal: string | null;
+  items: {
+    id: string;
+    jumlah: number;
+    hargaSaatPesan: string;
+    variant: { namaVarian: string; gambarUrl: string | null };
+  }[];
+  campaign: {
+    namaProduk: string;
+    paymentScheme: PaymentScheme;
+    estimasiKirim: string | null;
+    timelineEntries: {
+      id: string;
+      judulUpdate: string;
+      catatan: string | null;
+      createdAt: string;
+    }[];
+  };
+  billing: Billing;
+};
 
 export const dynamic = "force-dynamic";
 
@@ -21,36 +45,15 @@ export default async function PortalPage({
 }) {
   const { token } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { tokenAkses: token },
-    include: {
-      items: {
-        include: { variant: { select: { namaVarian: true, gambarUrl: true } } },
-      },
-      campaign: {
-        include: {
-          timelineEntries: {
-            orderBy: { createdAt: "desc" },
-            select: { id: true, judulUpdate: true, catatan: true, createdAt: true },
-          },
-        },
-      },
-      payments: {
-        orderBy: { createdAt: "desc" },
-        select: { statusVerifikasi: true, jumlah: true },
-      },
-    },
-  });
+  let order: PortalOrder;
+  try {
+    order = await api.get<PortalOrder>(`/public/order/${token}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
-  if (!order) notFound();
-
-  const { campaign } = order;
-  const billing = computeBilling({
-    items: order.items,
-    paymentScheme: campaign.paymentScheme,
-    dpPercent: campaign.dpPercent,
-    payments: order.payments,
-  });
+  const { campaign, billing } = order;
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
 
   const dibatalkan = order.status === "DIBATALKAN";

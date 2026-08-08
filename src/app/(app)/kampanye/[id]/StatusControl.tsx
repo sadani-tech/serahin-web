@@ -6,7 +6,7 @@ import {
   CAMPAIGN_STATUS_LABEL,
   CAMPAIGN_STATUS_ORDER,
 } from "@/lib/domain";
-import { CampaignStatus } from "@/generated/prisma";
+import { CampaignStatus } from "@/lib/types";
 import { changeCampaignStatus } from "../actions";
 
 export function StatusControl({

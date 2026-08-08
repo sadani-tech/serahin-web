@@ -1,6 +1,9 @@
 import { api } from "@/lib/api";
 import type { CampaignStatus } from "@/lib/types";
 
+export const NEAR_DEADLINE_DAYS = 7;
+export const STALE_TIMELINE_DAYS = 7;
+
 export const ACTIVE_STATUSES: CampaignStatus[] = [
   "OPEN",
   "CLOSED",

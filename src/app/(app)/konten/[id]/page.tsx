@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui";
+import type { PageStatus } from "@/lib/types";
 import { StaticPageForm } from "../StaticPageForm";
 import { updateStaticPage, deleteStaticPage } from "../actions";
 
 export const dynamic = "force-dynamic";
+
+type StaticPageDetail = {
+  id: string;
+  judul: string;
+  slug: string;
+  konten: string;
+  status: PageStatus;
+  urutan: number;
+};
 
 export default async function KontenEditPage({
   params,
@@ -13,8 +23,13 @@ export default async function KontenEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const page = await prisma.staticPage.findUnique({ where: { id } });
-  if (!page) notFound();
+  let page: StaticPageDetail;
+  try {
+    page = await api.get<StaticPageDetail>(`/cms/pages/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const updateAction = updateStaticPage.bind(null, id);
   const deleteAction = deleteStaticPage.bind(null, id);

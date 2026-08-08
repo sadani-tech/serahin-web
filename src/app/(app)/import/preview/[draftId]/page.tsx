@@ -1,14 +1,50 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { Card, CardHeader } from "@/components/ui";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { ORDER_STATUS_LABEL, PAYMENT_TYPE_LABEL } from "@/lib/domain";
-import { IMPORT_MODE_LABEL } from "@/lib/import/status";
-import { getValidationForDraft } from "@/lib/import/context";
+import { IMPORT_MODE_LABEL } from "@/lib/import-labels";
+import type { ImportMode, OrderStatus, PaymentType } from "@/lib/types";
 import { ConfirmBar } from "./ConfirmBar";
 
 export const dynamic = "force-dynamic";
+
+type Validation = {
+  ringkasan: { pesananValid: number; pesananError: number };
+  kuotaWarnings: string[];
+  kampanye: {
+    errors: string[];
+    namaProduk: string;
+    harga: number;
+    tanggalBuka: string | null;
+    tanggalTutup: string | null;
+    paymentScheme: string;
+  } | null;
+  varian: { namaVarian: string; harga: number; kuotaMaks: number; errors: string[] }[];
+  pesanan: {
+    idRef: string;
+    namaPembeli: string;
+    kontak: string;
+    status: OrderStatus;
+    errors: string[];
+    warnings: string[];
+  }[];
+  items: {
+    idRefPesanan: string;
+    varianInput: string;
+    jumlah: number;
+    hargaSaatPesan: number;
+    errors: string[];
+  }[];
+  pembayaran: {
+    idRefPesanan: string;
+    jenis: PaymentType | null;
+    jumlah: number | null;
+    tanggal: string | null;
+    errors: string[];
+  }[];
+};
 
 export default async function ImportPreviewPage({
   params,
@@ -16,19 +52,19 @@ export default async function ImportPreviewPage({
   params: Promise<{ draftId: string }>;
 }) {
   const { draftId } = await params;
-  const draft = await prisma.importDraft.findUnique({ where: { id: draftId } });
-  if (!draft) notFound();
 
-  const v = await getValidationForDraft(draft);
-
-  let targetNama: string | null = null;
-  if (draft.targetCampaignId) {
-    const c = await prisma.campaign.findUnique({
-      where: { id: draft.targetCampaignId },
-      select: { namaProduk: true },
-    });
-    targetNama = c?.namaProduk ?? null;
+  let res: {
+    draft: { mode: ImportMode; namaFile: string; targetNama: string | null };
+    validation: Validation;
+  };
+  try {
+    res = await api.get(`/import/draft/${draftId}/preview`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
   }
+  const { draft, validation: v } = res;
+  const targetNama = draft.targetNama;
 
   return (
     <div className="space-y-6">

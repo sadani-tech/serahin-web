@@ -1,18 +1,22 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { FaqManager } from "./FaqManager";
 
 export const dynamic = "force-dynamic";
 
+type FaqRow = {
+  id: string;
+  pertanyaan: string;
+  jawaban: string;
+  urutan: number;
+  aktif: boolean;
+  campaignId: string | null;
+};
+
 export default async function FaqPage() {
   const [faqs, campaigns] = await Promise.all([
-    prisma.faqEntry.findMany({
-      orderBy: [{ campaignId: "asc" }, { urutan: "asc" }, { createdAt: "asc" }],
-    }),
-    prisma.campaign.findMany({
-      orderBy: { createdAt: "desc" },
-      select: { id: true, namaProduk: true },
-    }),
+    api.get<FaqRow[]>("/cms/faq"),
+    api.get<{ id: string; namaProduk: string }[]>("/kampanye"),
   ]);
 
   return (

@@ -1,12 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { OrderForm } from "@/app/(app)/pesanan/OrderForm";
 import { updateOrder } from "@/app/(app)/pesanan/actions";
-import { ORDER_STATUS_NONAKTIF } from "@/lib/domain";
 import { toNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+type OrderDetail = {
+  namaPembeli: string;
+  kontak: string;
+  catatan: string | null;
+  items: { variantId: string; jumlah: number }[];
+  campaign: { id: string };
+};
+
+type CampaignDetail = {
+  variants: { id: string; namaVarian: string; sisa: number; harga: string }[];
+};
 
 export default async function EditOrderPage({
   params,
@@ -15,40 +26,29 @@ export default async function EditOrderPage({
 }) {
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      items: { select: { variantId: true, jumlah: true } },
-      campaign: {
-        include: {
-          variants: {
-            orderBy: { createdAt: "asc" },
-            include: {
-              orderItems: {
-                where: {
-                  order: { status: { notIn: ORDER_STATUS_NONAKTIF } },
-                },
-                select: { jumlah: true, orderId: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-  if (!order) notFound();
+  let order: OrderDetail;
+  try {
+    order = await api.get<OrderDetail>(`/pesanan/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
-  const variantOptions = order.campaign.variants.map((v) => {
-    const terisiLain = v.orderItems
-      .filter((oi) => oi.orderId !== order.id)
-      .reduce((s, oi) => s + oi.jumlah, 0);
-    return {
-      id: v.id,
-      namaVarian: v.namaVarian,
-      sisa: v.kuotaMaks - terisiLain,
-      harga: toNumber(v.harga),
-    };
-  });
+  const campaign = await api.get<CampaignDetail>(
+    `/kampanye/${order.campaign.id}`,
+  );
+
+  // Sisa global + kembalikan jumlah milik pesanan ini (agar bisa dipertahankan).
+  const jumlahIni = new Map<string, number>();
+  for (const it of order.items) {
+    jumlahIni.set(it.variantId, (jumlahIni.get(it.variantId) ?? 0) + it.jumlah);
+  }
+  const variantOptions = campaign.variants.map((v) => ({
+    id: v.id,
+    namaVarian: v.namaVarian,
+    sisa: v.sisa + (jumlahIni.get(v.id) ?? 0),
+    harga: toNumber(v.harga),
+  }));
 
   const action = updateOrder.bind(null, id);
 

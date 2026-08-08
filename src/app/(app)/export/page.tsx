@@ -1,22 +1,23 @@
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui";
 import { formatWaktu } from "@/lib/format";
 import { ExportPanel } from "./ExportPanel";
 
 export const dynamic = "force-dynamic";
 
+type AuditRow = {
+  id: string;
+  jumlahBaris: number;
+  format: string;
+  keterangan: string | null;
+  createdAt: string;
+  createdBy: { name: string | null; email: string };
+};
+
 export default async function ExportPage() {
   const [campaigns, audits] = await Promise.all([
-    prisma.campaign.findMany({
-      orderBy: { createdAt: "desc" },
-      select: { id: true, namaProduk: true },
-    }),
-    prisma.exportAudit.findMany({
-      where: { jenis: "kontak" },
-      orderBy: { createdAt: "desc" },
-      take: 15,
-      include: { createdBy: { select: { name: true, email: true } } },
-    }),
+    api.get<{ id: string; namaProduk: string }[]>("/kampanye"),
+    api.get<AuditRow[]>("/export/audits"),
   ]);
 
   return (

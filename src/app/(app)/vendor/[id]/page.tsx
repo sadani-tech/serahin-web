@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { api, ApiError } from "@/lib/api";
 import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatTanggal } from "@/lib/format";
@@ -9,9 +9,37 @@ import {
   ratingStars,
   KETEPATAN_LABEL,
   KUALITAS_LABEL,
+  type EvalInput,
 } from "@/lib/vendor";
+import type {
+  CampaignStatus,
+  KesesuaianKualitas,
+  KetepatanWaktu,
+} from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+type VendorDetail = {
+  id: string;
+  nama: string;
+  kontak: string | null;
+  spesialisasi: string | null;
+  catatanUmum: string | null;
+  campaigns: {
+    id: string;
+    namaProduk: string;
+    status: CampaignStatus;
+    createdAt: string;
+  }[];
+  evaluations: (EvalInput & {
+    id: string;
+    kesesuaianKualitas: KesesuaianKualitas;
+    ketepatanWaktu: KetepatanWaktu;
+    catatan: string | null;
+    createdAt: string;
+    campaign: { id: string; namaProduk: string };
+  })[];
+};
 
 export default async function VendorDetailPage({
   params,
@@ -20,20 +48,13 @@ export default async function VendorDetailPage({
 }) {
   const { id } = await params;
 
-  const vendor = await prisma.vendor.findUnique({
-    where: { id },
-    include: {
-      campaigns: {
-        orderBy: { createdAt: "desc" },
-        select: { id: true, namaProduk: true, status: true, createdAt: true },
-      },
-      evaluations: {
-        orderBy: { createdAt: "desc" },
-        include: { campaign: { select: { id: true, namaProduk: true } } },
-      },
-    },
-  });
-  if (!vendor) notFound();
+  let vendor: VendorDetail;
+  try {
+    vendor = await api.get<VendorDetail>(`/vendor/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
 
   const stats = computeVendorStats(vendor.evaluations);
 
