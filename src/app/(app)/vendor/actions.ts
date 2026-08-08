@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/session";
+import { api, ApiError } from "@/lib/api";
 
 const vendorSchema = z.object({
   nama: z.string().min(1, "Nama vendor wajib diisi"),
@@ -28,12 +27,16 @@ export async function createVendor(
   _prev: VendorFormState,
   formData: FormData,
 ): Promise<VendorFormState> {
-  await requireUser();
   const parsed = parseVendor(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
-  const vendor = await prisma.vendor.create({ data: parsed.data });
+  let vendor: { id: string };
+  try {
+    vendor = await api.post<{ id: string }>("/vendor", parsed.data);
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
+  }
   revalidatePath("/vendor");
   redirect(`/vendor/${vendor.id}`);
 }
@@ -43,20 +46,20 @@ export async function updateVendor(
   _prev: VendorFormState,
   formData: FormData,
 ): Promise<VendorFormState> {
-  await requireUser();
   const parsed = parseVendor(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
-  await prisma.vendor.update({ where: { id: vendorId }, data: parsed.data });
+  try {
+    await api.patch(`/vendor/${vendorId}`, parsed.data);
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
+  }
   revalidatePath(`/vendor/${vendorId}`);
   redirect(`/vendor/${vendorId}`);
 }
 
-// --- Evaluasi vendor per kampanye (FR-7.3) --------------------------------
-
 const evalSchema = z.object({
-  campaignId: z.string().min(1),
   ketepatanWaktu: z.enum(["TEPAT_WAKTU", "TELAT"]),
   jumlahHariTelat: z.coerce.number().int().min(0).optional(),
   kesesuaianKualitas: z.enum(["SESUAI", "TIDAK_SESUAI"]),
@@ -69,10 +72,7 @@ export async function saveEvaluation(
   _prev: VendorFormState,
   formData: FormData,
 ): Promise<VendorFormState> {
-  await requireUser();
-
   const parsed = evalSchema.safeParse({
-    campaignId,
     ketepatanWaktu: formData.get("ketepatanWaktu"),
     jumlahHariTelat: formData.get("jumlahHariTelat") || undefined,
     kesesuaianKualitas: formData.get("kesesuaianKualitas"),
@@ -82,40 +82,11 @@ export async function saveEvaluation(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
-  const d = parsed.data;
-
-  const campaign = await prisma.campaign.findUniqueOrThrow({
-    where: { id: campaignId },
-    select: { vendorId: true },
-  });
-  if (!campaign.vendorId) {
-    return { error: "Kampanye ini belum punya vendor." };
+  try {
+    await api.post("/vendor/evaluations", { campaignId, ...parsed.data });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
   }
-
-  const hariTelat = d.ketepatanWaktu === "TELAT" ? (d.jumlahHariTelat ?? 0) : 0;
-
-  // Satu evaluasi per kampanye — upsert.
-  await prisma.vendorEvaluation.upsert({
-    where: { campaignId },
-    create: {
-      campaignId,
-      vendorId: campaign.vendorId,
-      ketepatanWaktu: d.ketepatanWaktu,
-      jumlahHariTelat: hariTelat,
-      kesesuaianKualitas: d.kesesuaianKualitas,
-      rating: d.rating,
-      catatan: d.catatan,
-    },
-    update: {
-      ketepatanWaktu: d.ketepatanWaktu,
-      jumlahHariTelat: hariTelat,
-      kesesuaianKualitas: d.kesesuaianKualitas,
-      rating: d.rating,
-      catatan: d.catatan,
-    },
-  });
-
   revalidatePath(`/kampanye/${campaignId}`);
-  revalidatePath(`/vendor/${campaign.vendorId}`);
   return undefined;
 }

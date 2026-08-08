@@ -1,4 +1,4 @@
-import { Payment, PaymentScheme, Prisma } from "@/generated/prisma";
+import { PaymentScheme, PaymentVerification } from "@/lib/types";
 import { toNumber } from "@/lib/format";
 
 export type Billing = {
@@ -11,7 +11,7 @@ export type Billing = {
 };
 
 export type BillingItem = {
-  hargaSaatPesan: Prisma.Decimal | number | string;
+  hargaSaatPesan: number | string;
   jumlah: number;
 };
 
@@ -37,7 +37,7 @@ export function computeBilling(params: {
   items: BillingItem[];
   paymentScheme: PaymentScheme;
   dpPercent?: number | null;
-  payments: Pick<Payment, "jumlah" | "statusVerifikasi">[];
+  payments: { jumlah: number | string; statusVerifikasi: PaymentVerification }[];
 }): Billing {
   const total = computeOrderTotal(params.items);
 

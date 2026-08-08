@@ -1,25 +1,19 @@
-import { prisma } from "@/lib/prisma";
+import { api } from "@/lib/api";
 
-/** Daftar halaman statis terpublikasi untuk tautan footer publik (v1.6 3.1). */
-export async function getFooterPages() {
-  return prisma.staticPage.findMany({
-    where: { status: "PUBLISH" },
-    orderBy: [{ urutan: "asc" }, { createdAt: "asc" }],
-    select: { slug: true, judul: true },
-  });
+export type FooterPage = { slug: string; judul: string };
+export type PublicFaqItem = {
+  id: string;
+  pertanyaan: string;
+  jawaban: string;
+  campaignId: string | null;
+};
+
+/** Halaman statis terpublikasi untuk tautan footer publik (v1.6 3.1). */
+export function getFooterPages(): Promise<FooterPage[]> {
+  return api.get<FooterPage[]>("/cms/public/pages");
 }
 
-/**
- * FAQ untuk ditampilkan publik (v1.6 3.3): FAQ global (campaignId null) plus
- * FAQ khusus kampanye bila campaignId diberikan. Diurutkan sesuai `urutan`.
- */
-export async function getPublicFaq(campaignId?: string) {
-  return prisma.faqEntry.findMany({
-    where: {
-      aktif: true,
-      OR: [{ campaignId: null }, ...(campaignId ? [{ campaignId }] : [])],
-    },
-    orderBy: [{ urutan: "asc" }, { createdAt: "asc" }],
-    select: { id: true, pertanyaan: true, jawaban: true, campaignId: true },
-  });
+/** FAQ publik (global + per kampanye) (v1.6 3.3). */
+export function getPublicFaq(campaignId?: string): Promise<PublicFaqItem[]> {
+  return api.get<PublicFaqItem[]>("/cms/public/faq", { campaignId });
 }

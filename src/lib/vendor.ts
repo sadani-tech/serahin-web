@@ -1,4 +1,4 @@
-import { KetepatanWaktu, KesesuaianKualitas } from "@/generated/prisma";
+import { KetepatanWaktu, KesesuaianKualitas } from "@/lib/types";
 
 export const KETEPATAN_LABEL: Record<KetepatanWaktu, string> = {
   TEPAT_WAKTU: "Tepat waktu",

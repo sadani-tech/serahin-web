@@ -1,6 +1,4 @@
-import { Prisma } from "@/generated/prisma";
-
-type DecimalInput = Prisma.Decimal | number | string | null | undefined;
+type DecimalInput = number | string | { toString(): string } | null | undefined;
 
 /** Ubah nilai Decimal/number/string menjadi number aman. */
 export function toNumber(value: DecimalInput): number {

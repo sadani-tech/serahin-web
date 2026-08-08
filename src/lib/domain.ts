@@ -4,7 +4,7 @@ import {
   PaymentType,
   PaymentVerification,
   PaymentScheme,
-} from "@/generated/prisma";
+} from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Status Kampanye (FR-1.4): Open → Closed → Produksi → Siap Kirim → Selesai

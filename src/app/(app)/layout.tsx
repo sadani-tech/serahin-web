@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { auth, signOut } from "@/auth";
+import { getSession } from "@/lib/session";
+import { logoutAction } from "@/lib/auth-actions";
 import { NavLinks } from "@/components/nav";
 import { Button } from "@/components/ui";
 
@@ -8,7 +9,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getSession();
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -24,12 +25,7 @@ export default async function AppLayout({
             <span className="hidden text-sm text-slate-500 sm:inline">
               {session?.user?.name ?? session?.user?.email}
             </span>
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/login" });
-              }}
-            >
+            <form action={logoutAction}>
               <Button variant="ghost" type="submit">
                 Keluar
               </Button>

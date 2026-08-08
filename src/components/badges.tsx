@@ -2,7 +2,7 @@ import {
   CampaignStatus,
   OrderStatus,
   PaymentVerification,
-} from "@/generated/prisma";
+} from "@/lib/types";
 import {
   CAMPAIGN_STATUS_BADGE,
   CAMPAIGN_STATUS_LABEL,
