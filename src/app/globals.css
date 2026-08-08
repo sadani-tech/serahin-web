@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Styling konten rich-text (v1.6 CMS) — tanpa plugin typography. */
+.prose-serahin {
+  color: #334155;
+  line-height: 1.7;
+  font-size: 0.925rem;
+}
+.prose-serahin > :first-child {
+  margin-top: 0;
+}
+.prose-serahin > :last-child {
+  margin-bottom: 0;
+}
+.prose-serahin p {
+  margin: 0.75em 0;
+}
+.prose-serahin h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 1em 0 0.5em;
+}
+.prose-serahin h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 1em 0 0.5em;
+}
+.prose-serahin h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 1em 0 0.5em;
+}
+.prose-serahin ul,
+.prose-serahin ol {
+  margin: 0.75em 0;
+  padding-left: 1.5em;
+}
+.prose-serahin ul {
+  list-style: disc;
+}
+.prose-serahin ol {
+  list-style: decimal;
+}
+.prose-serahin li {
+  margin: 0.25em 0;
+}
+.prose-serahin a {
+  color: #0f766e;
+  text-decoration: underline;
+}
+.prose-serahin img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.75em 0;
+}
+.prose-serahin blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 1em;
+  color: #64748b;
+  margin: 0.75em 0;
+}
+.prose-serahin strong {
+  font-weight: 600;
+  color: #0f172a;
+}
