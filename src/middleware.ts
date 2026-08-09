@@ -24,13 +24,9 @@ export default async function middleware(req: NextRequest) {
     pathname.startsWith("/po/") ||
     pathname.startsWith("/halaman/");
 
-<<<<<<<< HEAD:apps/web/src/proxy.ts
-  if (!isLoggedIn && !isLoginPage) {
-========
   const loggedIn = await isValid(req.cookies.get("token")?.value);
 
   if (!loggedIn && !isPublic) {
->>>>>>>> 27b470c38025f536f72671cb109747e9d588e18d:apps/web/src/middleware.ts
     const url = new URL("/login", req.nextUrl.origin);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
