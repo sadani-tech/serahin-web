@@ -33,10 +33,10 @@ export default async function DashboardPage({
   const adaFilter = !!(status || sp.dateFrom || sp.dateTo);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Dashboard
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -48,7 +48,7 @@ export default async function DashboardPage({
 
       {/* Filter (FR-6.6) */}
       <Card className="p-4">
-        <form className="flex flex-wrap items-end gap-3">
+        <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500">
               Status kampanye
@@ -106,37 +106,35 @@ export default async function DashboardPage({
       </Card>
 
       {/* Kartu ringkasan */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="px-5 py-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <Card className="px-4 py-3 sm:px-5 sm:py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Kampanye aktif
           </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">
+          <p className="mt-1 text-2xl font-bold text-slate-900">
             {data.jumlahKampanyeAktif}
           </p>
         </Card>
-        <Card className="px-5 py-4">
+        <Card className="col-span-2 px-4 py-3 sm:col-span-1 sm:px-5 sm:py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Dana masuk terverifikasi
+            Dana masuk
           </p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">
+          <p className="mt-1 text-xl font-bold text-emerald-600 sm:text-2xl">
             {formatRupiah(data.totalCashflow)}
           </p>
           <p className="mt-0.5 text-xs text-slate-400">
-            dari {formatRupiah(data.totalNilaiPesanan)} nilai pesanan aktif
+            dari {formatRupiah(data.totalNilaiPesanan)} total
           </p>
         </Card>
-        <Card className="px-5 py-4">
+        <Card className="px-4 py-3 sm:px-5 sm:py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Perlu perhatian
           </p>
-          <p
-            className={`mt-1 text-2xl font-semibold ${data.perluPerhatian.length > 0 ? "text-rose-600" : "text-slate-900"}`}
-          >
+          <p className={`mt-1 text-2xl font-bold ${data.perluPerhatian.length > 0 ? "text-rose-600" : "text-slate-900"}`}>
             {data.perluPerhatian.length}
           </p>
           <p className="mt-0.5 text-xs text-slate-400">
-            pesanan belum lunas mendekati deadline
+            mendekati deadline
           </p>
         </Card>
       </div>

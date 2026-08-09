@@ -60,7 +60,7 @@ export function Button({
 }: ComponentProps<"button"> & { variant?: ButtonVariant }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${buttonStyles[variant]} ${className}`}
+      className={`inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${buttonStyles[variant]} ${className}`}
       {...props}
     />
   );
