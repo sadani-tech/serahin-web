@@ -36,17 +36,34 @@ export async function uploadImport(
   redirect(`/import/preview/${res.draftId}`);
 }
 
-export async function confirmImport(draftId: string) {
-  const res = await api.post<{ logId: string }>(
-    `/import/draft/${draftId}/confirm`,
-  );
+export async function confirmImport(
+  draftId: string,
+): Promise<{ error: string } | undefined> {
+  let res: { logId: string };
+  try {
+    res = await api.post<{ logId: string }>(
+      `/import/draft/${draftId}/confirm`,
+    );
+  } catch (e) {
+    return {
+      error: e instanceof ApiError ? e.message : "Gagal mengkonfirmasi import. Coba lagi.",
+    };
+  }
   revalidatePath("/import/riwayat");
   revalidatePath("/kampanye");
   redirect(`/import/riwayat?sukses=${res.logId}`);
 }
 
-export async function cancelDraft(draftId: string) {
-  await api.del(`/import/draft/${draftId}`);
+export async function cancelDraft(
+  draftId: string,
+): Promise<{ error: string } | undefined> {
+  try {
+    await api.del(`/import/draft/${draftId}`);
+  } catch (e) {
+    return {
+      error: e instanceof ApiError ? e.message : "Gagal membatalkan sesi.",
+    };
+  }
   redirect("/import");
 }
 
