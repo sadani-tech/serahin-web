@@ -139,11 +139,16 @@ export default async function DashboardPage({
         <DashboardSection
           title="Perlu perhatian"
           subtitle={`Belum lunas & deadline pelunasan ≤ ${NEAR_DEADLINE_DAYS} hari`}
-          items={data.perluPerhatian as { id: string; orderId: string; campaignId: string; namaPembeli: string; namaProduk: string; varian: string; sisa: number; deadline: string | null; hariTersisa: number | null; lewat: boolean; }[]}
+          itemCount={data.perluPerhatian.length}
           emptyMessage="Tidak ada yang mendesak"
           emptyDescription="Semua pesanan aman dari deadline pelunasan."
-          render={(item) => (
-            <Link href={`/pesanan/${item.orderId}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50">
+        >
+          {data.perluPerhatian.map((item) => (
+            <Link
+              key={item.orderId}
+              href={`/pesanan/${item.orderId}`}
+              className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50"
+            >
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-900">{item.namaPembeli}</p>
                 <p className="truncate text-xs text-slate-500">{item.namaProduk} · {item.varian}</p>
@@ -155,24 +160,29 @@ export default async function DashboardPage({
                 </p>
               </div>
             </Link>
-          )}
-        />
+          ))}
+        </DashboardSection>
         <DashboardSection
           title="Belum diupdate"
           subtitle={`Kampanye aktif tanpa update timeline ≥ ${STALE_TIMELINE_DAYS} hari`}
-          items={data.staleCampaigns}
+          itemCount={data.staleCampaigns.length}
           emptyMessage="Semua kampanye ter-update"
           emptyDescription="Tidak ada kampanye yang lama tak disentuh."
-          render={(item) => (
-            <Link href={`/kampanye/${item.id}?tab=timeline`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50">
+        >
+          {data.staleCampaigns.map((item) => (
+            <Link
+              key={item.id}
+              href={`/kampanye/${item.id}?tab=timeline`}
+              className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50"
+            >
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-900">{item.namaProduk}</p>
                 <p className="text-xs text-slate-500">update terakhir {formatTanggal(item.lastUpdate)}</p>
               </div>
               <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">{item.hariLalu} hari lalu</span>
             </Link>
-          )}
-        />
+          ))}
+        </DashboardSection>
       </div>
       <ActiveCampaignsCard items={data.activeCampaigns} />
     </div>

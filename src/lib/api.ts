@@ -1,40 +1,20 @@
-
+import { cookies } from "next/headers";
 
 /**
- * Klien REST untuk backend NestJS (menggantikan akses Prisma langsung).
- * Token JWT dibaca dari cookie httpOnly `token`.
+ * Klien REST server-side untuk backend NestJS (menggantikan akses Prisma
+ * langsung). Token JWT dibaca dari cookie httpOnly `token`.
+ *
+ * PENTING: modul ini hanya boleh diimpor dari Server Component / Server
+ * Action / Route Handler. Cookie `token` bertanda httpOnly sehingga TIDAK
+ * bisa dibaca lewat `document.cookie` di client — jangan tambahkan cabang
+ * "client-side" di sini, itu tidak akan pernah membawa token.
  */
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 export const TOKEN_COOKIE = "token";
 
-// Server-side auth (for SSR pages)
-async function serverAuthHeader(): Promise<Record<string, string> | null> {
-  try {
-    const { cookies } = await import("next/headers");
-    const store = await cookies();
-    const token = store.get(TOKEN_COOKIE)?.value;
-    return token ? { Authorization: `Bearer ${token}` } : null;
-  } catch {
-    return null;
-  }
-}
-
-// Client-side auth (for CSR pages)
-async function clientAuthHeader(): Promise<Record<string, string> | null> {
-  try {
-    const token = typeof document !== "undefined" 
-      ? document.cookie.split("; ").find(row => row.startsWith(`${TOKEN_COOKIE}=`))?.split("=")[1]
-      : null;
-    return token ? { Authorization: `Bearer ${token}` } : null;
-  } catch {
-    return null;
-  }
-}
-
 async function authHeader(): Promise<Record<string, string>> {
-  const token = typeof window !== "undefined" 
-    ? document?.cookie?.split("; ").find(row => row.startsWith(`${TOKEN_COOKIE}=`))?.split("=")[1]
-    : null;
+  const store = await cookies();
+  const token = store.get(TOKEN_COOKIE)?.value;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

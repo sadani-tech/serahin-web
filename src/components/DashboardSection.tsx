@@ -5,33 +5,33 @@ import Link from "next/link";
 import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
-import { persenKuotaColor, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard";
+import { persenKuotaColor, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard-ui";
 import type { CampaignStatus } from "@/lib/types";
 
-export function DashboardSection<T extends { id: string }>({
+export function DashboardSection({
   title,
   subtitle,
-  items,
+  itemCount,
   emptyMessage,
   emptyDescription,
   action,
-  render,
+  children,
 }: {
   title: string;
   subtitle: string;
-  items: T[];
+  itemCount: number;
   emptyMessage: string;
   emptyDescription: string;
   action?: React.ReactNode;
-  render: (item: T) => React.ReactNode;
+  children?: React.ReactNode;
 }) {
   const [showEmpty, setShowEmpty] = useState(true);
 
-  if (items.length > 0) {
+  if (itemCount > 0) {
     return (
       <Card>
         <CardHeader title={title} subtitle={subtitle} />
-        <ul className="divide-y divide-slate-100">{items.map((item) => render(item))}</ul>
+        <ul className="divide-y divide-slate-100">{children}</ul>
       </Card>
     );
   }
