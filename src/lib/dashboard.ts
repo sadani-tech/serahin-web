@@ -1,8 +1,9 @@
 import { api } from "@/lib/api";
 import type { CampaignStatus } from "@/lib/types";
 
-export const NEAR_DEADLINE_DAYS = 7;
-export const STALE_TIMELINE_DAYS = 7;
+// Re-export agar importer lama (Server Component) tidak perlu berubah;
+// definisi asli dipindah ke dashboard-ui.ts (aman diimpor client).
+export { NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS, persenKuotaColor } from "@/lib/dashboard-ui";
 
 export const ACTIVE_STATUSES: CampaignStatus[] = [
   "OPEN",
@@ -58,10 +59,4 @@ export function getDashboardData(
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
   });
-}
-
-export function persenKuotaColor(persen: number): string {
-  if (persen >= 100) return "bg-rose-500";
-  if (persen >= 75) return "bg-amber-500";
-  return "bg-slate-900";
 }
