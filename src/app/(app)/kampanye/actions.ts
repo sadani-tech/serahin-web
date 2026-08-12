@@ -6,88 +6,146 @@ import { api, ApiError } from "@/lib/api";
 
 export type CampaignFormState = { error?: string } | undefined;
 
-function parseVariants(formData: FormData) {
-  const names = formData.getAll("variantNama").map(String);
-  const kuotas = formData.getAll("variantKuota").map(String);
-  const hargas = formData.getAll("variantHarga").map(String);
-  const gambars = formData.getAll("variantGambar").map(String);
-  const ids = formData.getAll("variantId").map(String);
-  return names
-    .map((namaVarian, i) => ({
-      id: ids[i] || undefined,
-      namaVarian: namaVarian.trim(),
-      kuotaMaks: Number(kuotas[i] ?? 0),
-      harga: Number(hargas[i] ?? 0),
-      gambarUrl: (gambars[i] ?? "").trim() || undefined,
-    }))
-    .filter((v) => v.namaVarian.length > 0);
+function getFormDataValue(formData: FormData, key: string): string | undefined {
+  const value = formData.get(key);
+  return value === null ? undefined : (value as string);
 }
 
-function campaignBody(formData: FormData) {
-  const dpPercentRaw = formData.get("dpPercent");
-  return {
-    namaProduk: String(formData.get("namaProduk") ?? ""),
-    deskripsi: (formData.get("deskripsi") as string) || undefined,
-    tanggalBuka: String(formData.get("tanggalBuka") ?? ""),
-    tanggalTutup: String(formData.get("tanggalTutup") ?? ""),
-    estimasiProduksi: (formData.get("estimasiProduksi") as string) || undefined,
-    estimasiKirim: (formData.get("estimasiKirim") as string) || undefined,
-    paymentScheme: String(formData.get("paymentScheme") ?? "DP_PELUNASAN"),
-    dpPercent: dpPercentRaw ? Number(dpPercentRaw) : undefined,
-    deadlinePelunasan: (formData.get("deadlinePelunasan") as string) || undefined,
-    vendorId: (formData.get("vendorId") as string) || undefined,
-    variants: parseVariants(formData),
-  };
+function getFormDataNumber(formData: FormData, key: string): number | undefined {
+  const value = formData.get(key);
+  if (value === null) return undefined;
+  const num = Number(value);
+  return isNaN(num) ? undefined : num;
 }
 
 export async function createCampaign(
   _prev: CampaignFormState,
   formData: FormData,
 ): Promise<CampaignFormState> {
-  let campaign: { id: string };
-  try {
-    campaign = await api.post<{ id: string }>("/kampanye", campaignBody(formData));
-  } catch (e) {
-    return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
+  const variants: Array<{ id?: string; namaVarian: string; kuotaMaks: number; harga: number; gambarUrl?: string }> = [];
+  const variantIds = formData.getAll("variantId");
+  const variantNamavars = formData.getAll("variantNama");
+  const variantKuotas = formData.getAll("variantKuota");
+  const variantHargas = formData.getAll("variantHarga");
+  
+  for (let i = 0; i < variantNamavars.length; i++) {
+    const namaVarian = variantNamavars[i];
+    if (!namaVarian) continue;
+    
+    variants.push({
+      id: variantIds[i] ? String(variantIds[i]) : undefined,
+      namaVarian: String(namaVarian),
+      kuotaMaks: Number(variantKuotas[i]) || 0,
+      harga: Number(variantHargas[i]) || 0,
+      gambarUrl: formData.getAll("variantGambar")[i] ? String(formData.getAll("variantGambar")[i]) : undefined,
+    });
   }
+
+  try {
+    await api.post("/kampanye", {
+      namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
+      deskripsi: getFormDataValue(formData, "deskripsi"),
+      tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
+      tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
+      paymentScheme: getFormDataValue(formData, "paymentScheme") as "DP_PELUNASAN" | "LUNAS",
+      dpPercent: getFormDataNumber(formData, "dpPercent"),
+      deadlinePelunasan: getFormDataValue(formData, "deadlinePelunasan"),
+      vendorId: getFormDataValue(formData, "vendorId") || null,
+      variants,
+    });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal membuat kampanye" };
+  }
+
   revalidatePath("/kampanye");
-  redirect(`/kampanye/${campaign.id}`);
+  redirect("/kampanye");
 }
 
 export async function updateCampaign(
-  campaignId: string,
+  id: string,
   _prev: CampaignFormState,
   formData: FormData,
 ): Promise<CampaignFormState> {
+  const variants: Array<{ id?: string; namaVarian: string; kuotaMaks: number; harga: number; gambarUrl?: string }> = [];
+  const variantIds = formData.getAll("variantId");
+  const variantNamavars = formData.getAll("variantNama");
+  const variantKuotas = formData.getAll("variantKuota");
+  const variantHargas = formData.getAll("variantHarga");
+  
+  for (let i = 0; i < variantNamavars.length; i++) {
+    const namaVarian = variantNamavars[i];
+    if (!namaVarian) continue;
+    
+    variants.push({
+      id: variantIds[i] ? String(variantIds[i]) : undefined,
+      namaVarian: String(namaVarian),
+      kuotaMaks: Number(variantKuotas[i]) || 0,
+      harga: Number(variantHargas[i]) || 0,
+      gambarUrl: formData.getAll("variantGambar")[i] ? String(formData.getAll("variantGambar")[i]) : undefined,
+    });
+  }
+
   try {
-    await api.patch(`/kampanye/${campaignId}`, campaignBody(formData));
+    await api.patch(`/kampanye/${id}`, {
+      namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
+      deskripsi: getFormDataValue(formData, "deskripsi"),
+      tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
+      tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
+      paymentScheme: getFormDataValue(formData, "paymentScheme") as "DP_PELUNASAN" | "LUNAS",
+      dpPercent: getFormDataNumber(formData, "dpPercent"),
+      deadlinePelunasan: getFormDataValue(formData, "deadlinePelunasan"),
+      vendorId: getFormDataValue(formData, "vendorId") || null,
+      variants,
+    });
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
   }
+
+  revalidatePath(`/kampanye/${id}`);
+  redirect(`/kampanye/${id}`);
+}
+
+export async function changeCampaignStatus(campaignId: string, formData: FormData) {
+  const status = String(formData.get("status") ?? "");
+  const catatan = String(formData.get("catatan") ?? "");
+  
+  try {
+    await api.post(`/kampanye/${campaignId}/status`, { status, catatan });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal mengubah status" };
+  }
   revalidatePath(`/kampanye/${campaignId}`);
-  redirect(`/kampanye/${campaignId}`);
 }
 
 export async function toggleFormAktif(campaignId: string, aktif: boolean) {
-  await api.post(`/kampanye/${campaignId}/form`, { aktif });
+  try {
+    await api.post(`/kampanye/${campaignId}/form`, { aktif });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal mengubah status form" };
+  }
   revalidatePath(`/kampanye/${campaignId}`);
 }
 
 export async function addTimelineEntry(campaignId: string, formData: FormData) {
-  await api.post(`/kampanye/${campaignId}/timeline`, {
-    judulUpdate: String(formData.get("judulUpdate") ?? ""),
-    catatan: String(formData.get("catatan") ?? ""),
-  });
+  const judulUpdate = String(formData.get("judulUpdate") ?? "");
+  const catatan = String(formData.get("catatan") ?? "");
+
+  if (!judulUpdate.trim()) {
+    return { error: "Judul update wajib diisi" };
+  }
+
+  try {
+    await api.post(`/kampanye/${campaignId}/timeline`, {
+      judulUpdate,
+      catatan,
+    });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menambahkan update" };
+  }
   revalidatePath(`/kampanye/${campaignId}`);
 }
 
-export async function changeCampaignStatus(
-  campaignId: string,
-  formData: FormData,
-) {
-  await api.post(`/kampanye/${campaignId}/status`, {
-    status: String(formData.get("status") ?? ""),
-    catatan: String(formData.get("catatan") ?? ""),
-  });
-  revalidatePath(`/kampanye/${campaignId}`);
+export async function deleteCampaign(id: string) {
+  await api.deleteCampaign(id);
+  revalidatePath("/kampanye");
 }

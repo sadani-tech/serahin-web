@@ -5,6 +5,7 @@ import { useState } from "react";
 import { logoutAction } from "@/lib/auth-actions";
 import { NavLinks, MobileMenuButton, MobileDrawer, BottomNav, type NavUser } from "@/components/nav";
 import { Button } from "@/components/ui";
+import { NavigationProgress } from "@/hooks/useNavigationLoading";
 
 export function AppShell({
   children,
@@ -16,7 +17,9 @@ export function AppShell({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
+    <>
+      <NavigationProgress />
+      <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-3">
@@ -56,5 +59,6 @@ export function AppShell({
 
       <BottomNav />
     </div>
+    </>
   );
 }

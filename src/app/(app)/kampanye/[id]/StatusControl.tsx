@@ -21,7 +21,12 @@ export function StatusControl({
   const action = changeCampaignStatus.bind(null, campaignId);
 
   return (
-    <form action={action} className="space-y-3">
+    <form
+      action={async (formData: FormData) => {
+        await action(formData);
+      }}
+      className="space-y-3"
+    >
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-48 flex-1">
           <label className="mb-1 block text-sm font-medium text-slate-700">
