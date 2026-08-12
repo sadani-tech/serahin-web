@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export type NavUser = { name?: string; email?: string } | null;
@@ -87,20 +87,30 @@ function useActiveLink() {
 
 export function NavLinks() {
   const isActive = useActiveLink();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleNav = (href: string) => {
+    setIsLoading(true);
+    router.push(href);
+    setTimeout(() => setIsLoading(false), 300);
+  };
+
   return (
     <nav className="hidden items-center gap-0.5 md:flex">
       {links.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
-          <Link
+          <button
             key={link.href}
-            href={link.href}
+            onClick={() => handleNav(link.href)}
+            disabled={isLoading}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-            }`}
+            } ${isLoading ? "opacity-50 cursor-wait" : ""}`}
           >
             {link.label}
-          </Link>
+          </button>
         );
       })}
     </nav>
@@ -145,6 +155,7 @@ export function MobileDrawer({
   logoutAction: () => Promise<void>;
 }) {
   const isActive = useActiveLink();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
@@ -193,11 +204,13 @@ export function MobileDrawer({
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    onClick={onClose}
+                    onClick={() => {
+                      setIsLoading(true);
+                      onClose();
+                      setTimeout(() => setIsLoading(false), 300);
+                    }}
                     className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-50"
+                      active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     <span className={active ? "text-white" : "text-slate-400"}>
@@ -247,6 +260,8 @@ export function BottomNav() {
   const isActive = useActiveLink();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
@@ -260,9 +275,13 @@ export function BottomNav() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => setIsLoading(false), 300);
+                }}
                 className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
                   active ? "text-slate-900" : "text-slate-400"
-                }`}
+                } ${isLoading ? "opacity-50 cursor-wait" : ""}`}
               >
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
@@ -310,10 +329,14 @@ export function BottomNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setIsLoading(true);
+                  setTimeout(() => setIsLoading(false), 300);
+                }}
                 className={`flex flex-col items-center gap-2 bg-white px-3 py-4 text-xs font-medium transition-colors ${
                   active ? "text-slate-900" : "text-slate-500"
-                }`}
+                } ${isLoading ? "opacity-50 cursor-wait" : ""}`}
               >
                 <span className={`rounded-xl p-2 ${active ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
                   {link.icon}

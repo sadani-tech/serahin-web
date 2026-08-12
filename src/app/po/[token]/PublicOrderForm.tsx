@@ -53,8 +53,11 @@ export function PublicOrderForm({
       <Field label="Nama" required>
         <Input name="namaPembeli" required placeholder="Nama lengkap Anda" />
       </Field>
-      <Field label="Kontak (WA / email)" required>
-        <Input name="kontak" required placeholder="081234567890" />
+      <Field label="WhatsApp" required>
+        <Input name="wa" required placeholder="081234567890" />
+      </Field>
+      <Field label="Email" required>
+        <Input name="email" type="email" required placeholder="email@example.com" />
       </Field>
 
       {/* Keranjang varian (FR-3.1/3.1a) */}

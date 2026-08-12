@@ -54,7 +54,7 @@ export default async function PembeliPage({
           <Input
             name="q"
             defaultValue={query}
-            placeholder="Cari nama atau nomor WA / email…"
+            placeholder="Cari nama, WA atau email…"
             className="flex-1"
           />
           <button

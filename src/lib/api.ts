@@ -84,6 +84,10 @@ export const api = {
     return parse(res) as Promise<T>;
   },
 
+  async deleteCampaign(id: string) {
+    return api.del(`/kampanye/${id}`);
+  },
+
   /** POST multipart (upload file). `form` sudah berisi field + file. */
   async postForm<T>(path: string, form: FormData): Promise<T> {
     const res = await fetch(`${API_URL}${path}`, {
