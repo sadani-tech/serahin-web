@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Button, Field, FormError, Input, Select } from "@/components/ui";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { PAYMENT_TYPE_LABEL } from "@/lib/domain";
 import { PaymentScheme } from "@/lib/types";
 import { addPayment, type PaymentFormState } from "../actions";
@@ -25,6 +26,7 @@ export function PaymentForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const { alert } = useConfirm();
 
   // Reset form setelah sukses (state kembali undefined tanpa error).
   useEffect(() => {
@@ -39,7 +41,10 @@ export function PaymentForm({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Ukuran file terlalu besar (maks 5MB)");
+        void alert({
+          title: "File terlalu besar",
+          description: "Ukuran file melebihi batas maksimal 5MB.",
+        });
         e.target.value = "";
         setPreview(null);
         setFileName("");

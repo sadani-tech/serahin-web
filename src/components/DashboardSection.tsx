@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
+import { Card, CardHeader, EmptyState, LinkButton, ScrollList } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { persenKuotaColor, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard-ui";
@@ -31,7 +31,9 @@ export function DashboardSection({
     return (
       <Card>
         <CardHeader title={title} subtitle={subtitle} />
-        <ul className="divide-y divide-slate-100">{children}</ul>
+        <ScrollList>
+          <ul className="divide-y divide-slate-100">{children}</ul>
+        </ScrollList>
       </Card>
     );
   }
@@ -89,7 +91,7 @@ export function ActiveCampaignsCard({
   return (
     <Card>
       <CardHeader title="Kampanye aktif" subtitle="Progres kuota terisi per kampanye" />
-      <div className="divide-y divide-slate-100">
+      <ScrollList className="divide-y divide-slate-100">
         {items.map((c) => (
           <Link key={c.id} href={`/kampanye/${c.id}`} className="block px-5 py-3 hover:bg-slate-50">
             <div className="flex items-center justify-between gap-3">
@@ -106,7 +108,7 @@ export function ActiveCampaignsCard({
             </div>
           </Link>
         ))}
-      </div>
+      </ScrollList>
     </Card>
   );
 }

@@ -71,6 +71,7 @@ export default async function TambahPesananPage({
           action={action}
           variants={variantOptions}
           submitLabel="Simpan Pesanan"
+          withBuktiPembayaran
         />
       )}
     </div>

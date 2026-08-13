@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card, EmptyState, LinkButton } from "@/components/ui";
+import { Card, DeleteIconButton, EmptyState, LinkButton } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
 import { deleteCampaign } from "@/app/(app)/kampanye/actions";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export type CampaignStatus =
   | "OPEN"
@@ -38,24 +39,28 @@ function rentangHarga(variants: { harga: string }[]): string {
 export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] }) {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { confirm, alert } = useConfirm();
   const totalPages = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
   const pageCampaigns = campaigns.slice(start, end);
 
   async function handleDelete(id: string, namaProduk: string) {
-    if (
-      !confirm(
-        `Hapus kampanye "${namaProduk}"? Seluruh varian dan pesanan di dalamnya ikut terhapus. Tindakan ini tidak bisa dibatalkan.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Hapus kampanye "${namaProduk}"?`,
+      description:
+        "Seluruh varian dan pesanan di dalamnya ikut terhapus. Tindakan ini tidak bisa dibatalkan.",
+      confirmLabel: "Hapus kampanye",
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       await deleteCampaign(id);
     } catch {
-      alert("Gagal menghapus kampanye. Coba lagi.");
+      await alert({
+        title: "Gagal menghapus kampanye",
+        description: "Terjadi kesalahan. Silakan coba lagi.",
+      });
     } finally {
       setDeletingId(null);
     }
@@ -118,14 +123,11 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
                     </div>
                   </Link>
                   <div className="flex justify-end px-4 pb-3">
-                    <button
-                      type="button"
+                    <DeleteIconButton
                       onClick={() => handleDelete(c.id, c.namaProduk)}
-                      disabled={deletingId === c.id}
-                      className="rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50"
-                    >
-                      {deletingId === c.id ? "Menghapus…" : "🗑️ Hapus"}
-                    </button>
+                      loading={deletingId === c.id}
+                      title="Hapus kampanye"
+                    />
                   </div>
                 </li>
               );
@@ -195,14 +197,11 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
                       {formatTanggal(c.tanggalTutup)}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button
-                        type="button"
+                      <DeleteIconButton
                         onClick={() => handleDelete(c.id, c.namaProduk)}
-                        disabled={deletingId === c.id}
-                        className="rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50"
-                      >
-                        {deletingId === c.id ? "Menghapus…" : "🗑️ Hapus"}
-                      </button>
+                        loading={deletingId === c.id}
+                        title="Hapus kampanye"
+                      />
                     </td>
                   </tr>
                 ))}

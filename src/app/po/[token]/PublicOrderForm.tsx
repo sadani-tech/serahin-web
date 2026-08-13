@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { Button, Field, FormError, Input, ScrollList } from "@/components/ui";
+import { FileUploadField } from "@/components/FileUploadField";
 import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
 import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "../constants";
@@ -63,6 +64,7 @@ export function PublicOrderForm({
       {/* Keranjang varian (FR-3.1/3.1a) */}
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Pilih varian</p>
+        <ScrollList maxRows={5} rowHeight={4.75} className="space-y-2 pr-1">
         {variants.map((v) => {
           const habis = v.sisa <= 0;
           const q = qty[v.id] ?? 0;
@@ -125,7 +127,16 @@ export function PublicOrderForm({
             </div>
           );
         })}
+        </ScrollList>
       </div>
+
+      {/* Bukti pembayaran (wajib) */}
+      <FileUploadField
+        name="buktiPembayaran"
+        label="Bukti pembayaran"
+        hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)."
+        required
+      />
 
       <div className="flex items-center justify-between border-t border-slate-100 pt-3">
         <span className="text-sm text-slate-500">Total</span>

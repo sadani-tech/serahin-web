@@ -48,12 +48,24 @@ export async function createOrder(
   }
   const kontak = buildKontak(String(parsed.data.wa), parsed.data.email);
   try {
-    await api.post("/pesanan", {
-      campaignId,
-      ...parsed.data,
-      kontak,
-      items: parseCart(formData),
-    });
+    const fd = new FormData();
+    fd.set("campaignId", campaignId);
+    fd.set("namaPembeli", parsed.data.namaPembeli);
+    fd.set("kontak", kontak);
+    if (parsed.data.catatan) fd.set("catatan", parsed.data.catatan);
+    fd.set("items", JSON.stringify(parseCart(formData)));
+
+    // Nominal bayar opsional (bila admin input saat buat pesanan)
+    const jumlahBayar = formData.get("jumlahBayar");
+    if (jumlahBayar && Number(jumlahBayar) > 0) {
+      fd.set("jumlahBayar", String(Number(jumlahBayar)));
+    }
+
+    // Bukti pembayaran opsional (FR-upload-bukti)
+    const bukti = formData.get("buktiPembayaran");
+    if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
+
+    await api.postForm("/pesanan", fd);
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal membuat pesanan" };
   }
@@ -135,13 +147,18 @@ export async function addPayment(
   return undefined;
 }
 
+/**
+ * Verifikasi pembayaran — opsional koreksi nominal bila payment dibuat dengan
+ * jumlah placeholder 0 (saat upload bukti pada saat buat pesanan).
+ */
 export async function verifyPayment(
   paymentId: string,
   keputusan: "TERVERIFIKASI" | "DITOLAK",
+  jumlah?: number,
 ) {
   const res = await api.post<{ id?: string; campaign?: { id: string } }>(
     `/payments/${paymentId}/verify`,
-    { keputusan },
+    { keputusan, ...(jumlah !== undefined && jumlah > 0 && { jumlah }) },
   );
   if (res?.id) revalidatePath(`/pesanan/${res.id}`);
 }

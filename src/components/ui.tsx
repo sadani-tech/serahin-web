@@ -133,6 +133,46 @@ export function LinkButton({
   );
 }
 
+// Tombol hapus berbentuk ikon — konsisten di tabel kampanye & vendor.
+export function DeleteIconButton({
+  onClick,
+  loading = false,
+  disabled = false,
+  title = "Hapus",
+  className = "",
+}: {
+  onClick?: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+  title?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      title={title}
+      aria-label={title}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    >
+      {loading ? (
+        <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <line x1="10" y1="11" x2="10" y2="17" />
+          <line x1="14" y1="11" x2="14" y2="17" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export function Field({
   label,
   hint,
@@ -172,6 +212,31 @@ export function Textarea(props: ComponentProps<"textarea">) {
 export function Select(props: ComponentProps<"select">) {
   const { className = "", ...rest } = props;
   return <select className={`${inputBase} ${className}`} {...rest} />;
+}
+
+// Membungkus list panjang agar hanya menampilkan ~10 baris lalu bisa di-scroll.
+// Dipakai konsisten di semua tempat yang menampilkan daftar.
+export function ScrollList({
+  children,
+  className = "",
+  maxRows = 10,
+  rowHeight = 3.5,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Perkiraan jumlah baris yang terlihat sebelum scroll. */
+  maxRows?: number;
+  /** Perkiraan tinggi satu baris dalam rem. */
+  rowHeight?: number;
+}) {
+  return (
+    <div
+      className={`overflow-y-auto overscroll-contain ${className}`}
+      style={{ maxHeight: `${maxRows * rowHeight}rem` }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function EmptyState({

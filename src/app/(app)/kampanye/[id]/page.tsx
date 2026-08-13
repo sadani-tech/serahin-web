@@ -8,6 +8,7 @@ import {
   CardHeader,
   EmptyState,
   LinkButton,
+  ScrollList,
 } from "@/components/ui";
 import {
   formatRupiah,
@@ -268,7 +269,7 @@ export default async function CampaignDetailPage({
                 title="Varian & kuota"
                 subtitle={`Total terisi ${kuotaTerisi} dari ${kuotaTotal} kuota`}
               />
-              <div className="divide-y divide-slate-100">
+              <ScrollList className="divide-y divide-slate-100">
                 {campaign.variants.map((v) => {
                   const terisi = terisiPerVarian.get(v.id) ?? 0;
                   const persen = v.kuotaMaks
@@ -303,7 +304,7 @@ export default async function CampaignDetailPage({
                     </div>
                   );
                 })}
-              </div>
+              </ScrollList>
             </Card>
           </div>
 
@@ -473,7 +474,7 @@ export default async function CampaignDetailPage({
               description="Belum ada pesanan yang cocok dengan filter."
             />
           ) : (
-            <div className="overflow-x-auto">
+            <ScrollList className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -529,7 +530,7 @@ export default async function CampaignDetailPage({
                   })}
                 </tbody>
               </table>
-            </div>
+            </ScrollList>
           )}
         </Card>
       )}
@@ -542,6 +543,7 @@ export default async function CampaignDetailPage({
               {campaign.timelineEntries.length === 0 ? (
                 <EmptyState title="Belum ada update timeline" />
               ) : (
+                <ScrollList maxRows={12} rowHeight={4}>
                 <ol className="relative space-y-5 px-6 py-5">
                   {campaign.timelineEntries.map((e) => (
                     <li key={e.id} className="relative pl-6">
@@ -568,6 +570,7 @@ export default async function CampaignDetailPage({
                     </li>
                   ))}
                 </ol>
+                </ScrollList>
               )}
             </Card>
           </div>

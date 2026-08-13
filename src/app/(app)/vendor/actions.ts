@@ -59,6 +59,20 @@ export async function updateVendor(
   redirect(`/vendor/${vendorId}`);
 }
 
+export async function deleteVendor(
+  vendorId: string,
+): Promise<{ error?: string }> {
+  try {
+    await api.del(`/vendor/${vendorId}`);
+  } catch (e) {
+    return {
+      error: e instanceof ApiError ? e.message : "Gagal menghapus vendor",
+    };
+  }
+  revalidatePath("/vendor");
+  return {};
+}
+
 const evalSchema = z.object({
   ketepatanWaktu: z.enum(["TEPAT_WAKTU", "TELAT"]),
   jumlahHariTelat: z.coerce.number().int().min(0).optional(),
