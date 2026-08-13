@@ -25,9 +25,15 @@ export async function createPublicOrder(
   formData: FormData,
 ): Promise<PublicOrderState> {
   const namaPembeli = String(formData.get("namaPembeli") ?? "").trim();
-  const kontak = String(formData.get("kontak") ?? "").trim();
+  const wa = String(formData.get("wa") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
   if (!namaPembeli) return { error: "Nama wajib diisi" };
-  if (!kontak) return { error: "Kontak (WA/email) wajib diisi" };
+  if (!wa) return { error: "WhatsApp wajib diisi" };
+  if (!email) return { error: "Email wajib diisi" };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Format email tidak valid" };
+  }
+  const kontak = wa + (email ? `, ${email}` : "");
 
   const items = parseCart(formData);
   if (items.length === 0) return { error: "Pilih minimal satu varian." };

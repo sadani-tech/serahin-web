@@ -3,6 +3,11 @@ import { cookies } from "next/headers";
 /**
  * Klien REST server-side untuk backend NestJS (menggantikan akses Prisma
  * langsung). Token JWT dibaca dari cookie httpOnly `token`.
+ *
+ * PENTING: modul ini hanya boleh diimpor dari Server Component / Server
+ * Action / Route Handler. Cookie `token` bertanda httpOnly sehingga TIDAK
+ * bisa dibaca lewat `document.cookie` di client — jangan tambahkan cabang
+ * "client-side" di sini, itu tidak akan pernah membawa token.
  */
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 export const TOKEN_COOKIE = "token";
@@ -82,6 +87,10 @@ export const api = {
       cache: "no-store",
     });
     return parse(res) as Promise<T>;
+  },
+
+  async deleteCampaign(id: string) {
+    return api.del(`/kampanye/${id}`);
   },
 
   /** POST multipart (upload file). `form` sudah berisi field + file. */

@@ -9,9 +9,14 @@ export type OrderFormState = { error?: string } | undefined;
 
 const headerSchema = z.object({
   namaPembeli: z.string().min(1, "Nama pembeli wajib diisi"),
-  kontak: z.string().min(1, "Kontak wajib diisi"),
+  wa: z.string().min(1, "WhatsApp wajib diisi"),
+  email: z.string().min(1, "Email wajib diisi").email("Format email tidak valid"),
   catatan: z.string().optional(),
 });
+
+function buildKontak(wa: string, email?: string): string {
+  return email ? `${wa}, ${email}` : wa;
+}
 
 function parseCart(formData: FormData) {
   const vids = formData.getAll("itemVariantId").map(String);
@@ -34,16 +39,19 @@ export async function createOrder(
 ): Promise<OrderFormState> {
   const parsed = headerSchema.safeParse({
     namaPembeli: formData.get("namaPembeli"),
-    kontak: formData.get("kontak"),
+    wa: formData.get("wa"),
+    email: formData.get("email")?.toString(),
     catatan: formData.get("catatan") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
+  const kontak = buildKontak(String(parsed.data.wa), parsed.data.email);
   try {
     await api.post("/pesanan", {
       campaignId,
       ...parsed.data,
+      kontak,
       items: parseCart(formData),
     });
   } catch (e) {
@@ -60,15 +68,18 @@ export async function updateOrder(
 ): Promise<OrderFormState> {
   const parsed = headerSchema.safeParse({
     namaPembeli: formData.get("namaPembeli"),
-    kontak: formData.get("kontak"),
+    wa: formData.get("wa"),
+    email: formData.get("email")?.toString(),
     catatan: formData.get("catatan") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
+  const kontak = buildKontak(String(parsed.data.wa), parsed.data.email);
   try {
     await api.patch(`/pesanan/${orderId}`, {
       ...parsed.data,
+      kontak,
       items: parseCart(formData),
     });
   } catch (e) {

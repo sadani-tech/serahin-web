@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import {
   Button,
   Card,
@@ -21,6 +21,8 @@ export type VariantOption = {
 };
 
 type Row = { variantId: string; jumlah: number };
+
+const VARIANT_PAGE_SIZE = 8;
 
 export function OrderForm({
   action,
@@ -74,12 +76,20 @@ export function OrderForm({
               required
             />
           </Field>
-          <Field label="Kontak (WA / email)" required>
+          <Field label="WhatsApp" required>
             <Input
-              name="kontak"
+              name="wa"
               defaultValue={initial?.kontak}
               placeholder="081234567890"
               required
+            />
+          </Field>
+          <Field label="Email" required>
+            <Input
+              name="email"
+              type="email"
+              required
+              placeholder="email@example.com"
             />
           </Field>
           <div className="sm:col-span-2">
@@ -111,25 +121,11 @@ export function OrderForm({
               <div key={i} className="flex flex-wrap items-end gap-2">
                 <div className="min-w-48 flex-1">
                   <Field label={i === 0 ? "Varian" : ""}>
-                    <Select
-                      name="itemVariantId"
+                    <PaginatedVariantSelect
+                      variants={variants}
                       value={r.variantId}
-                      onChange={(e) => update(i, { variantId: e.target.value })}
-                    >
-                      <option value="">— pilih varian —</option>
-                      {variants.map((opt) => (
-                        <option
-                          key={opt.id}
-                          value={opt.id}
-                          disabled={
-                            opt.sisa <= 0 && opt.id !== r.variantId
-                          }
-                        >
-                          {opt.namaVarian} — {formatRupiah(opt.harga)} (sisa{" "}
-                          {opt.sisa})
-                        </option>
-                      ))}
-                    </Select>
+                      onChange={(val) => update(i, { variantId: val })}
+                    />
                   </Field>
                 </div>
                 <div className="w-24">
@@ -174,5 +170,91 @@ export function OrderForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function PaginatedVariantSelect({
+  variants,
+  value,
+  onChange,
+}: {
+  variants: VariantOption[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return variants;
+    return variants.filter((v) =>
+      v.namaVarian.toLowerCase().includes(q),
+    );
+  }, [variants, filter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / VARIANT_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * VARIANT_PAGE_SIZE;
+  const paged = filtered.slice(start, start + VARIANT_PAGE_SIZE);
+
+  return (
+    <div className="space-y-1.5">
+      <Select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        size={Math.min(paged.length + 1, 8)}
+      >
+        <option value="">— pilih varian —</option>
+        {paged.map((opt) => (
+          <option
+            key={opt.id}
+            value={opt.id}
+            disabled={opt.sisa <= 0 && opt.id !== value}
+          >
+            {opt.namaVarian} — {formatRupiah(opt.harga)} (sisa {opt.sisa})
+          </option>
+        ))}
+      </Select>
+      {variants.length > VARIANT_PAGE_SIZE ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            type="text"
+            placeholder="Cari varian…"
+            value={filter}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setPage(1);
+            }}
+            className="h-8 w-40 text-xs"
+          />
+          <div className="flex items-center gap-1 text-xs text-slate-600">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="h-7 px-2"
+            >
+              ‹
+            </Button>
+            <span>
+              {safePage}/{totalPages} ({filtered.length})
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                setPage((p) => Math.min(totalPages, p + 1))
+              }
+              disabled={safePage >= totalPages}
+              className="h-7 px-2"
+            >
+              ›
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
