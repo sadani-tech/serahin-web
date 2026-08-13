@@ -1,6 +1,7 @@
 "use client";
 
 import { verifyPayment, deletePayment } from "../actions";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export function PaymentActions({
   paymentId,
@@ -9,6 +10,7 @@ export function PaymentActions({
   paymentId: string;
   status: "MENUNGGU_VERIFIKASI" | "TERVERIFIKASI" | "DITOLAK";
 }) {
+  const { confirm } = useConfirm();
   return (
     <div className="flex flex-wrap items-center gap-2">
       {status !== "TERVERIFIKASI" && (
@@ -28,8 +30,13 @@ export function PaymentActions({
         </button>
       )}
       <button
-        onClick={() => {
-          if (confirm("Hapus catatan pembayaran ini?")) deletePayment(paymentId);
+        onClick={async () => {
+          const ok = await confirm({
+            title: "Hapus catatan pembayaran ini?",
+            description: "Catatan pembayaran akan dihapus permanen.",
+            confirmLabel: "Hapus",
+          });
+          if (ok) deletePayment(paymentId);
         }}
         className="rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
       >

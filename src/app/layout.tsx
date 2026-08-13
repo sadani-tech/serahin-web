@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 
 export const metadata: Metadata = {
   title: "Serahin — Sistem Manajemen Pre-Order",
@@ -22,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="id" className="h-full antialiased">
       <body className="min-h-full flex flex-col text-slate-900">
-        {children}
+        <ConfirmProvider>{children}</ConfirmProvider>
       </body>
     </html>
   );

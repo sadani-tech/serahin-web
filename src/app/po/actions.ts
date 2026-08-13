@@ -40,14 +40,20 @@ export async function createPublicOrder(
 
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
 
+  // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran (FR-upload-bukti)
+  const fd = new FormData();
+  fd.set("namaPembeli", namaPembeli);
+  fd.set("kontak", kontak);
+  fd.set("items", JSON.stringify(items));
+  fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
+
+  // Bukti pembayaran opsional — dikirim hanya jika file valid dipilih
+  const bukti = formData.get("buktiPembayaran");
+  if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
+
   let result: { tokenAkses?: string; needsConfirm?: boolean; warning?: string };
   try {
-    result = await api.post(`/public/form/${formToken}/order`, {
-      namaPembeli,
-      kontak,
-      items,
-      confirmDuplikat,
-    });
+    result = await api.postForm(`/public/form/${formToken}/order`, fd);
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan." };
   }

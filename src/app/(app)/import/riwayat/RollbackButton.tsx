@@ -3,16 +3,21 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { rollbackImportAction } from "../actions";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export function RollbackButton({ importLogId }: { importLogId: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
+  const { confirm } = useConfirm();
 
-  function run() {
-    if (!confirm("Rollback sesi import ini? Seluruh data hasil sesi ini akan dihapus.")) {
-      return;
-    }
+  async function run() {
+    const ok = await confirm({
+      title: "Rollback sesi import ini?",
+      description: "Seluruh data hasil sesi ini akan dihapus.",
+      confirmLabel: "Rollback",
+    });
+    if (!ok) return;
     setError(undefined);
     startTransition(async () => {
       const res = await rollbackImportAction(importLogId);

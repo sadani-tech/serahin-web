@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card, EmptyState, LinkButton } from "@/components/ui";
+import { Card, DeleteIconButton, EmptyState, LinkButton } from "@/components/ui";
 import { computeVendorStats, ratingStars } from "@/lib/vendor";
+import { deleteVendor } from "@/app/(app)/vendor/actions";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 type VendorRow = {
   id: string;
@@ -25,11 +27,37 @@ interface Props {
 export default function VendorTable({ vendors }: Props) {
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { confirm, alert } = useConfirm();
 
   const totalPages = Math.ceil(vendors.length / PAGE_SIZE);
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
   const pageVendors = vendors.slice(start, end);
+
+  async function handleDelete(id: string, nama: string) {
+    const ok = await confirm({
+      title: `Hapus vendor "${nama}"?`,
+      description:
+        "Vendor tidak bisa dihapus jika masih punya kampanye aktif.",
+      confirmLabel: "Hapus vendor",
+    });
+    if (!ok) return;
+    setDeletingId(id);
+    try {
+      const res = await deleteVendor(id);
+      if (res?.error) {
+        await alert({ title: "Tidak bisa menghapus vendor", description: res.error });
+      }
+    } catch {
+      await alert({
+        title: "Gagal menghapus vendor",
+        description: "Terjadi kesalahan. Silakan coba lagi.",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <Card>
@@ -49,6 +77,7 @@ export default function VendorTable({ vendors }: Props) {
                 <th className="px-5 py-3 font-medium">Kampanye</th>
                 <th className="px-5 py-3 font-medium">Rating</th>
                 <th className="px-5 py-3 font-medium">Telat</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -73,6 +102,13 @@ export default function VendorTable({ vendors }: Props) {
                       ) : (
                         "-"
                       )}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <DeleteIconButton
+                        onClick={() => handleDelete(v.id, v.nama)}
+                        loading={deletingId === v.id}
+                        title="Hapus vendor"
+                      />
                     </td>
                   </tr>
                 );

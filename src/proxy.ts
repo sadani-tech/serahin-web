@@ -13,7 +13,8 @@ async function isValid(token: string | undefined): Promise<boolean> {
   }
 }
 
-export default async function middleware(req: NextRequest) {
+// Next 16: konvensi "middleware" diganti "proxy" (fungsi boleh default/named).
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isLoginPage = pathname === "/login";
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
-import { Card, EmptyState, Input } from "@/components/ui";
+import { Card, EmptyState, Input, ScrollList } from "@/components/ui";
 import { formatTanggal } from "@/lib/format";
 import type { OrderStatus } from "@/lib/types";
 
@@ -81,7 +81,7 @@ export default async function PembeliPage({
           />
         </Card>
       ) : (
-        <div className="space-y-4">
+        <ScrollList maxRows={6} rowHeight={7} className="space-y-4 pr-1">
           {Array.from(grouped.values()).map((group) => {
             const first = group[0];
             return (
@@ -97,6 +97,7 @@ export default async function PembeliPage({
                     {group.length} pesanan
                   </span>
                 </div>
+                <ScrollList>
                 <ul className="divide-y divide-slate-100">
                   {group.map((o) => (
                     <li key={o.id}>
@@ -118,10 +119,11 @@ export default async function PembeliPage({
                     </li>
                   ))}
                 </ul>
+                </ScrollList>
               </Card>
             );
           })}
-        </div>
+        </ScrollList>
       )}
     </div>
   );

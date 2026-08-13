@@ -7,9 +7,11 @@ import {
   Field,
   FormError,
   Input,
+  ScrollList,
   Select,
   Textarea,
 } from "@/components/ui";
+import { FileUploadField } from "@/components/FileUploadField";
 import { formatRupiah } from "@/lib/format";
 import type { OrderFormState } from "./actions";
 
@@ -29,6 +31,7 @@ export function OrderForm({
   variants,
   initial,
   submitLabel,
+  withBuktiPembayaran = false,
 }: {
   action: (
     prev: OrderFormState,
@@ -42,6 +45,8 @@ export function OrderForm({
     items?: Row[];
   };
   submitLabel: string;
+  /** Tampilkan field unggah bukti pembayaran (hanya saat buat pesanan baru). */
+  withBuktiPembayaran?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [rows, setRows] = useState<Row[]>(
@@ -114,7 +119,7 @@ export function OrderForm({
             + Tambah item
           </Button>
         </div>
-        <div className="space-y-3">
+        <ScrollList maxRows={6} rowHeight={5} className="space-y-3 pr-1">
           {rows.map((r, i) => {
             const v = varById.get(r.variantId);
             return (
@@ -156,13 +161,47 @@ export function OrderForm({
               </div>
             );
           })}
-        </div>
+        </ScrollList>
         <div className="mt-4 flex justify-end border-t border-slate-100 pt-3 text-sm">
           <span className="font-medium text-slate-900">
             Total: {formatRupiah(total)}
           </span>
         </div>
       </Card>
+
+      {withBuktiPembayaran && (
+        <Card className="p-5">
+          <h3 className="mb-1 text-sm font-semibold text-slate-900">
+            Pembayaran awal
+          </h3>
+          <p className="mb-4 text-xs text-slate-500">
+            Catat nominal yang sudah dibayar beserta buktinya. Pembayaran akan
+            berstatus menunggu verifikasi.
+          </p>
+          <div className="space-y-4">
+            <Field
+              label="Jumlah dibayar (Rp)"
+              required
+              hint={`Total pesanan: ${formatRupiah(total)}`}
+            >
+              <Input
+                name="jumlahBayar"
+                type="number"
+                min={1}
+                step={1000}
+                required
+                placeholder="0"
+              />
+            </Field>
+            <FileUploadField
+              name="buktiPembayaran"
+              label="Unggah bukti pembayaran"
+              hint="JPG, PNG, WEBP, atau PDF (maks 5MB)."
+              required
+            />
+          </div>
+        </Card>
+      )}
 
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>

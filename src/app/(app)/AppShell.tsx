@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { logoutAction } from "@/lib/auth-actions";
-import { NavLinks, MobileMenuButton, MobileDrawer, BottomNav, type NavUser } from "@/components/nav";
+import { NavLinks, NavIconActions, MobileMenuButton, MobileDrawer, BottomNav, type NavUser } from "@/components/nav";
 import { Button } from "@/components/ui";
 import { NavigationProgress } from "@/hooks/useNavigationLoading";
+import { NavLoadingProvider } from "@/hooks/useNavLoading";
 
 export function AppShell({
   children,
@@ -17,7 +18,7 @@ export function AppShell({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <>
+    <NavLoadingProvider>
       <NavigationProgress />
       <div className="flex min-h-full flex-1 flex-col">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -30,6 +31,8 @@ export function AppShell({
             <NavLinks />
           </div>
           <div className="flex items-center gap-3">
+            <NavIconActions />
+            <span className="hidden h-6 w-px bg-slate-200 md:inline-block" aria-hidden />
             <span className="hidden text-sm text-slate-500 sm:inline">
               {user?.name ?? user?.email}
             </span>
@@ -59,6 +62,6 @@ export function AppShell({
 
       <BottomNav />
     </div>
-    </>
+    </NavLoadingProvider>
   );
 }
