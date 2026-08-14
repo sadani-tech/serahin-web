@@ -7,6 +7,7 @@ import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import type { OrderStatus, PaymentScheme } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
+import { PortalPaymentForm } from "./PortalPaymentForm";
 
 type PortalOrder = {
   status: OrderStatus;
@@ -60,6 +61,18 @@ export default async function PortalPage({
   const dibatalkan = order.status === "DIBATALKAN";
   const ditolak = order.status === "DITOLAK";
   const baruMasuk = order.status === "BARU_MASUK";
+
+  // Pembeli boleh mengirim pembayaran sendiri bila masih ada sisa tagihan dan
+  // tidak ada pembayaran yang sedang menunggu verifikasi.
+  const bisaBayar =
+    !dibatalkan &&
+    !ditolak &&
+    billing.sisa > 0 &&
+    billing.menungguVerifikasi === 0;
+  const isPelunasan =
+    campaign.paymentScheme === "DP_PELUNASAN" &&
+    billing.dpTarget > 0 &&
+    billing.dibayar >= billing.dpTarget;
 
   return (
     <div className="min-h-full bg-slate-50 py-10">
@@ -192,6 +205,28 @@ export default async function PortalPage({
             </p>
           )}
         </div>
+
+        {/* Pembayaran mandiri pembeli (pelunasan) */}
+        {bisaBayar && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-5 py-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                {isPelunasan ? "Lakukan pelunasan" : "Kirim pembayaran"}
+              </h2>
+              <p className="text-xs text-slate-500">
+                Sisa tagihan {formatRupiah(billing.sisa)}. Unggah bukti transfer
+                untuk diverifikasi Admin.
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <PortalPaymentForm
+                token={token}
+                sisa={billing.sisa}
+                isPelunasan={isPelunasan}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Timeline kampanye */}
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -3,6 +3,8 @@
 import { startTransition, useActionState, useState } from "react";
 import { Button, Field, FormError, Input, ScrollList } from "@/components/ui";
 import { FileUploadField } from "@/components/FileUploadField";
+import { ProductImage } from "@/components/ProductImage";
+import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
 import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "../constants";
@@ -46,6 +48,12 @@ export function PublicOrderForm({
     setQty((s) => ({ ...s, [id]: Math.max(0, v) }));
   // Warna terpilih per varian.
   const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
+  // Pratinjau gambar varian (lightbox).
+  const [preview, setPreview] = useState<{
+    images: string[];
+    title: string;
+    start: number;
+  } | null>(null);
 
   const items = variants
     .filter((v) => (qty[v.id] ?? 0) > 0)
@@ -76,6 +84,7 @@ export function PublicOrderForm({
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-4">
       {state?.error && <FormError message={state.error} />}
       {state?.needsConfirm && state.warning && (
@@ -123,6 +132,15 @@ export function PublicOrderForm({
         {variants.map((v) => {
           const habis = v.sisa <= 0;
           const q = qty[v.id] ?? 0;
+          const imgs =
+            v.images && v.images.length
+              ? v.images
+              : v.gambarUrl
+                ? [v.gambarUrl]
+                : [];
+          const openPreview = (start: number) => {
+            if (imgs.length) setPreview({ images: imgs, title: v.namaVarian, start });
+          };
           return (
             <div
               key={v.id}
@@ -131,18 +149,25 @@ export function PublicOrderForm({
               }`}
             >
               <div className="flex items-center gap-3">
-                {v.gambarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                <div className="relative h-12 w-12 shrink-0">
+                  <ProductImage
                     src={v.gambarUrl}
                     alt={v.namaVarian}
                     className="h-12 w-12 rounded object-cover ring-1 ring-slate-200"
+                    iconClassName="h-6 w-6"
+                    onClick={imgs.length ? () => openPreview(0) : undefined}
                   />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-slate-100 text-xs text-slate-400">
-                    —
-                  </div>
-                )}
+                  {imgs.length > 0 && (
+                    <span
+                      className="pointer-events-none absolute bottom-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-900/70 text-white"
+                      aria-hidden="true"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
+                        <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-slate-900">
                     {v.namaVarian}
@@ -176,16 +201,17 @@ export function PublicOrderForm({
                 )}
               </div>
 
-              {/* Galeri referensi (multi-image) */}
-              {v.images && v.images.length > 1 && (
+              {/* Galeri referensi (multi-image) — klik untuk pratinjau */}
+              {imgs.length > 1 && (
                 <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
-                  {v.images.map((src, idx) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                  {imgs.map((src, idx) => (
+                    <ProductImage
                       key={`${src}-${idx}`}
                       src={src}
                       alt={`${v.namaVarian} ${idx + 1}`}
                       className="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-slate-200"
+                      iconClassName="h-6 w-6"
+                      onClick={() => openPreview(idx)}
                     />
                   ))}
                 </div>
@@ -275,5 +301,15 @@ export function PublicOrderForm({
         Maksimal {MAX_UNIT_PER_SUBMISSION} unit per varian.
       </p>
     </form>
+
+    {preview && (
+      <ImagePreviewModal
+        images={preview.images}
+        startIndex={preview.start}
+        title={preview.title}
+        onClose={() => setPreview(null)}
+      />
+    )}
+    </>
   );
 }
