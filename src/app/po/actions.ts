@@ -4,18 +4,36 @@ import { redirect } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "./constants";
 
+// Keranjang dikirim sebagai satu field JSON ("cart") dari state klien.
 function parseCart(formData: FormData) {
-  const vids = formData.getAll("itemVariantId").map(String);
-  const qtys = formData.getAll("itemJumlah").map(String);
-  const items: { variantId: string; jumlah: number }[] = [];
-  vids.forEach((vid, i) => {
-    if (!vid) return;
-    let j = Math.max(1, Math.round(Number(qtys[i] ?? 1)) || 1);
-    j = Math.min(j, MAX_UNIT_PER_SUBMISSION);
-    const ex = items.find((it) => it.variantId === vid);
-    if (ex) ex.jumlah = Math.min(MAX_UNIT_PER_SUBMISSION, ex.jumlah + j);
-    else items.push({ variantId: vid, jumlah: j });
-  });
+  const raw = formData.get("cart");
+  let parsed: unknown = [];
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = [];
+    }
+  }
+  const items: { variantId: string; jumlah: number; warna?: string }[] = [];
+  if (Array.isArray(parsed)) {
+    for (const it of parsed) {
+      const vid = String((it as { variantId?: unknown })?.variantId ?? "");
+      if (!vid) continue;
+      let j = Math.max(
+        1,
+        Math.round(Number((it as { jumlah?: unknown })?.jumlah ?? 1)) || 1,
+      );
+      j = Math.min(j, MAX_UNIT_PER_SUBMISSION);
+      const warna =
+        String((it as { warna?: unknown })?.warna ?? "").trim() || undefined;
+      const ex = items.find(
+        (x) => x.variantId === vid && (x.warna ?? "") === (warna ?? ""),
+      );
+      if (ex) ex.jumlah = Math.min(MAX_UNIT_PER_SUBMISSION, ex.jumlah + j);
+      else items.push({ variantId: vid, jumlah: j, warna });
+    }
+  }
   return items;
 }
 
@@ -38,6 +56,13 @@ export async function createPublicOrder(
   const items = parseCart(formData);
   if (items.length === 0) return { error: "Pilih minimal satu varian." };
 
+  const jumlahBayarRaw = String(formData.get("jumlahBayar") ?? "").replace(
+    /\D/g,
+    "",
+  );
+  const jumlahBayar = jumlahBayarRaw ? Number(jumlahBayarRaw) : 0;
+  if (jumlahBayar <= 0) return { error: "Jumlah bayar wajib diisi." };
+
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
 
   // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran (FR-upload-bukti)
@@ -45,6 +70,7 @@ export async function createPublicOrder(
   fd.set("namaPembeli", namaPembeli);
   fd.set("kontak", kontak);
   fd.set("items", JSON.stringify(items));
+  fd.set("jumlahBayar", String(jumlahBayar));
   fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
 
   // Bukti pembayaran opsional — dikirim hanya jika file valid dipilih

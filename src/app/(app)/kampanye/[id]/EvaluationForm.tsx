@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { KETEPATAN_LABEL, KUALITAS_LABEL } from "@/lib/vendor";
 import { KetepatanWaktu, KesesuaianKualitas } from "@/lib/types";
@@ -24,6 +25,7 @@ export function EvaluationForm({
     action,
     undefined,
   );
+  useOverlayWhilePending(pending);
   const [ketepatan, setKetepatan] = useState<KetepatanWaktu>(
     initial?.ketepatanWaktu ?? "TEPAT_WAKTU",
   );

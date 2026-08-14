@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button } from "@/components/ui";
 import { confirmImport, cancelDraft } from "../../actions";
 
@@ -16,6 +17,7 @@ export function ConfirmBar({
   bisaKonfirmasi: boolean;
 }) {
   const [pending, startTransition] = useTransition();
+  useOverlayWhilePending(pending);
   const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {

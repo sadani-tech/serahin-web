@@ -18,7 +18,7 @@ type VendorRow = {
 };
 
 export default async function VendorListPage() {
-  const vendors = await api.get<VendorRow[]>("/vendor");
+  const vendors = await api.list<VendorRow>("/vendor");
 
   return (
     <div>

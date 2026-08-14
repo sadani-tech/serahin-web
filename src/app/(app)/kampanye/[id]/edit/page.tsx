@@ -5,7 +5,7 @@ import { CampaignForm, type VendorOption } from "../../CampaignForm";
 import { updateCampaign } from "../../actions";
 import { toDateInput, toNumber } from "@/lib/format";
 import { computeVendorStats, type EvalInput } from "@/lib/vendor";
-import type { CampaignStatus, PaymentScheme } from "@/lib/types";
+import type { CampaignStatus, DpTipe, PaymentScheme } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,9 @@ type CampaignDetail = {
   estimasiProduksi: string | null;
   estimasiKirim: string | null;
   paymentScheme: PaymentScheme;
+  dpTipe: DpTipe | null;
   dpPercent: number | null;
+  dpNominal: string | null;
   deadlinePelunasan: string | null;
   status: CampaignStatus;
   variants: {
@@ -27,6 +29,8 @@ type CampaignDetail = {
     kuotaMaks: number;
     harga: string;
     gambarUrl: string | null;
+    images: string[];
+    warna: string[];
     hargaPerluTinjau: boolean;
     terisi: number;
   }[];
@@ -54,7 +58,7 @@ export default async function EditCampaignPage({
     throw e;
   }
 
-  const vendors = await api.get<VendorRow[]>("/vendor");
+  const vendors = await api.list<VendorRow>("/vendor");
   const vendorOptions: VendorOption[] = vendors.map((v) => {
     const stats = computeVendorStats(v.evaluations);
     return {
@@ -95,14 +99,17 @@ export default async function EditCampaignPage({
           estimasiProduksi: toDateInput(campaign.estimasiProduksi),
           estimasiKirim: toDateInput(campaign.estimasiKirim),
           paymentScheme: campaign.paymentScheme,
+          dpTipe: campaign.dpTipe ?? undefined,
           dpPercent: campaign.dpPercent ?? undefined,
+          dpNominal: campaign.dpNominal ? toNumber(campaign.dpNominal) : undefined,
           deadlinePelunasan: toDateInput(campaign.deadlinePelunasan),
           variants: campaign.variants.map((v) => ({
             id: v.id,
             namaVarian: v.namaVarian,
             kuotaMaks: v.kuotaMaks,
             harga: toNumber(v.harga),
-            gambarUrl: v.gambarUrl ?? undefined,
+            images: v.images ?? [],
+            warna: v.warna ?? [],
             perluTinjau: v.hargaPerluTinjau,
             terisi: v.terisi,
           })),

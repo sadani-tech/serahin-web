@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { Button } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 import type { PageStatus } from "@/lib/types";
 import { StaticPageForm } from "../StaticPageForm";
 import { updateStaticPage, deleteStaticPage } from "../actions";
@@ -72,9 +72,9 @@ export default async function KontenEditPage({
       />
 
       <form action={deleteAction} className="mt-6 border-t border-slate-200 pt-6">
-        <Button variant="danger" type="submit">
+        <SubmitButton variant="danger" loadingText="Menghapus…">
           Hapus Halaman
-        </Button>
+        </SubmitButton>
       </form>
     </div>
   );

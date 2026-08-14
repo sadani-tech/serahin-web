@@ -17,8 +17,8 @@ type PageRow = {
 
 export default async function KontenPage() {
   const [pages, faqs] = await Promise.all([
-    api.get<PageRow[]>("/cms/pages"),
-    api.get<unknown[]>("/cms/faq"),
+    api.list<PageRow>("/cms/pages"),
+    api.list<unknown>("/cms/faq"),
   ]);
   const faqCount = faqs.length;
 

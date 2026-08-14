@@ -6,6 +6,7 @@ import { Card, DeleteIconButton, EmptyState, LinkButton } from "@/components/ui"
 import { computeVendorStats, ratingStars } from "@/lib/vendor";
 import { deleteVendor } from "@/app/(app)/vendor/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useNavLoading } from "@/hooks/useNavLoading";
 
 type VendorRow = {
   id: string;
@@ -29,6 +30,7 @@ export default function VendorTable({ vendors }: Props) {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { confirm, alert } = useConfirm();
+  const { startLoading, stopLoading } = useNavLoading();
 
   const totalPages = Math.ceil(vendors.length / PAGE_SIZE);
   const start = (page - 1) * PAGE_SIZE;
@@ -44,6 +46,7 @@ export default function VendorTable({ vendors }: Props) {
     });
     if (!ok) return;
     setDeletingId(id);
+    startLoading();
     try {
       const res = await deleteVendor(id);
       if (res?.error) {
@@ -56,6 +59,7 @@ export default function VendorTable({ vendors }: Props) {
       });
     } finally {
       setDeletingId(null);
+      stopLoading();
     }
   }
 

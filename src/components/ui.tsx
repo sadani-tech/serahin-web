@@ -196,8 +196,11 @@ export function Field({
   );
 }
 
+// Border pakai `border` asli (bukan `ring`/box-shadow) agar konsisten di Safari —
+// Safari sering tidak merender inset box-shadow pada form control native, sehingga
+// border input jadi tak terlihat.
 const inputBase =
-  "block w-full rounded-lg border-0 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-slate-900";
+  "block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900";
 
 export function Input(props: ComponentProps<"input">) {
   const { className = "", ...rest } = props;

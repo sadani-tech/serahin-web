@@ -11,6 +11,7 @@ export type CampaignStatus =
   | "SELESAI";
 
 export type PaymentScheme = "DP_PELUNASAN" | "LUNAS";
+export type DpTipe = "PERSEN" | "NOMINAL";
 
 export type OrderStatus =
   | "BARU_MASUK"

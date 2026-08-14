@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useNavLoading } from "@/hooks/useNavLoading";
 
 export type NavUser = { name?: string; email?: string } | null;
 
@@ -104,7 +103,6 @@ function useActiveLink() {
 
 export function NavLinks() {
   const isActive = useActiveLink();
-  const { startLoading } = useNavLoading();
 
   return (
     <nav className="hidden items-center gap-0.5 md:flex">
@@ -114,7 +112,6 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            onClick={() => { if (!active) startLoading(); }}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
             }`}
@@ -130,7 +127,6 @@ export function NavLinks() {
 // Ikon aksi utilitas (Import / Export) di kanan header — desktop.
 export function NavIconActions() {
   const isActive = useActiveLink();
-  const { startLoading } = useNavLoading();
 
   return (
     <div className="hidden items-center gap-1 md:flex">
@@ -142,7 +138,6 @@ export function NavIconActions() {
             href={link.href}
             title={link.label}
             aria-label={link.label}
-            onClick={() => { if (!active) startLoading(); }}
             className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
               active
                 ? "bg-slate-900 text-white"
@@ -195,7 +190,6 @@ export function MobileDrawer({
   logoutAction: () => Promise<void>;
 }) {
   const isActive = useActiveLink();
-  const { startLoading } = useNavLoading();
 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
@@ -244,10 +238,7 @@ export function MobileDrawer({
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    onClick={() => {
-                      if (!active) startLoading();
-                      onClose();
-                    }}
+                    onClick={onClose}
                     className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
                       active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
                     }`}
@@ -299,7 +290,6 @@ export function BottomNav() {
   const isActive = useActiveLink();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { startLoading } = useNavLoading();
 
   useEffect(() => { setMenuOpen(false); }, [pathname]);
 
@@ -313,7 +303,6 @@ export function BottomNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => { if (!active) startLoading(); }}
                 className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
                   active ? "text-slate-900" : "text-slate-400"
                 }`}
@@ -364,10 +353,7 @@ export function BottomNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => {
-                  setMenuOpen(false);
-                  if (!active) startLoading();
-                }}
+                onClick={() => setMenuOpen(false)}
                 className={`flex flex-col items-center gap-2 bg-white px-3 py-4 text-xs font-medium transition-colors ${
                   active ? "text-slate-900" : "text-slate-500"
                 }`}

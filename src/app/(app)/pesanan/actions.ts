@@ -21,13 +21,17 @@ function buildKontak(wa: string, email?: string): string {
 function parseCart(formData: FormData) {
   const vids = formData.getAll("itemVariantId").map(String);
   const qtys = formData.getAll("itemJumlah").map(String);
-  const items: { variantId: string; jumlah: number }[] = [];
+  const warnas = formData.getAll("itemWarna").map(String);
+  const items: { variantId: string; jumlah: number; warna?: string }[] = [];
   vids.forEach((vid, i) => {
     if (!vid) return;
     const j = Math.max(1, Math.round(Number(qtys[i] ?? 1)) || 1);
-    const ex = items.find((it) => it.variantId === vid);
+    const warna = (warnas[i] ?? "").trim() || undefined;
+    const ex = items.find(
+      (it) => it.variantId === vid && (it.warna ?? "") === (warna ?? ""),
+    );
     if (ex) ex.jumlah += j;
-    else items.push({ variantId: vid, jumlah: j });
+    else items.push({ variantId: vid, jumlah: j, warna });
   });
   return items;
 }
@@ -99,6 +103,26 @@ export async function updateOrder(
   }
   revalidatePath(`/pesanan/${orderId}`);
   redirect(`/pesanan/${orderId}`);
+}
+
+export async function bulkUpdateOrderStatus(
+  campaignId: string,
+  ids: string[],
+  status: string,
+): Promise<{ updated?: number; error?: string }> {
+  if (ids.length === 0) return { updated: 0 };
+  try {
+    const res = await api.post<{ updated: number }>("/pesanan/bulk-status", {
+      ids,
+      status,
+    });
+    revalidatePath(`/kampanye/${campaignId}`);
+    return { updated: res.updated };
+  } catch (e) {
+    return {
+      error: e instanceof ApiError ? e.message : "Gagal memperbarui status",
+    };
+  }
 }
 
 export async function changeOrderStatus(orderId: string, formData: FormData) {

@@ -6,7 +6,7 @@ import { ImportUploadForm } from "./ImportUploadForm";
 export const dynamic = "force-dynamic";
 
 export default async function ImportPage() {
-  const campaigns = await api.get<{ id: string; namaProduk: string }[]>(
+  const campaigns = await api.list<{ id: string; namaProduk: string }>(
     "/kampanye",
   );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { useRouter } from "next/navigation";
 import { rollbackImportAction } from "../actions";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -8,6 +9,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 export function RollbackButton({ importLogId }: { importLogId: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  useOverlayWhilePending(pending);
   const [error, setError] = useState<string>();
   const { confirm } = useConfirm();
 

@@ -15,6 +15,7 @@ type PortalOrder = {
     id: string;
     jumlah: number;
     hargaSaatPesan: string;
+    warna: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
   campaign: {
@@ -127,6 +128,11 @@ export default async function PortalPage({
                   <div>
                     <p className="font-medium text-slate-900">
                       {it.variant.namaVarian}
+                      {it.warna && (
+                        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                          {it.warna}
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-slate-500">
                       {it.jumlah} × {formatRupiah(it.hargaSaatPesan)}

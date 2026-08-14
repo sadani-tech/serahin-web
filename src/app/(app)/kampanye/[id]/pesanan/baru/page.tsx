@@ -13,7 +13,13 @@ export const dynamic = "force-dynamic";
 type CampaignDetail = {
   namaProduk: string;
   status: CampaignStatus;
-  variants: { id: string; namaVarian: string; sisa: number; harga: string }[];
+  variants: {
+    id: string;
+    namaVarian: string;
+    sisa: number;
+    harga: string;
+    warna: string[];
+  }[];
 };
 
 export default async function TambahPesananPage({
@@ -38,6 +44,7 @@ export default async function TambahPesananPage({
     namaVarian: v.namaVarian,
     sisa: v.sisa,
     harga: toNumber(v.harga),
+    warna: v.warna ?? [],
   }));
 
   const action = createOrder.bind(null, id);

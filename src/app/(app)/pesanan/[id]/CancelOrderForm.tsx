@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 import { cancelOrder } from "../actions";
 
 export function CancelOrderForm({ orderId }: { orderId: string }) {
@@ -25,9 +26,9 @@ export function CancelOrderForm({ orderId }: { orderId: string }) {
         placeholder="Alasan pembatalan — mis. pembeli tidak melunasi"
       />
       <div className="flex gap-2">
-        <Button variant="danger" type="submit" className="flex-1">
+        <SubmitButton variant="danger" loadingText="Membatalkan…" className="flex-1">
           Konfirmasi batal
-        </Button>
+        </SubmitButton>
         <Button variant="secondary" type="button" onClick={() => setOpen(false)}>
           Batal
         </Button>

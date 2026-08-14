@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, FormError } from "@/components/ui";
 import { formatRupiah } from "@/lib/format";
 import { confirmLegacy, type LegacyConfirmState } from "../../../legacy-actions";
@@ -37,6 +38,7 @@ export function LegacyPreview({
     LegacyConfirmState,
     FormData
   >(action, undefined);
+  useOverlayWhilePending(pending);
 
   const variantNama = useMemo(
     () => new Map(variants.map((v) => [v.id, v.nama])),
@@ -116,7 +118,7 @@ export function LegacyPreview({
                       onChange={(e) =>
                         setResolusi((s) => ({ ...s, [r.index]: e.target.value }))
                       }
-                      className="rounded-lg px-2 py-1 text-sm ring-1 ring-inset ring-amber-300"
+                      className="rounded-lg border border-amber-300 px-2 py-1 text-sm"
                     >
                       <option value="">— pilih varian —</option>
                       {variants.map((v) => (

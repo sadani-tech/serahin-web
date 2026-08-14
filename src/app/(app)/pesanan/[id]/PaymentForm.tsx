@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, Field, FormError, Input, Select } from "@/components/ui";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { PAYMENT_TYPE_LABEL } from "@/lib/domain";
 import { PaymentScheme } from "@/lib/types";
@@ -23,6 +25,7 @@ export function PaymentForm({
     PaymentFormState,
     FormData
   >(action, undefined);
+  useOverlayWhilePending(pending);
   const formRef = useRef<HTMLFormElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
@@ -87,7 +90,7 @@ export function PaymentForm({
               : `Sisa total: Rp${sisaTotal.toLocaleString("id-ID")}`
           }
         >
-          <Input name="jumlah" type="number" min={1} step={1000} required />
+          <CurrencyInput name="jumlah" required placeholder="0" />
         </Field>
         <Field label="Tanggal bayar">
           <Input name="tanggal" type="date" />

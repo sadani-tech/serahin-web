@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, Field, FormError, Input, Select } from "@/components/ui";
 import { uploadImport } from "./actions";
 import { type ImportUploadState } from "./constants";
@@ -18,6 +19,7 @@ export function ImportUploadForm({
     ImportUploadState,
     FormData
   >(uploadImport, undefined);
+  useOverlayWhilePending(pending);
   const [campaignId, setCampaignId] = useState(fixedCampaignId ?? "");
 
   const templateHref =
