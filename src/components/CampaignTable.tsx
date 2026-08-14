@@ -7,6 +7,7 @@ import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
 import { deleteCampaign } from "@/app/(app)/kampanye/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useNavLoading } from "@/hooks/useNavLoading";
 
 export type CampaignStatus =
   | "OPEN"
@@ -40,6 +41,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { confirm, alert } = useConfirm();
+  const { startLoading, stopLoading } = useNavLoading();
   const totalPages = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
@@ -54,6 +56,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
     });
     if (!ok) return;
     setDeletingId(id);
+    startLoading();
     try {
       await deleteCampaign(id);
     } catch {
@@ -63,6 +66,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
       });
     } finally {
       setDeletingId(null);
+      stopLoading();
     }
   }
 

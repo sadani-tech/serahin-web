@@ -2,6 +2,7 @@
 
 import { verifyPayment, deletePayment } from "../actions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useApiTransition } from "@/hooks/useNavLoading";
 
 export function PaymentActions({
   paymentId,
@@ -11,34 +12,39 @@ export function PaymentActions({
   status: "MENUNGGU_VERIFIKASI" | "TERVERIFIKASI" | "DITOLAK";
 }) {
   const { confirm } = useConfirm();
+  const { pending, run } = useApiTransition();
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {status !== "TERVERIFIKASI" && (
         <button
-          onClick={() => verifyPayment(paymentId, "TERVERIFIKASI")}
-          className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-500"
+          disabled={pending}
+          onClick={() => run(() => verifyPayment(paymentId, "TERVERIFIKASI"))}
+          className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
         >
           Verifikasi
         </button>
       )}
       {status !== "DITOLAK" && (
         <button
-          onClick={() => verifyPayment(paymentId, "DITOLAK")}
-          className="rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-400"
+          disabled={pending}
+          onClick={() => run(() => verifyPayment(paymentId, "DITOLAK"))}
+          className="rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-400 disabled:opacity-50"
         >
           Tolak
         </button>
       )}
       <button
+        disabled={pending}
         onClick={async () => {
           const ok = await confirm({
             title: "Hapus catatan pembayaran ini?",
             description: "Catatan pembayaran akan dihapus permanen.",
             confirmLabel: "Hapus",
           });
-          if (ok) deletePayment(paymentId);
+          if (ok) run(() => deletePayment(paymentId));
         }}
-        className="rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
+        className="rounded-md px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50"
       >
         Hapus
       </button>

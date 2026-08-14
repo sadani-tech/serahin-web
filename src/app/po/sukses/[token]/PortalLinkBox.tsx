@@ -26,7 +26,7 @@ export function PortalLinkBox({ token }: { token: string }) {
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700 ring-1 ring-inset ring-slate-300"
+          className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
         />
         <button
           type="button"

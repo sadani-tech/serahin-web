@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Select, Textarea } from "@/components/ui";
+import { Select, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
 import { OrderStatus } from "@/lib/types";
 import { changeOrderStatus } from "../actions";
@@ -38,9 +39,9 @@ export function OrderStatusControl({
       {changed && (
         <Textarea name="catatan" rows={2} placeholder="Catatan (opsional)" />
       )}
-      <Button type="submit" disabled={!changed} className="w-full">
+      <SubmitButton disabled={!changed} loadingText="Menyimpan…" className="w-full">
         Simpan status
-      </Button>
+      </SubmitButton>
     </form>
   );
 }

@@ -12,6 +12,7 @@ import { computeBilling } from "@/lib/billing";
 import type {
   OrderStatus,
   PaymentScheme,
+  DpTipe,
   PaymentType,
   PaymentVerification,
 } from "@/lib/types";
@@ -36,6 +37,7 @@ type OrderDetail = {
     id: string;
     jumlah: number;
     hargaSaatPesan: string;
+    warna: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
   payments: {
@@ -58,7 +60,9 @@ type OrderDetail = {
     id: string;
     namaProduk: string;
     paymentScheme: PaymentScheme;
+    dpTipe: DpTipe | null;
     dpPercent: number | null;
+    dpNominal: string | null;
     deadlinePelunasan: string | null;
   };
 };
@@ -81,7 +85,9 @@ export default async function OrderDetailPage({
   const billing = computeBilling({
     items: order.items,
     paymentScheme: order.campaign.paymentScheme,
+    dpTipe: order.campaign.dpTipe,
     dpPercent: order.campaign.dpPercent,
+    dpNominal: order.campaign.dpNominal,
     payments: order.payments,
   });
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
@@ -190,7 +196,9 @@ export default async function OrderDetailPage({
               <div className="px-5 py-4">
                 <p className="text-xs uppercase tracking-wide text-slate-500">
                   {order.campaign.paymentScheme === "DP_PELUNASAN"
-                    ? `Target DP (${order.campaign.dpPercent ?? 50}%)`
+                    ? order.campaign.dpTipe === "NOMINAL"
+                      ? "Target DP (nominal)"
+                      : `Target DP (${order.campaign.dpPercent ?? 50}%)`
                     : "Menunggu verifikasi"}
                 </p>
                 <p className="mt-1 text-lg font-semibold text-slate-700">
@@ -227,6 +235,11 @@ export default async function OrderDetailPage({
                     <div>
                       <p className="font-medium text-slate-900">
                         {it.variant.namaVarian}
+                        {it.warna && (
+                          <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                            {it.warna}
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-slate-500">
                         {it.jumlah} × {formatRupiah(it.hargaSaatPesan)}

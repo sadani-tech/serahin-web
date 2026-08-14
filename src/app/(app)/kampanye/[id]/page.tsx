@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { CampaignBadge, OrderBadge } from "@/components/badges";
+import { CampaignBadge } from "@/components/badges";
 import { RichText } from "@/components/RichText";
 import {
   Card,
@@ -32,6 +32,7 @@ import type {
   OrderStatus,
   CampaignStatus,
   PaymentScheme,
+  DpTipe,
   PaymentVerification,
   KetepatanWaktu,
   KesesuaianKualitas,
@@ -41,6 +42,7 @@ import { StatusControl } from "./StatusControl";
 import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
+import { OrderBulkTable, type OrderRow } from "@/components/OrderBulkTable";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +53,9 @@ type CampaignDetail = {
   status: CampaignStatus;
   harga: string;
   paymentScheme: PaymentScheme;
+  dpTipe: DpTipe | null;
   dpPercent: number | null;
+  dpNominal: string | null;
   tanggalBuka: string;
   tanggalTutup: string;
   estimasiProduksi: string | null;
@@ -146,6 +150,31 @@ export default async function CampaignDetailPage({
     return true;
   });
 
+  // Baris pesanan siap-render untuk tabel bulk (billing dihitung di server).
+  const orderRows: OrderRow[] = orders.map((o) => {
+    const billing = computeBilling({
+      items: o.items,
+      paymentScheme: campaign.paymentScheme,
+      dpTipe: campaign.dpTipe,
+      dpPercent: campaign.dpPercent,
+      dpNominal: campaign.dpNominal,
+      payments: o.payments,
+    });
+    return {
+      id: o.id,
+      namaPembeli: o.namaPembeli,
+      kontak: o.kontak,
+      varianLabel:
+        o.items.length === 1
+          ? o.items[0].variant.namaVarian
+          : `${o.items.length} varian`,
+      totalQty: o.items.reduce((s, it) => s + it.jumlah, 0),
+      status: o.status,
+      sisa: billing.sisa,
+      aktif: orderAktif(o.status),
+    };
+  });
+
   const deadlineLewat =
     !!campaign.deadlinePelunasan &&
     new Date(campaign.deadlinePelunasan).getTime() < Date.now();
@@ -173,9 +202,7 @@ export default async function CampaignDetailPage({
             <p className="mt-1 text-sm text-slate-500">
               {formatRupiah(campaign.harga)} / unit ·{" "}
               {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]}
-              {campaign.paymentScheme === "DP_PELUNASAN" &&
-                campaign.dpPercent != null &&
-                ` (DP ${campaign.dpPercent}%)`}
+              {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
             </p>
           </div>
           <div className="flex gap-2">
@@ -231,9 +258,7 @@ export default async function CampaignDetailPage({
                 <Info label="Skema pembayaran"
                   value={
                     PAYMENT_SCHEME_LABEL[campaign.paymentScheme] +
-                    (campaign.paymentScheme === "DP_PELUNASAN" && campaign.dpPercent
-                      ? ` — DP ${campaign.dpPercent}%`
-                      : "")
+                    (dpLabel(campaign) ? ` — ${dpLabel(campaign)}` : "")
                   }
                 />
                 <Info label="Tanggal buka" value={formatTanggal(campaign.tanggalBuka)} />
@@ -425,7 +450,7 @@ export default async function CampaignDetailPage({
               <select
                 name="status"
                 defaultValue={filterStatus ?? ""}
-                className="rounded-lg px-3 py-1.5 text-sm ring-1 ring-inset ring-slate-300"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
               >
                 <option value="">Semua status</option>
                 {Object.entries(ORDER_STATUS_LABEL).map(([v, l]) => (
@@ -442,7 +467,7 @@ export default async function CampaignDetailPage({
               <select
                 name="variant"
                 defaultValue={filterVariant ?? ""}
-                className="rounded-lg px-3 py-1.5 text-sm ring-1 ring-inset ring-slate-300"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
               >
                 <option value="">Semua varian</option>
                 {campaign.variants.map((v) => (
@@ -474,63 +499,7 @@ export default async function CampaignDetailPage({
               description="Belum ada pesanan yang cocok dengan filter."
             />
           ) : (
-            <ScrollList className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <th className="px-5 py-3 font-medium">Pembeli</th>
-                    <th className="px-5 py-3 font-medium">Varian</th>
-                    <th className="px-5 py-3 font-medium">Qty</th>
-                    <th className="px-5 py-3 font-medium">Status</th>
-                    <th className="px-5 py-3 font-medium">Sisa tagihan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {orders.map((o) => {
-                    const billing = computeBilling({
-                      items: o.items,
-                      paymentScheme: campaign.paymentScheme,
-                      dpPercent: campaign.dpPercent,
-                      payments: o.payments,
-                    });
-                    const totalQty = o.items.reduce((s, it) => s + it.jumlah, 0);
-                    return (
-                      <tr key={o.id} className="hover:bg-slate-50">
-                        <td className="px-5 py-3">
-                          <Link
-                            href={`/pesanan/${o.id}`}
-                            className="font-medium text-slate-900 hover:underline"
-                          >
-                            {o.namaPembeli}
-                          </Link>
-                          <div className="text-xs text-slate-500">{o.kontak}</div>
-                        </td>
-                        <td className="px-5 py-3 text-slate-700">
-                          {o.items.length === 1
-                            ? o.items[0].variant.namaVarian
-                            : `${o.items.length} varian`}
-                        </td>
-                        <td className="px-5 py-3 text-slate-700">{totalQty}</td>
-                        <td className="px-5 py-3">
-                          <OrderBadge status={o.status} />
-                        </td>
-                        <td className="px-5 py-3">
-                          {!orderAktif(o.status) ? (
-                            <span className="text-slate-400">-</span>
-                          ) : billing.sisa > 0 ? (
-                            <span className="font-medium text-rose-600">
-                              {formatRupiah(billing.sisa)}
-                            </span>
-                          ) : (
-                            <span className="text-emerald-600">Lunas</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </ScrollList>
+            <OrderBulkTable campaignId={id} rows={orderRows} />
           )}
         </Card>
       )}
@@ -603,4 +572,18 @@ function Info({
       <dd className="mt-0.5 text-slate-700">{value}</dd>
     </div>
   );
+}
+
+// Label DP sesuai tipe: "DP 50%" atau "DP Rp100.000"; null bila skema LUNAS.
+function dpLabel(c: {
+  paymentScheme: PaymentScheme;
+  dpTipe: DpTipe | null;
+  dpPercent: number | null;
+  dpNominal: string | null;
+}): string | null {
+  if (c.paymentScheme !== "DP_PELUNASAN") return null;
+  if (c.dpTipe === "NOMINAL") {
+    return c.dpNominal != null ? `DP ${formatRupiah(c.dpNominal)}` : null;
+  }
+  return c.dpPercent != null ? `DP ${c.dpPercent}%` : null;
 }

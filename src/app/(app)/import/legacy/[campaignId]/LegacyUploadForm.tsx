@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, Field, FormError, Input, Select } from "@/components/ui";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
 import { uploadLegacy } from "../../legacy-actions";
 import { type ImportUploadState } from "../../constants";
@@ -12,6 +14,7 @@ export function LegacyUploadForm({ campaignId }: { campaignId: string }) {
     ImportUploadState,
     FormData
   >(action, undefined);
+  useOverlayWhilePending(pending);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -23,7 +26,7 @@ export function LegacyUploadForm({ campaignId }: { campaignId: string }) {
           required
           hint="Diterapkan ke setiap baris (sumber tak punya nominal). FR-2.2"
         >
-          <Input name="dpNominal" type="number" min={1} step={1000} defaultValue={100000} required />
+          <CurrencyInput name="dpNominal" defaultValue={100000} required />
         </Field>
         <Field label="Status pesanan default" required>
           <Select name="defaultStatus" defaultValue="DP_DITERIMA" required>

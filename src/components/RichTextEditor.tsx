@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type ClipboardEvent, useEffect, useRef, useState } from "react";
 
 /**
  * Editor WYSIWYG ringan berbasis contenteditable (v1.6 3.1/3.2).
@@ -47,6 +47,13 @@ export function RichTextEditor({
 
   // Isi editor sekali di awal (uncontrolled agar kursor tidak melompat).
   useEffect(() => {
+    // Enter memakai <p> (bukan <div> default Chrome). <div> tidak ada di
+    // daftar tag sanitizer → akan dibuang & baris menyatu. <p> aman dan tersimpan.
+    try {
+      document.execCommand("defaultParagraphSeparator", false, "p");
+    } catch {
+      // execCommand tidak tersedia (mis. saat SSR/test) — abaikan.
+    }
     if (editorRef.current && editorRef.current.innerHTML !== defaultValue) {
       editorRef.current.innerHTML = defaultValue;
     }
@@ -55,6 +62,16 @@ export function RichTextEditor({
 
   const sync = () => {
     if (editorRef.current) setHtml(editorRef.current.innerHTML);
+  };
+
+  // Tempel sebagai teks polos: buang format bawaan sumber (mis. bold dari
+  // caption Instagram/WhatsApp) yang tadinya "menebal sendiri", tapi tetap
+  // pertahankan pindah baris.
+  const handlePaste = (e: ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
+    sync();
   };
 
   const exec = (command: string, value?: string) => {
@@ -116,6 +133,7 @@ export function RichTextEditor({
         suppressContentEditableWarning
         onInput={sync}
         onBlur={sync}
+        onPaste={handlePaste}
         data-placeholder={placeholder}
         className="prose-serahin min-h-[220px] max-w-none px-4 py-3 text-sm focus:outline-none empty:before:text-slate-400 empty:before:content-[attr(data-placeholder)]"
       />

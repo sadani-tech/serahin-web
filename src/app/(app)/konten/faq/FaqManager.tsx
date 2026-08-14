@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   Button,
   Card,
@@ -11,6 +12,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { badge } from "@/lib/domain";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { createFaq, updateFaq, deleteFaq, type KontenFormState } from "../actions";
 
 type CampaignOption = { id: string; namaProduk: string };
@@ -141,6 +143,7 @@ function FaqFields({
     },
     undefined,
   );
+  useOverlayWhilePending(pending);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -206,12 +209,21 @@ function FaqFields({
 function DeleteFaqButton({ id }: { id: string }) {
   return (
     <form action={deleteFaq.bind(null, id)}>
-      <button
-        type="submit"
-        className="text-sm font-medium text-rose-600 hover:underline"
-      >
-        Hapus
-      </button>
+      <DeleteFaqSubmit />
     </form>
+  );
+}
+
+function DeleteFaqSubmit() {
+  const { pending } = useFormStatus();
+  useOverlayWhilePending(pending);
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="text-sm font-medium text-rose-600 hover:underline disabled:opacity-50"
+    >
+      {pending ? "Menghapus…" : "Hapus"}
+    </button>
   );
 }

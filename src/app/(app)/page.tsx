@@ -52,7 +52,7 @@ export default async function DashboardPage({
             <select
               name="status"
               defaultValue={status ?? ""}
-              className="rounded-lg px-3 py-1.5 text-sm ring-1 ring-inset ring-slate-300"
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
             >
               <option value="">Semua</option>
               {Object.entries(CAMPAIGN_STATUS_LABEL).map(([v, l]) => (
@@ -70,7 +70,7 @@ export default async function DashboardPage({
               type="date"
               name="dateFrom"
               defaultValue={sp.dateFrom ?? ""}
-              className="rounded-lg px-3 py-1.5 text-sm ring-1 ring-inset ring-slate-300"
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
             />
           </div>
           <div>
@@ -81,7 +81,7 @@ export default async function DashboardPage({
               type="date"
               name="dateTo"
               defaultValue={sp.dateTo ?? ""}
-              className="rounded-lg px-3 py-1.5 text-sm ring-1 ring-inset ring-slate-300"
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
             />
           </div>
           <button

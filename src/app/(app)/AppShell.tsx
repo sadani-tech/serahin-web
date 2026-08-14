@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { logoutAction } from "@/lib/auth-actions";
 import { NavLinks, NavIconActions, MobileMenuButton, MobileDrawer, BottomNav, type NavUser } from "@/components/nav";
-import { Button } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 import { NavigationProgress } from "@/hooks/useNavigationLoading";
 import { NavLoadingProvider } from "@/hooks/useNavLoading";
 
@@ -37,7 +37,7 @@ export function AppShell({
               {user?.name ?? user?.email}
             </span>
             <form action={logoutAction} className="hidden md:block">
-              <Button variant="ghost" type="submit">Keluar</Button>
+              <SubmitButton variant="ghost" loadingText="Keluar…">Keluar</SubmitButton>
             </form>
           </div>
         </div>

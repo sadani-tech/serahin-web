@@ -15,8 +15,8 @@ type FaqRow = {
 
 export default async function FaqPage() {
   const [faqs, campaigns] = await Promise.all([
-    api.get<FaqRow[]>("/cms/faq"),
-    api.get<{ id: string; namaProduk: string }[]>("/kampanye"),
+    api.list<FaqRow>("/cms/faq"),
+    api.list<{ id: string; namaProduk: string }>("/kampanye"),
   ]);
 
   return (

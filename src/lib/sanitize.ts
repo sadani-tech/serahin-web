@@ -8,6 +8,7 @@ import sanitizeHtml from "sanitize-html";
 const OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
     "p",
+    "div",
     "br",
     "b",
     "strong",
@@ -43,8 +44,17 @@ const OPTIONS: sanitizeHtml.IOptions = {
   },
 };
 
+// Deteksi apakah konten sudah punya struktur baris sendiri (blok atau <br>).
+const HAS_LINE_STRUCTURE = /<(?:p|div|br|h[1-3]|ul|ol|li|blockquote)\b/i;
+
 export function sanitizeRichText(html: string): string {
-  return sanitizeHtml(html, OPTIONS);
+  // Teks polos (mis. hasil import Excel) memakai newline "\n" untuk pindah
+  // baris, tapi HTML mengabaikannya. Ubah newline ke <br> — hanya bila konten
+  // belum punya struktur baris sendiri, agar tidak menghasilkan baris dobel.
+  const normalized = HAS_LINE_STRUCTURE.test(html)
+    ? html
+    : html.replace(/\r\n|\r|\n/g, "<br />");
+  return sanitizeHtml(normalized, OPTIONS);
 }
 
 /** True bila konten kosong setelah tag dilepas (untuk validasi form). */

@@ -14,7 +14,7 @@ type VendorRow = {
 };
 
 export default async function KampanyeBaruPage() {
-  const vendors = await api.get<VendorRow[]>("/vendor");
+  const vendors = await api.list<VendorRow>("/vendor");
 
   const vendorOptions: VendorOption[] = vendors.map((v) => {
     const stats = computeVendorStats(v.evaluations);

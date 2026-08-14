@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button } from "@/components/ui";
 import { toggleFormAktif } from "../actions";
 
@@ -17,6 +18,7 @@ export function FormPublikControl({
 }) {
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
+  useOverlayWhilePending(pending);
   const url =
     typeof window !== "undefined"
       ? `${window.location.origin}/po/${formToken}`
@@ -62,7 +64,7 @@ export function FormPublikControl({
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700 ring-1 ring-inset ring-slate-300"
+          className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
         />
         <Button type="button" variant="secondary" onClick={copy}>
           {copied ? "Tersalin ✓" : "Salin"}

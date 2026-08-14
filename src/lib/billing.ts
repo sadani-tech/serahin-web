@@ -36,7 +36,10 @@ export function computeOrderQty(items: { jumlah: number }[]): number {
 export function computeBilling(params: {
   items: BillingItem[];
   paymentScheme: PaymentScheme;
+  /** PERSEN (dpPercent) atau NOMINAL (dpNominal). Default PERSEN. */
+  dpTipe?: "PERSEN" | "NOMINAL" | null;
   dpPercent?: number | null;
+  dpNominal?: number | string | null;
   payments: { jumlah: number | string; statusVerifikasi: PaymentVerification }[];
 }): Billing {
   const total = computeOrderTotal(params.items);
@@ -53,7 +56,9 @@ export function computeBilling(params: {
   const sisa = Math.max(total - dibayar, 0);
   const dpTarget =
     params.paymentScheme === "DP_PELUNASAN"
-      ? Math.round((total * (params.dpPercent ?? 50)) / 100)
+      ? params.dpTipe === "NOMINAL"
+        ? Math.min(toNumber(params.dpNominal ?? 0), total) // flat, tak lebih dari total
+        : Math.round((total * (params.dpPercent ?? 50)) / 100)
       : 0;
 
   return {

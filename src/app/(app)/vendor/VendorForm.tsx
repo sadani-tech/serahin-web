@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, Card, Field, FormError, Input, Textarea } from "@/components/ui";
 import type { VendorFormState } from "./actions";
 
@@ -22,6 +23,7 @@ export function VendorForm({
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  useOverlayWhilePending(pending);
 
   return (
     <form action={formAction} className="space-y-6">

@@ -31,6 +31,8 @@ type FormInfo = {
     sisa: number;
     harga: number;
     gambarUrl: string | null;
+    images: string[];
+    warna: string[];
   }[];
 };
 

@@ -1,17 +1,20 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useState } from "react";
+import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import {
   Button,
   Card,
+  EmptyState,
   Field,
   FormError,
   Input,
   ScrollList,
-  Select,
   Textarea,
 } from "@/components/ui";
 import { FileUploadField } from "@/components/FileUploadField";
+import { CurrencyInput } from "@/components/CurrencyInput";
+import { VariantPickerModal } from "@/components/VariantPickerModal";
 import { formatRupiah } from "@/lib/format";
 import type { OrderFormState } from "./actions";
 
@@ -20,11 +23,21 @@ export type VariantOption = {
   namaVarian: string;
   sisa: number; // sisa kuota
   harga: number;
+  warna?: string[]; // opsi warna (bila ada)
 };
 
-type Row = { variantId: string; jumlah: number };
+type Row = { variantId: string; jumlah: number; warna?: string };
 
-const VARIANT_PAGE_SIZE = 8;
+/** Pisahkan kontak gabungan "wa, email" menjadi field terpisah. */
+function splitKontak(kontak?: string): { wa: string; email: string } {
+  const parts = (kontak ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const email = parts.find((p) => p.includes("@")) ?? "";
+  const wa = parts.find((p) => !p.includes("@")) ?? "";
+  return { wa, email };
+}
 
 export function OrderForm({
   action,
@@ -49,23 +62,47 @@ export function OrderForm({
   withBuktiPembayaran?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
-  const [rows, setRows] = useState<Row[]>(
-    initial?.items && initial.items.length > 0
-      ? initial.items
-      : [{ variantId: "", jumlah: 1 }],
+  useOverlayWhilePending(pending);
+
+  const { wa: initialWa, email: initialEmail } = splitKontak(initial?.kontak);
+
+  const [cart, setCart] = useState<Row[]>(
+    initial?.items?.filter((it) => it.variantId) ?? [],
   );
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const varById = new Map(variants.map((v) => [v.id, v]));
-  const addRow = () => setRows((r) => [...r, { variantId: "", jumlah: 1 }]);
-  const removeRow = (i: number) =>
-    setRows((r) => (r.length > 1 ? r.filter((_, idx) => idx !== i) : r));
-  const update = (i: number, patch: Partial<Row>) =>
-    setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  const inCart = new Set(cart.map((r) => r.variantId));
 
-  const total = rows.reduce((s, r) => {
+  const addToCart = (variantId: string) =>
+    setCart((c) =>
+      c.some((r) => r.variantId === variantId)
+        ? c
+        : [...c, { variantId, jumlah: 1 }],
+    );
+  const setQty = (variantId: string, jumlah: number) =>
+    setCart((c) =>
+      c.map((r) =>
+        r.variantId === variantId ? { ...r, jumlah: Math.max(1, jumlah) } : r,
+      ),
+    );
+  const removeItem = (variantId: string) =>
+    setCart((c) => c.filter((r) => r.variantId !== variantId));
+  const setWarna = (variantId: string, warna: string) =>
+    setCart((c) =>
+      c.map((r) => (r.variantId === variantId ? { ...r, warna } : r)),
+    );
+
+  const total = cart.reduce((s, r) => {
     const v = varById.get(r.variantId);
     return s + (v ? v.harga * r.jumlah : 0);
   }, 0);
+
+  // Ada item berwarna yang belum memilih warna → blokir simpan.
+  const warnaBelumLengkap = cart.some((r) => {
+    const v = varById.get(r.variantId);
+    return v?.warna && v.warna.length > 0 && !r.warna;
+  });
 
   return (
     <form action={formAction} className="space-y-6">
@@ -84,7 +121,7 @@ export function OrderForm({
           <Field label="WhatsApp" required>
             <Input
               name="wa"
-              defaultValue={initial?.kontak}
+              defaultValue={initialWa}
               placeholder="081234567890"
               required
             />
@@ -93,6 +130,7 @@ export function OrderForm({
             <Input
               name="email"
               type="email"
+              defaultValue={initialEmail}
               required
               placeholder="email@example.com"
             />
@@ -115,54 +153,118 @@ export function OrderForm({
           <h3 className="text-sm font-semibold text-slate-900">
             Item pesanan (keranjang)
           </h3>
-          <Button type="button" variant="secondary" onClick={addRow}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setPickerOpen(true)}
+          >
             + Tambah item
           </Button>
         </div>
-        <ScrollList maxRows={6} rowHeight={5} className="space-y-3 pr-1">
-          {rows.map((r, i) => {
-            const v = varById.get(r.variantId);
-            return (
-              <div key={i} className="flex flex-wrap items-end gap-2">
-                <div className="min-w-48 flex-1">
-                  <Field label={i === 0 ? "Varian" : ""}>
-                    <PaginatedVariantSelect
-                      variants={variants}
-                      value={r.variantId}
-                      onChange={(val) => update(i, { variantId: val })}
-                    />
-                  </Field>
-                </div>
-                <div className="w-24">
-                  <Field label={i === 0 ? "Jumlah" : ""}>
-                    <Input
-                      name="itemJumlah"
-                      type="number"
-                      min={1}
-                      value={r.jumlah}
-                      onChange={(e) =>
-                        update(i, { jumlah: Number(e.target.value) || 1 })
-                      }
-                    />
-                  </Field>
-                </div>
-                <div className="w-28 pb-2 text-right text-sm text-slate-600">
-                  {v ? formatRupiah(v.harga * r.jumlah) : "—"}
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => removeRow(i)}
-                  className="mb-0.5 text-rose-600"
-                  disabled={rows.length === 1}
+
+        {cart.length === 0 ? (
+          <EmptyState
+            title="Keranjang masih kosong"
+            description="Klik “Tambah item” untuk memilih varian produk."
+            action={
+              <Button type="button" onClick={() => setPickerOpen(true)}>
+                + Tambah item
+              </Button>
+            }
+          />
+        ) : (
+          <ScrollList maxRows={6} rowHeight={4.5} className="space-y-2 pr-1">
+            {cart.map((r) => {
+              const v = varById.get(r.variantId);
+              const maxQty = v ? Math.max(1, v.sisa) : undefined;
+              const atMax = maxQty !== undefined && r.jumlah >= maxQty;
+              return (
+                <div
+                  key={r.variantId}
+                  className="flex items-center gap-3 rounded-lg border border-slate-200 p-3"
                 >
-                  Hapus
-                </Button>
-              </div>
-            );
-          })}
-        </ScrollList>
-        <div className="mt-4 flex justify-end border-t border-slate-100 pt-3 text-sm">
+                  <input type="hidden" name="itemVariantId" value={r.variantId} />
+                  <input type="hidden" name="itemJumlah" value={r.jumlah} />
+                  <input type="hidden" name="itemWarna" value={r.warna ?? ""} />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-slate-900">
+                      {v ? v.namaVarian : "Varian tidak tersedia"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {v ? formatRupiah(v.harga) : "—"}
+                      {v ? ` · sisa ${Math.max(0, v.sisa)}` : ""}
+                    </p>
+                    {v?.warna && v.warna.length > 0 && (
+                      <select
+                        value={r.warna ?? ""}
+                        onChange={(e) => setWarna(r.variantId, e.target.value)}
+                        className={`mt-1.5 rounded-lg border px-2 py-1 text-xs ${
+                          r.warna ? "border-slate-300" : "border-rose-300"
+                        }`}
+                      >
+                        <option value="">— pilih warna —</option>
+                        {v.warna.map((w) => (
+                          <option key={w} value={w}>
+                            {w}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setQty(r.variantId, r.jumlah - 1)}
+                      disabled={r.jumlah <= 1}
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+                      aria-label="Kurangi"
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center text-sm font-medium">
+                      {r.jumlah}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQty(r.variantId, r.jumlah + 1)}
+                      disabled={atMax}
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+                      aria-label="Tambah"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="w-28 text-right text-sm font-medium text-slate-900">
+                    {v ? formatRupiah(v.harga * r.jumlah) : "—"}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(r.variantId)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                    aria-label="Hapus item"
+                    title="Hapus item"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+          </ScrollList>
+        )}
+
+        <div className="mt-4 flex justify-between border-t border-slate-100 pt-3 text-sm">
+          <span className="text-slate-500">
+            {cart.length} item · {cart.reduce((s, r) => s + r.jumlah, 0)} unit
+          </span>
           <span className="font-medium text-slate-900">
             Total: {formatRupiah(total)}
           </span>
@@ -184,14 +286,7 @@ export function OrderForm({
               required
               hint={`Total pesanan: ${formatRupiah(total)}`}
             >
-              <Input
-                name="jumlahBayar"
-                type="number"
-                min={1}
-                step={1000}
-                required
-                placeholder="0"
-              />
+              <CurrencyInput name="jumlahBayar" required placeholder="0" />
             </Field>
             <FileUploadField
               name="buktiPembayaran"
@@ -203,97 +298,27 @@ export function OrderForm({
         </Card>
       )}
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
+      <div className="flex flex-col items-end gap-1">
+        {warnaBelumLengkap && (
+          <p className="text-xs text-rose-600">
+            Pilih warna untuk item yang memerlukannya.
+          </p>
+        )}
+        <Button
+          type="submit"
+          disabled={pending || cart.length === 0 || warnaBelumLengkap}
+        >
           {pending ? "Menyimpan…" : submitLabel}
         </Button>
       </div>
+
+      <VariantPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        variants={variants}
+        inCart={inCart}
+        onPick={addToCart}
+      />
     </form>
-  );
-}
-
-function PaginatedVariantSelect({
-  variants,
-  value,
-  onChange,
-}: {
-  variants: VariantOption[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [page, setPage] = useState(1);
-  const [filter, setFilter] = useState("");
-
-  const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return variants;
-    return variants.filter((v) =>
-      v.namaVarian.toLowerCase().includes(q),
-    );
-  }, [variants, filter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / VARIANT_PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * VARIANT_PAGE_SIZE;
-  const paged = filtered.slice(start, start + VARIANT_PAGE_SIZE);
-
-  return (
-    <div className="space-y-1.5">
-      <Select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        size={Math.min(paged.length + 1, 8)}
-      >
-        <option value="">— pilih varian —</option>
-        {paged.map((opt) => (
-          <option
-            key={opt.id}
-            value={opt.id}
-            disabled={opt.sisa <= 0 && opt.id !== value}
-          >
-            {opt.namaVarian} — {formatRupiah(opt.harga)} (sisa {opt.sisa})
-          </option>
-        ))}
-      </Select>
-      {variants.length > VARIANT_PAGE_SIZE ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            type="text"
-            placeholder="Cari varian…"
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setPage(1);
-            }}
-            className="h-8 w-40 text-xs"
-          />
-          <div className="flex items-center gap-1 text-xs text-slate-600">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-              className="h-7 px-2"
-            >
-              ‹
-            </Button>
-            <span>
-              {safePage}/{totalPages} ({filtered.length})
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() =>
-                setPage((p) => Math.min(totalPages, p + 1))
-              }
-              disabled={safePage >= totalPages}
-              className="h-7 px-2"
-            >
-              ›
-            </Button>
-          </div>
-        </div>
-      ) : null}
-    </div>
   );
 }

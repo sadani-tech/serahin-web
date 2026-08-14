@@ -21,7 +21,7 @@ type CampaignRow = {
 };
 
 export default async function KampanyeListPage() {
-  const campaigns = await api.get<CampaignRow[]>("/kampanye");
+  const campaigns = await api.list<CampaignRow>("/kampanye");
 
   return (
     <div>

@@ -60,6 +60,16 @@ export const api = {
     return parse(res) as Promise<T>;
   },
 
+  /**
+   * GET endpoint daftar berpaginasi. Backend membungkus hasil dalam envelope
+   * `{ data, meta }` (lihat `apps/api/src/common/query.ts`), tapi halaman admin
+   * hanya butuh array-nya — helper ini mengembalikan `data` langsung.
+   */
+  async list<T>(path: string, query?: Query): Promise<T[]> {
+    const res = await api.get<{ data: T[] }>(path, query);
+    return res.data;
+  },
+
   async post<T>(path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${API_URL}${path}`, {
       method: "POST",

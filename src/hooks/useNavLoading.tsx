@@ -7,13 +7,22 @@ import {
   useEffect,
   useRef,
   useState,
+  useTransition,
   type ReactNode,
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-// Overlay loading global untuk memberi umpan balik saat pindah tab / halaman,
-// supaya aksi tidak terasa "diam" (FR-UX). Dipicu manual saat klik navigasi,
-// lalu otomatis hilang ketika route baru selesai commit (pathname/query berubah).
+// Overlay loading global untuk memberi umpan balik saat pindah halaman / menekan
+// tombol aksi yang hit API, supaya tidak terasa "diam".
+//
+// Dua sumber loading yang digabung:
+//   1. Navigasi   — dideteksi otomatis dari klik <a> internal (semua <Link>),
+//      lalu hilang saat route baru commit (pathname/searchParams berubah).
+//   2. Aksi/API   — dihitung dengan counter via startLoading()/stopLoading()
+//      (dipakai useOverlayWhilePending / useApiTransition / SubmitButton).
+//
+// Overlay tampil bila salah satu aktif. Counter (bukan boolean) supaya beberapa
+// aksi bersamaan tidak saling mematikan overlay.
 
 type NavLoadingContextValue = {
   pending: boolean;
@@ -23,40 +32,87 @@ type NavLoadingContextValue = {
 
 const NavLoadingContext = createContext<NavLoadingContextValue | null>(null);
 
-const SAFETY_TIMEOUT_MS = 8000;
+const NAV_SAFETY_TIMEOUT_MS = 8000;
 
 export function NavLoadingProvider({ children }: { children: ReactNode }) {
-  const [pending, setPending] = useState(false);
+  const [navPending, setNavPending] = useState(false);
+  const [actionCount, setActionCount] = useState(0);
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearTimer = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+  const startLoading = useCallback(() => setActionCount((c) => c + 1), []);
+  const stopLoading = useCallback(
+    () => setActionCount((c) => Math.max(0, c - 1)),
+    [],
+  );
+
+  const clearNavTimer = () => {
+    if (navTimer.current) {
+      clearTimeout(navTimer.current);
+      navTimer.current = null;
     }
   };
 
-  const stopLoading = useCallback(() => {
-    clearTimer();
-    setPending(false);
-  }, []);
-
-  const startLoading = useCallback(() => {
-    clearTimer();
-    setPending(true);
-    // Jaring pengaman: jika navigasi tidak mengubah route (mis. link ke halaman
-    // yang sama), overlay tetap hilang setelah beberapa detik.
-    timeoutRef.current = setTimeout(() => setPending(false), SAFETY_TIMEOUT_MS);
-  }, []);
-
-  // Route baru sudah commit → sembunyikan overlay.
+  // Deteksi klik navigasi internal (semua <Link>/<a> same-origin) secara global,
+  // sehingga setiap perpindahan halaman menampilkan overlay tanpa perlu wiring
+  // di tiap link.
   useEffect(() => {
-    stopLoading();
-  }, [pathname, searchParams, stopLoading]);
+    function onClick(e: MouseEvent) {
+      if (
+        e.defaultPrevented ||
+        e.button !== 0 ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return;
+      }
+      const el = e.target as HTMLElement | null;
+      const a = el?.closest?.("a");
+      if (!a) return;
+      const href = a.getAttribute("href");
+      if (!href) return;
+      if (a.target && a.target !== "_self") return;
+      if (a.hasAttribute("download")) return;
 
-  useEffect(() => () => clearTimer(), []);
+      let url: URL;
+      try {
+        url = new URL(href, window.location.href);
+      } catch {
+        return;
+      }
+      if (url.origin !== window.location.origin) return; // eksternal
+      // Halaman yang sama (atau hanya hash) → tidak ada loading.
+      if (
+        url.pathname === window.location.pathname &&
+        url.search === window.location.search
+      ) {
+        return;
+      }
+
+      setNavPending(true);
+      clearNavTimer();
+      navTimer.current = setTimeout(
+        () => setNavPending(false),
+        NAV_SAFETY_TIMEOUT_MS,
+      );
+    }
+
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
+
+  // Route baru sudah commit → hentikan loading navigasi.
+  useEffect(() => {
+    setNavPending(false);
+    clearNavTimer();
+  }, [pathname, searchParams]);
+
+  useEffect(() => () => clearNavTimer(), []);
+
+  const pending = navPending || actionCount > 0;
 
   return (
     <NavLoadingContext.Provider value={{ pending, startLoading, stopLoading }}>
@@ -73,6 +129,43 @@ export function useNavLoading(): NavLoadingContextValue {
     return { pending: false, startLoading: () => {}, stopLoading: () => {} };
   }
   return ctx;
+}
+
+/**
+ * Tampilkan overlay loading global selama `pending` bernilai true.
+ * Dipakai oleh form yang sudah punya state pending sendiri (useActionState /
+ * useTransition). Increment saat pending, decrement saat selesai/unmount.
+ */
+export function useOverlayWhilePending(pending: boolean) {
+  const { startLoading, stopLoading } = useNavLoading();
+  useEffect(() => {
+    if (!pending) return;
+    startLoading();
+    return () => stopLoading();
+  }, [pending, startLoading, stopLoading]);
+}
+
+/**
+ * Bungkus aksi onClick yang memanggil server action / API supaya menampilkan
+ * overlay loading global + memberi flag `pending` untuk menonaktifkan tombol.
+ *
+ *   const { pending, run } = useApiTransition();
+ *   <button disabled={pending} onClick={() => run(() => someAction(id))}>…
+ *
+ * Overlay dikendalikan lewat efek pada `pending` (bukan di dalam transition)
+ * agar update-nya urgent dan overlay benar-benar tampil.
+ */
+export function useApiTransition() {
+  const [pending, startTransition] = useTransition();
+  useOverlayWhilePending(pending);
+
+  const run = useCallback((fn: () => unknown | Promise<unknown>) => {
+    startTransition(async () => {
+      await fn();
+    });
+  }, []);
+
+  return { pending, run };
 }
 
 function LoadingOverlay({ show }: { show: boolean }) {
