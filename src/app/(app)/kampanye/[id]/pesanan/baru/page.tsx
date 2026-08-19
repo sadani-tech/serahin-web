@@ -4,15 +4,19 @@ import { api, ApiError } from "@/lib/api";
 import { OrderForm } from "@/app/(app)/pesanan/OrderForm";
 import { createOrder } from "@/app/(app)/pesanan/actions";
 import { campaignMenerimaPesanan } from "@/lib/domain";
-import { toNumber } from "@/lib/format";
+import { formatTanggal, toNumber } from "@/lib/format";
+import { richTextToPlain } from "@/lib/sanitize";
 import type { CampaignStatus } from "@/lib/types";
 import { Card } from "@/components/ui";
+import { CopyButton } from "@/components/CopyButton";
 
 export const dynamic = "force-dynamic";
 
 type CampaignDetail = {
   namaProduk: string;
+  deskripsi: string | null;
   status: CampaignStatus;
+  tanggalTutup: string;
   variants: {
     id: string;
     namaVarian: string;
@@ -48,6 +52,9 @@ export default async function TambahPesananPage({
   }));
 
   const action = createOrder.bind(null, id);
+  const deskripsiPlain = campaign.deskripsi
+    ? richTextToPlain(campaign.deskripsi)
+    : "";
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -65,6 +72,28 @@ export default async function TambahPesananPage({
           {campaign.namaProduk}
         </p>
       </div>
+
+      <Card className="mb-6 p-4">
+        <p className="text-sm text-slate-700">
+          Kampanye tutup:{" "}
+          <span className="font-medium text-slate-900">
+            {formatTanggal(campaign.tanggalTutup)}
+          </span>
+        </p>
+        {deskripsiPlain && (
+          <div className="mt-3">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Deskripsi kampanye
+              </span>
+              <CopyButton text={deskripsiPlain} label="Salin deskripsi" />
+            </div>
+            <p className="whitespace-pre-wrap text-sm text-slate-600">
+              {deskripsiPlain}
+            </p>
+          </div>
+        )}
+      </Card>
 
       {!bisaPesan ? (
         <Card className="p-6">

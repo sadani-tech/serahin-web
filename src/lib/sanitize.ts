@@ -63,3 +63,10 @@ export function isRichTextEmpty(html: string): boolean {
     .replace(/&nbsp;/g, " ")
     .trim().length === 0;
 }
+
+/** Ubah rich-text HTML jadi teks polos (mis. untuk tombol salin ke clipboard). */
+export function richTextToPlain(html: string): string {
+  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
+    .replace(/&nbsp;/g, " ")
+    .trim();
+}

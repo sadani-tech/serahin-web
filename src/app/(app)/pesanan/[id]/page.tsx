@@ -16,6 +16,7 @@ import type {
   PaymentType,
   PaymentVerification,
 } from "@/lib/types";
+import { Collapsible } from "@/components/Collapsible";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { CancelOrderForm } from "./CancelOrderForm";
 import { PaymentForm } from "./PaymentForm";
@@ -307,15 +308,14 @@ export default async function OrderDetailPage({
 
             {!dibatalkan && (
               <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-900">
-                  Catat pembayaran baru
-                </h4>
-                <PaymentForm
-                  orderId={id}
-                  scheme={order.campaign.paymentScheme}
-                  sisaDp={Math.max(billing.dpTarget - billing.dibayar, 0)}
-                  sisaTotal={billing.sisa}
-                />
+                <Collapsible title="Catat pembayaran baru">
+                  <PaymentForm
+                    orderId={id}
+                    scheme={order.campaign.paymentScheme}
+                    sisaDp={Math.max(billing.dpTarget - billing.dibayar, 0)}
+                    sisaTotal={billing.sisa}
+                  />
+                </Collapsible>
               </div>
             )}
           </Card>

@@ -25,6 +25,7 @@ type VendorDetail = {
   kontak: string | null;
   spesialisasi: string | null;
   catatanUmum: string | null;
+  pricelist: string | null;
   campaigns: {
     id: string;
     namaProduk: string;
@@ -123,6 +124,17 @@ export default async function VendorDetailPage({
           </p>
           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
             {vendor.catatanUmum}
+          </p>
+        </Card>
+      )}
+
+      {vendor.pricelist && (
+        <Card className="p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Pricelist
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+            {vendor.pricelist}
           </p>
         </Card>
       )}

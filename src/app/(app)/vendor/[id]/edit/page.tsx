@@ -11,6 +11,7 @@ type VendorDetail = {
   kontak: string | null;
   spesialisasi: string | null;
   catatanUmum: string | null;
+  pricelist: string | null;
 };
 
 export default async function EditVendorPage({
@@ -50,6 +51,7 @@ export default async function EditVendorPage({
           kontak: vendor.kontak ?? undefined,
           spesialisasi: vendor.spesialisasi ?? undefined,
           catatanUmum: vendor.catatanUmum ?? undefined,
+          pricelist: vendor.pricelist ?? undefined,
         }}
       />
     </div>
