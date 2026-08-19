@@ -1,7 +1,8 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { Button, Field, FormError } from "@/components/ui";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { formatRupiah } from "@/lib/format";
 import { submitPortalPayment, type PortalPaymentState } from "../actions";
@@ -53,12 +54,11 @@ export function PortalPaymentForm({
             : "Nominal sesuai bukti transfer."
         }
       >
-        <Input
+        <CurrencyInput
           name="jumlahBayar"
-          inputMode="numeric"
           required
           value={jumlah}
-          onChange={(e) => setJumlah(e.target.value.replace(/\D/g, ""))}
+          onValueChange={setJumlah}
           placeholder="0"
         />
       </Field>

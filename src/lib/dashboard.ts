@@ -16,6 +16,7 @@ export type DashboardFilters = {
   status?: CampaignStatus;
   dateFrom?: string;
   dateTo?: string;
+  campaignId?: string;
 };
 
 export type DashboardData = {
@@ -58,5 +59,6 @@ export function getDashboardData(
     status: filters.status,
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
+    campaignId: filters.campaignId,
   });
 }

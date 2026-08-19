@@ -2,6 +2,7 @@
 
 import { startTransition, useActionState, useState } from "react";
 import { Button, Field, FormError, Input, ScrollList } from "@/components/ui";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
@@ -72,6 +73,8 @@ export function PublicOrderForm({
       v.warna.length > 0 &&
       !warnaSel[v.id],
   );
+  const bayarLebihDariTotal =
+    jumlahBayar !== "" && Number(jumlahBayar) > total;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -145,15 +148,15 @@ export function PublicOrderForm({
             <div
               key={v.id}
               className={`rounded-lg border p-3 ${
-                habis ? "border-slate-100 opacity-60" : "border-slate-200"
+                habis ? "border-slate-100 bg-slate-50" : "border-slate-200"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 shrink-0">
+                <div className={`relative h-12 w-12 shrink-0 ${habis ? "grayscale" : ""}`}>
                   <ProductImage
                     src={v.gambarUrl}
                     alt={v.namaVarian}
-                    className="h-12 w-12 rounded object-cover ring-1 ring-slate-200"
+                    className={`h-12 w-12 rounded object-cover ring-1 ring-slate-200 ${habis ? "opacity-50" : ""}`}
                     iconClassName="h-6 w-6"
                     onClick={imgs.length ? () => openPreview(0) : undefined}
                   />
@@ -169,15 +172,18 @@ export function PublicOrderForm({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-900">
+                  <p className={`truncate font-medium ${habis ? "text-slate-500" : "text-slate-900"}`}>
                     {v.namaVarian}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {formatRupiah(v.harga)} · sisa {Math.max(0, v.sisa)}
+                    {formatRupiah(v.harga)}
+                    {!habis && ` · sisa ${v.sisa}`}
                   </p>
                 </div>
                 {habis ? (
-                  <span className="text-xs font-medium text-rose-600">Habis</span>
+                  <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                    Stok Habis
+                  </span>
                 ) : (
                   <div className="flex items-center gap-1">
                     <button
@@ -259,19 +265,25 @@ export function PublicOrderForm({
         label="Jumlah yang dibayarkan"
         required
         hint={
-          jumlahBayar
-            ? `= ${formatRupiah(Number(jumlahBayar))}`
-            : "Nominal transfer sesuai bukti pembayaran."
+          bayarLebihDariTotal
+            ? undefined
+            : jumlahBayar
+              ? `= ${formatRupiah(Number(jumlahBayar))}`
+              : "Nominal transfer sesuai bukti pembayaran."
         }
       >
-        <Input
+        <CurrencyInput
           name="jumlahBayar"
-          inputMode="numeric"
           required
           value={jumlahBayar}
-          onChange={(e) => setJumlahBayar(e.target.value.replace(/\D/g, ""))}
-          placeholder="150000"
+          onValueChange={setJumlahBayar}
+          placeholder="150.000"
         />
+        {bayarLebihDariTotal && (
+          <span className="mt-1 block text-xs text-rose-600">
+            Jumlah yang dibayarkan tidak boleh lebih dari total harga.
+          </span>
+        )}
       </Field>
 
       <div className="flex items-center justify-between border-t border-slate-100 pt-3">
@@ -289,7 +301,7 @@ export function PublicOrderForm({
       <Button
         type="submit"
         className="w-full"
-        disabled={pending || !adaItem || warnaBelumLengkap}
+        disabled={pending || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}
       >
         {pending
           ? "Mengirim…"

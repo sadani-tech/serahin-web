@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { api } from "@/lib/api";
 import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; dateFrom?: string; dateTo?: string }>;
+  searchParams: Promise<{ status?: string; dateFrom?: string; dateTo?: string; campaignId?: string }>;
 }) {
   const sp = await searchParams;
   const status =
@@ -20,13 +21,17 @@ export default async function DashboardPage({
       ? (sp.status as CampaignStatus)
       : undefined;
 
-  const data = await getDashboardData({
-    status,
-    dateFrom: sp.dateFrom,
-    dateTo: sp.dateTo,
-  });
+  const [data, campaignList] = await Promise.all([
+    getDashboardData({
+      status,
+      dateFrom: sp.dateFrom,
+      dateTo: sp.dateTo,
+      campaignId: sp.campaignId,
+    }),
+    api.list<{ id: string; namaProduk: string }>("/kampanye"),
+  ]);
 
-  const adaFilter = !!(status || sp.dateFrom || sp.dateTo);
+  const adaFilter = !!(status || sp.dateFrom || sp.dateTo || sp.campaignId);
 
   return (
     <div className="space-y-6">
@@ -58,6 +63,23 @@ export default async function DashboardPage({
               {Object.entries(CAMPAIGN_STATUS_LABEL).map(([v, l]) => (
                 <option key={v} value={v}>
                   {l}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500">
+              Kampanye
+            </label>
+            <select
+              name="campaignId"
+              defaultValue={sp.campaignId ?? ""}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+            >
+              <option value="">Semua</option>
+              {campaignList.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.namaProduk}
                 </option>
               ))}
             </select>

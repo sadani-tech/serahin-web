@@ -19,6 +19,7 @@ export function VendorForm({
     kontak?: string;
     spesialisasi?: string;
     catatanUmum?: string;
+    pricelist?: string;
   };
   submitLabel: string;
 }) {
@@ -52,6 +53,16 @@ export function VendorForm({
                 defaultValue={initial?.catatanUmum}
                 rows={3}
                 placeholder="Catatan bebas tentang vendor ini"
+              />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Pricelist">
+              <Textarea
+                name="pricelist"
+                defaultValue={initial?.pricelist}
+                rows={4}
+                placeholder="Daftar harga yang diberikan vendor (bisa tempel dari WA/email)"
               />
             </Field>
           </div>

@@ -10,6 +10,7 @@ const vendorSchema = z.object({
   kontak: z.string().optional(),
   spesialisasi: z.string().optional(),
   catatanUmum: z.string().optional(),
+  pricelist: z.string().optional(),
 });
 
 export type VendorFormState = { error?: string } | undefined;
@@ -20,6 +21,7 @@ function parseVendor(formData: FormData) {
     kontak: formData.get("kontak") || undefined,
     spesialisasi: formData.get("spesialisasi") || undefined,
     catatanUmum: formData.get("catatanUmum") || undefined,
+    pricelist: formData.get("pricelist") || undefined,
   });
 }
 
