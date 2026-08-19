@@ -124,7 +124,7 @@ export default async function DashboardPage({
       </Card>
 
       {/* Kartu ringkasan */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <Card className="px-4 py-3 sm:px-5 sm:py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Kampanye aktif
@@ -155,6 +155,17 @@ export default async function DashboardPage({
             mendekati deadline
           </p>
         </Card>
+        <Link href="/verifikasi" className="block">
+          <Card className="h-full px-4 py-3 transition hover:border-sky-300 sm:px-5 sm:py-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Menunggu verifikasi
+            </p>
+            <p className={`mt-1 text-2xl font-bold ${data.menungguVerifikasi > 0 ? "text-sky-600" : "text-slate-900"}`}>
+              {data.menungguVerifikasi}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-400">pesanan baru masuk</p>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

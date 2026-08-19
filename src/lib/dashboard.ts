@@ -23,6 +23,7 @@ export type DashboardData = {
   totalCashflow: number;
   totalNilaiPesanan: number;
   jumlahKampanyeAktif: number;
+  menungguVerifikasi: number;
   activeCampaigns: {
     id: string;
     namaProduk: string;

@@ -90,13 +90,16 @@ export function PublicOrderForm({
     <>
     <form onSubmit={handleSubmit} className="space-y-4">
       {state?.error && <FormError message={state.error} />}
-      {state?.needsConfirm && state.warning && (
+      {(state?.needsConfirm || state?.needsCartConfirm) && state.warning && (
         <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
           {state.warning}
         </div>
       )}
       {state?.needsConfirm && (
         <input type="hidden" name="confirmDuplikat" value="1" />
+      )}
+      {state?.needsCartConfirm && (
+        <input type="hidden" name="confirmPerubahanKuota" value="1" />
       )}
 
       <Field label="Nama" required>
@@ -305,8 +308,8 @@ export function PublicOrderForm({
       >
         {pending
           ? "Mengirim…"
-          : state?.needsConfirm
-            ? "Ya, kirim tetap"
+          : state?.needsConfirm || state?.needsCartConfirm
+            ? "Ya, lanjutkan"
             : "Kirim Pesanan"}
       </Button>
       <p className="text-center text-xs text-slate-400">
