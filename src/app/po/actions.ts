@@ -64,6 +64,7 @@ export async function createPublicOrder(
   if (jumlahBayar <= 0) return { error: "Jumlah bayar wajib diisi." };
 
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
+  const confirmPerubahanKuota = formData.get("confirmPerubahanKuota") === "1";
 
   // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran (FR-upload-bukti)
   const fd = new FormData();
@@ -72,12 +73,13 @@ export async function createPublicOrder(
   fd.set("items", JSON.stringify(items));
   fd.set("jumlahBayar", String(jumlahBayar));
   fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
+  fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");
 
   // Bukti pembayaran opsional — dikirim hanya jika file valid dipilih
   const bukti = formData.get("buktiPembayaran");
   if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
 
-  let result: { tokenAkses?: string; needsConfirm?: boolean; warning?: string };
+  let result: { tokenAkses?: string; needsConfirm?: boolean; needsCartConfirm?: boolean; warning?: string };
   try {
     result = await api.postForm(`/public/form/${formToken}/order`, fd);
   } catch (e) {
@@ -86,6 +88,9 @@ export async function createPublicOrder(
 
   if (result.needsConfirm) {
     return { warning: result.warning, needsConfirm: true };
+  }
+  if (result.needsCartConfirm) {
+    return { warning: result.warning, needsCartConfirm: true };
   }
   redirect(`/po/sukses/${result.tokenAkses}`);
 }

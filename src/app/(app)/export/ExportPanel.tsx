@@ -10,12 +10,12 @@ import {
 type CampaignOption = { id: string; namaProduk: string };
 
 type CommonState = {
-  campaign: string;
+  campaigns: string[];
   from: string;
   to: string;
 };
 
-const EMPTY: CommonState = { campaign: "", from: "", to: "" };
+const EMPTY: CommonState = { campaigns: [], from: "", to: "" };
 
 function buildUrl(base: string, params: Record<string, string>): string {
   const sp = new URLSearchParams();
@@ -35,20 +35,25 @@ function CampaignDateFilters({
   setState: (s: CommonState) => void;
   campaigns: CampaignOption[];
 }) {
+  const toggleCampaign = (id: string) => {
+    const campaignsNext = state.campaigns.includes(id)
+      ? state.campaigns.filter((campaignId) => campaignId !== id)
+      : [...state.campaigns, id];
+    setState({ ...state, campaigns: campaignsNext });
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-3">
-      <Field label="Kampanye">
-        <Select
-          value={state.campaign}
-          onChange={(e) => setState({ ...state, campaign: e.target.value })}
-        >
-          <option value="">Semua kampanye (gabungan)</option>
-          {campaigns.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.namaProduk}
-            </option>
+      <Field label="Kampanye (boleh pilih beberapa)">
+        <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-slate-300 p-2">
+          <p className="px-1 text-xs text-slate-500">Tanpa pilihan = semua kampanye</p>
+          {campaigns.map((campaign) => (
+            <label key={campaign.id} className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-slate-50">
+              <input type="checkbox" checked={state.campaigns.includes(campaign.id)} onChange={() => toggleCampaign(campaign.id)} />
+              {campaign.namaProduk}
+            </label>
           ))}
-        </Select>
+        </div>
       </Field>
       <Field label="Dari tanggal">
         <Input
@@ -140,7 +145,7 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
               onClick={() =>
                 download(
                   buildUrl("/api/export/pesanan", {
-                    campaign: pesanan.campaign,
+                    campaign: pesanan.campaigns.join(","),
                     from: pesanan.from,
                     to: pesanan.to,
                     status: pesananStatus,
@@ -201,7 +206,7 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
               onClick={() =>
                 download(
                   buildUrl("/api/export/keuangan", {
-                    campaign: keuangan.campaign,
+                    campaign: keuangan.campaigns.join(","),
                     from: keuangan.from,
                     to: keuangan.to,
                     verifikasi: keuanganVerif,
@@ -271,7 +276,7 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
             onClick={() =>
               download(
                 buildUrl("/api/export/kontak", {
-                  campaign: kontak.campaign,
+                  campaign: kontak.campaigns.join(","),
                   from: kontak.from,
                   to: kontak.to,
                   cols: kontakCols.join(","),
