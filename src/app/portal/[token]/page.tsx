@@ -26,6 +26,7 @@ type PortalOrder = {
     namaProduk: string;
     paymentScheme: PaymentScheme;
     deskripsiPelunasan: string | null;
+    linkCheckoutShopee: string | null;
     estimasiKirim: string | null;
     timelineEntries: {
       id: string;
@@ -221,6 +222,16 @@ export default async function PortalPage({
                   {order.alamatPengiriman}
                 </p>
               )}
+              {order.metodePengiriman === "SHOPEE" && campaign.linkCheckoutShopee && (
+                <a
+                  href={campaign.linkCheckoutShopee}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 font-medium text-orange-600 underline"
+                >
+                  Checkout di Shopee →
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -247,6 +258,7 @@ export default async function PortalPage({
                 token={token}
                 sisa={billing.sisa}
                 isPelunasan={isPelunasan}
+                linkCheckoutShopee={campaign.linkCheckoutShopee}
               />
             </div>
           </div>

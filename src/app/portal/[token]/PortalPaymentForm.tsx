@@ -17,10 +17,12 @@ export function PortalPaymentForm({
   token,
   sisa,
   isPelunasan,
+  linkCheckoutShopee,
 }: {
   token: string;
   sisa: number;
   isPelunasan: boolean;
+  linkCheckoutShopee?: string | null;
 }) {
   const action = submitPortalPayment.bind(null, token);
   const [state, formAction, pending] = useActionState<
@@ -120,6 +122,32 @@ export function PortalPaymentForm({
             required
           />
         </Field>
+      )}
+
+      {isPelunasan && metode === "SHOPEE" && (
+        <div className="rounded-lg bg-orange-50 px-4 py-3 text-sm ring-1 ring-inset ring-orange-200">
+          {linkCheckoutShopee ? (
+            <>
+              <p className="text-orange-800">
+                Lakukan checkout melalui Shopee, lalu unggah bukti transfernya di
+                bawah.
+              </p>
+              <a
+                href={linkCheckoutShopee}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 font-semibold text-orange-700 underline"
+              >
+                Checkout di Shopee →
+              </a>
+            </>
+          ) : (
+            <p className="text-orange-800">
+              Silakan lakukan checkout via Shopee sesuai instruksi penjual di
+              atas, lalu unggah bukti transfernya di bawah.
+            </p>
+          )}
+        </div>
       )}
 
       <Field
