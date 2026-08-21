@@ -2,11 +2,11 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useOverlayWhilePending } from "@/hooks/useNavLoading";
-import { Button, Field, FormError, Input, Select } from "@/components/ui";
+import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { PAYMENT_TYPE_LABEL } from "@/lib/domain";
-import { PaymentScheme } from "@/lib/types";
+import { PAYMENT_TYPE_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
+import { PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { addPayment, type PaymentFormState } from "../actions";
 
 export function PaymentForm({
@@ -29,6 +29,10 @@ export function PaymentForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  const defaultJenis = scheme === "LUNAS" ? "LUNAS" : "DP";
+  const [jenis, setJenis] = useState<string>(defaultJenis);
+  const [metode, setMetode] = useState<MetodePengiriman | "">("");
+  const [alamat, setAlamat] = useState("");
   const { alert } = useConfirm();
 
   // Reset form setelah sukses (state kembali undefined tanpa error).
@@ -37,8 +41,11 @@ export function PaymentForm({
       formRef.current?.reset();
       setPreview(null);
       setFileName("");
+      setJenis(defaultJenis);
+      setMetode("");
+      setAlamat("");
     }
-  }, [state]);
+  }, [state, defaultJenis]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,7 +80,12 @@ export function PaymentForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Jenis" required>
-          <Select name="jenis" required defaultValue={jenisOptions[0]}>
+          <Select
+            name="jenis"
+            required
+            value={jenis}
+            onChange={(e) => setJenis(e.target.value)}
+          >
             {jenisOptions.map((j) => (
               <option key={j} value={j}>
                 {PAYMENT_TYPE_LABEL[j]}
@@ -134,6 +146,61 @@ export function PaymentForm({
           ) : null}
         </Field>
       </div>
+
+      {jenis === "PELUNASAN" && (
+        <div className="space-y-3 rounded-lg bg-slate-50 p-3 ring-1 ring-inset ring-slate-200">
+          <Field
+            label="Metode pengiriman"
+            required
+            hint="Sama seperti portal pembeli: Checkout Shopee atau Manual by Ekspedisi."
+          >
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[]).map(
+                (opt) => (
+                  <label
+                    key={opt}
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                      metode === opt
+                        ? "border-slate-900 bg-white ring-1 ring-slate-900"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="metodePengiriman"
+                      value={opt}
+                      checked={metode === opt}
+                      onChange={() => setMetode(opt)}
+                      required
+                      className="h-4 w-4 accent-slate-900"
+                    />
+                    <span className="font-medium text-slate-800">
+                      {METODE_PENGIRIMAN_LABEL[opt]}
+                    </span>
+                  </label>
+                ),
+              )}
+            </div>
+          </Field>
+
+          {metode === "EKSPEDISI" && (
+            <Field
+              label="Alamat pengiriman lengkap"
+              required
+              hint="Nama, Nomor HP, dan alamat lengkap untuk pengiriman ekspedisi."
+            >
+              <Textarea
+                name="alamatPengiriman"
+                value={alamat}
+                onChange={(e) => setAlamat(e.target.value)}
+                rows={3}
+                required
+                placeholder="Nama · No HP · Alamat lengkap (jalan, kecamatan, kota, kode pos)"
+              />
+            </Field>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>
