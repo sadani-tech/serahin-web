@@ -162,6 +162,27 @@ export async function addPayment(
   const bukti = formData.get("bukti");
   if (bukti instanceof File && bukti.size > 0) fd.set("bukti", bukti);
 
+  // Metode pengiriman (v1.8) — hanya relevan saat jenis PELUNASAN. Backend
+  // memvalidasi kewajiban metode/alamat sesuai jenis & pilihan.
+  if (jenis === "PELUNASAN") {
+    const metode = String(formData.get("metodePengiriman") ?? "").trim();
+    if (metode === "SHOPEE" || metode === "EKSPEDISI") {
+      fd.set("metodePengiriman", metode);
+      const alamat = String(formData.get("alamatPengiriman") ?? "").trim();
+      if (metode === "EKSPEDISI") {
+        if (!alamat) {
+          return {
+            error:
+              "Alamat pengiriman lengkap wajib diisi untuk Manual by Ekspedisi.",
+          };
+        }
+        fd.set("alamatPengiriman", alamat);
+      }
+    } else {
+      return { error: "Pilih metode pengiriman untuk pelunasan." };
+    }
+  }
+
   try {
     await api.postForm(`/pesanan/${orderId}/payments`, fd);
   } catch (e) {
