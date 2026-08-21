@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, ScrollList, Select } from "@/components/ui";
+import { Button, Select } from "@/components/ui";
 import { OrderBadge } from "@/components/badges";
 import { formatRupiah } from "@/lib/format";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
@@ -37,6 +37,22 @@ export function OrderBulkTable({
   const { startLoading, stopLoading } = useNavLoading();
   const router = useRouter();
   const headRef = useRef<HTMLInputElement>(null);
+
+  // Simpan & pulihkan posisi scroll daftar agar saat kembali dari detail
+  // pesanan (browser back atau tautan "←") tetap di baris yang dipilih —
+  // scroll internal container tidak dipulihkan otomatis oleh browser.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const storageKey = `orderlist-scroll:${campaignId}`;
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const saved = sessionStorage.getItem(storageKey);
+    if (saved) el.scrollTop = Number(saved) || 0;
+    const onScroll = () =>
+      sessionStorage.setItem(storageKey, String(el.scrollTop));
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [storageKey]);
 
   const allChecked = rows.length > 0 && selected.size === rows.length;
   const someChecked = selected.size > 0 && !allChecked;
@@ -127,7 +143,11 @@ export function OrderBulkTable({
         </div>
       )}
 
-      <ScrollList className="overflow-x-auto">
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto overflow-y-auto overscroll-contain"
+        style={{ maxHeight: "35rem" }}
+      >
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -195,7 +215,7 @@ export function OrderBulkTable({
             })}
           </tbody>
         </table>
-      </ScrollList>
+      </div>
     </div>
   );
 }
