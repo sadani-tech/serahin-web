@@ -30,6 +30,23 @@ export async function submitPortalPayment(
   fd.set("jumlahBayar", String(jumlah));
   fd.set("bukti", bukti);
 
+  // Metode pengiriman (v1.8) — hanya dikirim pada tahap pelunasan. Backend
+  // memvalidasi kewajiban metode/alamat sesuai tahap & pilihan.
+  const metode = String(formData.get("metodePengiriman") ?? "").trim();
+  if (metode === "SHOPEE" || metode === "EKSPEDISI") {
+    fd.set("metodePengiriman", metode);
+    const alamat = String(formData.get("alamatPengiriman") ?? "").trim();
+    if (metode === "EKSPEDISI") {
+      if (!alamat) {
+        return {
+          error:
+            "Alamat pengiriman lengkap wajib diisi untuk Manual by Ekspedisi.",
+        };
+      }
+      fd.set("alamatPengiriman", alamat);
+    }
+  }
+
   try {
     await api.postForm(`/public/order/${token}/payment`, fd);
   } catch (e) {

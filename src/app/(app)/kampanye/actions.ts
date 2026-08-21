@@ -96,6 +96,7 @@ export async function createCampaign(
     await api.post("/kampanye", {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
+      deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
       tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
       paymentScheme: getFormDataValue(formData, "paymentScheme") as "DP_PELUNASAN" | "LUNAS",
@@ -125,6 +126,7 @@ export async function updateCampaign(
     await api.patch(`/kampanye/${id}`, {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
+      deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
       tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
       paymentScheme: getFormDataValue(formData, "paymentScheme") as "DP_PELUNASAN" | "LUNAS",

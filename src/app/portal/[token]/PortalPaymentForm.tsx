@@ -1,14 +1,18 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { Button, Field, FormError } from "@/components/ui";
+import { Button, Field, FormError, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { formatRupiah } from "@/lib/format";
+import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
+import type { MetodePengiriman } from "@/lib/types";
 import { submitPortalPayment, type PortalPaymentState } from "../actions";
 
 // Form pelunasan/pembayaran mandiri pembeli di portal. Ditampilkan hanya bila
 // masih ada sisa tagihan & tidak ada pembayaran yang menunggu verifikasi.
+// Pada tahap pelunasan (isPelunasan), pembeli wajib memilih metode pengiriman;
+// opsi Ekspedisi mewajibkan alamat lengkap, Shopee tidak butuh alamat (v1.8).
 export function PortalPaymentForm({
   token,
   sisa,
@@ -24,11 +28,31 @@ export function PortalPaymentForm({
     FormData
   >(action, undefined);
   const [jumlah, setJumlah] = useState(String(sisa));
+  const [metode, setMetode] = useState<MetodePengiriman | "">("");
+  const [alamat, setAlamat] = useState("");
+  const [localError, setLocalError] = useState<string | undefined>();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isPelunasan) {
+      if (!metode) {
+        setLocalError("Pilih metode pengiriman terlebih dahulu.");
+        return;
+      }
+      if (metode === "EKSPEDISI" && !alamat.trim()) {
+        setLocalError(
+          "Alamat pengiriman lengkap wajib diisi untuk Manual by Ekspedisi.",
+        );
+        return;
+      }
+    }
+    setLocalError(undefined);
     const fd = new FormData(e.currentTarget);
     fd.set("jumlahBayar", jumlah);
+    if (isPelunasan && metode) {
+      fd.set("metodePengiriman", metode);
+      fd.set("alamatPengiriman", metode === "EKSPEDISI" ? alamat.trim() : "");
+    }
     startTransition(() => formAction(fd));
   }
 
@@ -43,7 +67,60 @@ export function PortalPaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {state?.error && <FormError message={state.error} />}
+      {(state?.error || localError) && (
+        <FormError message={localError ?? state?.error} />
+      )}
+
+      {isPelunasan && (
+        <Field
+          label="Metode pengiriman"
+          required
+          hint="Pilih salah satu opsi pengiriman untuk pelunasan."
+        >
+          <div className="space-y-2">
+            {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[]).map(
+              (opt) => (
+                <label
+                  key={opt}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                    metode === opt
+                      ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="metodePengirimanRadio"
+                    value={opt}
+                    checked={metode === opt}
+                    onChange={() => setMetode(opt)}
+                    className="h-4 w-4 accent-slate-900"
+                  />
+                  <span className="font-medium text-slate-800">
+                    {METODE_PENGIRIMAN_LABEL[opt]}
+                  </span>
+                </label>
+              ),
+            )}
+          </div>
+        </Field>
+      )}
+
+      {isPelunasan && metode === "EKSPEDISI" && (
+        <Field
+          label="Alamat pengiriman lengkap"
+          required
+          hint="Tulis Nama, Nomor HP, dan alamat lengkap untuk pengiriman ekspedisi."
+        >
+          <Textarea
+            value={alamat}
+            onChange={(e) => setAlamat(e.target.value)}
+            rows={4}
+            placeholder="Nama · No HP · Alamat lengkap (jalan, kecamatan, kota, kode pos)"
+            required
+          />
+        </Field>
+      )}
 
       <Field
         label="Jumlah yang ditransfer"

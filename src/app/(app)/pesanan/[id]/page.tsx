@@ -7,6 +7,7 @@ import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
 import {
   ORDER_STATUS_LABEL,
   PAYMENT_TYPE_LABEL,
+  METODE_PENGIRIMAN_LABEL,
 } from "@/lib/domain";
 import { computeBilling } from "@/lib/billing";
 import type {
@@ -15,6 +16,7 @@ import type {
   DpTipe,
   PaymentType,
   PaymentVerification,
+  MetodePengiriman,
 } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
 import { OrderStatusControl } from "./OrderStatusControl";
@@ -34,6 +36,8 @@ type OrderDetail = {
   catatan: string | null;
   alasanBatal: string | null;
   tokenAkses: string;
+  metodePengiriman: MetodePengiriman | null;
+  alamatPengiriman: string | null;
   items: {
     id: string;
     jumlah: number;
@@ -359,6 +363,26 @@ export default async function OrderDetailPage({
           <Card className="p-5">
             <CopyPortalLink token={order.tokenAkses} />
           </Card>
+          {order.metodePengiriman && (
+            <Card className="p-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Pengiriman (pelunasan)
+              </p>
+              <p className="mt-1 text-sm font-medium text-slate-900">
+                {METODE_PENGIRIMAN_LABEL[order.metodePengiriman]}
+              </p>
+              {order.metodePengiriman === "EKSPEDISI" && (
+                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                  {order.alamatPengiriman || "(Alamat belum diisi)"}
+                </p>
+              )}
+              {order.metodePengiriman === "SHOPEE" && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Pembeli checkout via Shopee — tidak memerlukan alamat manual.
+                </p>
+              )}
+            </Card>
+          )}
           {!dibatalkan && (
             <>
               <Card className="p-5">

@@ -1,5 +1,6 @@
 import {
   CampaignStatus,
+  MetodePengiriman,
   OrderStatus,
   PaymentType,
   PaymentVerification,
@@ -117,6 +118,15 @@ export const PAYMENT_VERIFICATION_BADGE: Record<PaymentVerification, string> = {
 export const PAYMENT_SCHEME_LABEL: Record<PaymentScheme, string> = {
   DP_PELUNASAN: "DP + Pelunasan",
   LUNAS: "Lunas Langsung",
+};
+
+// ---------------------------------------------------------------------------
+// Metode Pengiriman (v1.8) — pilihan pembeli saat pelunasan
+// ---------------------------------------------------------------------------
+
+export const METODE_PENGIRIMAN_LABEL: Record<MetodePengiriman, string> = {
+  SHOPEE: "Checkout Shopee",
+  EKSPEDISI: "Manual by Ekspedisi",
 };
 
 export function badge(base: string): string {
