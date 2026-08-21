@@ -27,6 +27,8 @@ export type OrderStatus =
 
 export type PaymentType = "DP" | "PELUNASAN" | "LUNAS";
 
+export type MetodePengiriman = "SHOPEE" | "EKSPEDISI";
+
 export type PaymentVerification =
   | "MENUNGGU_VERIFIKASI"
   | "TERVERIFIKASI"

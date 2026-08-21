@@ -4,14 +4,17 @@ import { api, ApiError } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
 import type { Billing } from "@/lib/billing";
 import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
-import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
-import type { OrderStatus, PaymentScheme } from "@/lib/types";
+import { PAYMENT_SCHEME_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
+import type { OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
+import { RichText } from "@/components/RichText";
 import { PortalPaymentForm } from "./PortalPaymentForm";
 
 type PortalOrder = {
   status: OrderStatus;
   alasanBatal: string | null;
+  metodePengiriman: MetodePengiriman | null;
+  alamatPengiriman: string | null;
   items: {
     id: string;
     jumlah: number;
@@ -22,6 +25,8 @@ type PortalOrder = {
   campaign: {
     namaProduk: string;
     paymentScheme: PaymentScheme;
+    deskripsiPelunasan: string | null;
+    linkCheckoutShopee: string | null;
     estimasiKirim: string | null;
     timelineEntries: {
       id: string;
@@ -76,7 +81,7 @@ export default async function PortalPage({
 
   return (
     <div className="min-h-full bg-slate-50 py-10">
-      <div className="mx-auto max-w-2xl space-y-6 px-4">
+      <div className="mx-auto min-w-0 max-w-2xl space-y-6 px-4">
         {/* Header */}
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -204,6 +209,31 @@ export default async function PortalPage({
               verifikasi Admin.
             </p>
           )}
+          {order.metodePengiriman && (
+            <div className="border-t border-slate-100 px-5 py-3 text-sm">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                Metode pengiriman
+              </p>
+              <p className="mt-0.5 font-medium text-slate-800">
+                {METODE_PENGIRIMAN_LABEL[order.metodePengiriman]}
+              </p>
+              {order.metodePengiriman === "EKSPEDISI" && order.alamatPengiriman && (
+                <p className="mt-0.5 whitespace-pre-wrap text-slate-600">
+                  {order.alamatPengiriman}
+                </p>
+              )}
+              {order.metodePengiriman === "SHOPEE" && campaign.linkCheckoutShopee && (
+                <a
+                  href={campaign.linkCheckoutShopee}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 font-medium text-orange-600 underline"
+                >
+                  Checkout di Shopee →
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Pembayaran mandiri pembeli (pelunasan) */}
@@ -219,10 +249,19 @@ export default async function PortalPage({
               </p>
             </div>
             <div className="px-5 py-4">
+              {isPelunasan && campaign.deskripsiPelunasan && (
+                <div className="mb-4 min-w-0 overflow-hidden rounded-lg bg-slate-50 p-4 ring-1 ring-inset ring-slate-200">
+                  <RichText
+                    html={campaign.deskripsiPelunasan}
+                    className="break-words"
+                  />
+                </div>
+              )}
               <PortalPaymentForm
                 token={token}
                 sisa={billing.sisa}
                 isPelunasan={isPelunasan}
+                linkCheckoutShopee={campaign.linkCheckoutShopee}
               />
             </div>
           </div>

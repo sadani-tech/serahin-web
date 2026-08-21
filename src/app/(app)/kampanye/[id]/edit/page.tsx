@@ -13,6 +13,8 @@ type CampaignDetail = {
   vendorId: string | null;
   namaProduk: string;
   deskripsi: string | null;
+  deskripsiPelunasan: string | null;
+  linkCheckoutShopee: string | null;
   tanggalBuka: string;
   tanggalTutup: string;
   estimasiProduksi: string | null;
@@ -94,6 +96,8 @@ export default async function EditCampaignPage({
           vendorId: campaign.vendorId ?? undefined,
           namaProduk: campaign.namaProduk,
           deskripsi: campaign.deskripsi ?? undefined,
+          deskripsiPelunasan: campaign.deskripsiPelunasan ?? undefined,
+          linkCheckoutShopee: campaign.linkCheckoutShopee ?? undefined,
           tanggalBuka: toDateInput(campaign.tanggalBuka),
           tanggalTutup: toDateInput(campaign.tanggalTutup),
           estimasiProduksi: toDateInput(campaign.estimasiProduksi),

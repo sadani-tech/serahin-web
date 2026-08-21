@@ -41,6 +41,8 @@ export type VendorOption = {
 export type CampaignFormValues = {
   namaProduk?: string;
   deskripsi?: string;
+  deskripsiPelunasan?: string;
+  linkCheckoutShopee?: string;
   tanggalBuka?: string;
   tanggalTutup?: string;
   estimasiProduksi?: string;
@@ -233,6 +235,33 @@ export function CampaignForm({
             />
           </Field>
         </div>
+        {scheme === "DP_PELUNASAN" && (
+          <div className="mt-4">
+            <Field
+              label="Instruksi pelunasan (v1.8)"
+              hint="Tampil di portal pembeli saat status DP Diterima. Sertakan opsi pengiriman, link checkout Shopee, dan nomor rekening TF."
+            >
+              <RichTextEditor
+                name="deskripsiPelunasan"
+                defaultValue={initial?.deskripsiPelunasan ?? ""}
+                placeholder="Halo! Tas kamu sudah bisa dilunasi. Ada dua opsi pengiriman…"
+              />
+            </Field>
+            <div className="mt-4">
+              <Field
+                label="Link Checkout Shopee"
+                hint="Ditampilkan di portal saat pembeli memilih opsi Checkout Shopee."
+              >
+                <Input
+                  name="linkCheckoutShopee"
+                  type="url"
+                  defaultValue={initial?.linkCheckoutShopee}
+                  placeholder="https://shopee.co.id/..."
+                />
+              </Field>
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="p-5">

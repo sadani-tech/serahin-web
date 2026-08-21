@@ -40,6 +40,16 @@ body {
   color: #334155;
   line-height: 1.7;
   font-size: 0.925rem;
+  max-width: 100%;
+  min-width: 0;
+  /* Cegah teks/tautan panjang menembus kotaknya (mis. instruksi pelunasan). */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.prose-serahin p,
+.prose-serahin li {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .prose-serahin > :first-child {
   margin-top: 0;
@@ -48,7 +58,7 @@ body {
   margin-bottom: 0;
 }
 .prose-serahin p {
-  margin: 0.75em 0;
+  margin: 0.5em 0;
 }
 .prose-serahin h1 {
   font-size: 1.5rem;
@@ -101,4 +111,52 @@ body {
 .prose-serahin strong {
   font-weight: 600;
   color: #0f172a;
+}
+
+/* ------------------------------------------------------------------ */
+/* Editor Quill (v1.8) — samakan tampilan dengan input Serahin lain.   */
+/* ------------------------------------------------------------------ */
+.serahin-quill .ql-toolbar.ql-snow {
+  border: 1px solid #cbd5e1;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background: #f8fafc;
+}
+.serahin-quill .ql-container.ql-snow {
+  border: 1px solid #cbd5e1;
+  border-top: none;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+.serahin-quill:focus-within .ql-toolbar.ql-snow,
+.serahin-quill:focus-within .ql-container.ql-snow {
+  border-color: #0f172a;
+}
+.serahin-quill .ql-editor {
+  min-height: 200px;
+  color: #334155;
+  line-height: 1.7;
+}
+.serahin-quill .ql-editor.ql-blank::before {
+  color: #94a3b8;
+  font-style: normal;
+}
+/* Spasi antar-paragraf rapat & konsisten dengan render prose-serahin
+   (Enter tidak lagi terasa "terlalu jauh"). */
+.serahin-quill .ql-editor p {
+  margin: 0 0 0.5em;
+}
+.serahin-quill .ql-editor p:last-child {
+  margin-bottom: 0;
+}
+/* List rapat seperti editor sebelumnya: Quill menumpuk padding pada <ol> (1.5em)
+   dan <li> (1.5em) = ~3em (terlalu jauh). Nolkan padding <ol> agar total indent
+   kembali 1.5em; marker (bullet/angka/alfabet) tetap via .ql-ui::before. */
+.serahin-quill .ql-editor ol {
+  padding-left: 0;
+}
+.serahin-quill .ql-editor li:not(.ql-direction-rtl) {
+  padding-left: 1.5em;
 }
