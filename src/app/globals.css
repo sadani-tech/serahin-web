@@ -40,6 +40,16 @@ body {
   color: #334155;
   line-height: 1.7;
   font-size: 0.925rem;
+  max-width: 100%;
+  min-width: 0;
+  /* Cegah teks/tautan panjang menembus kotaknya (mis. instruksi pelunasan). */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.prose-serahin p,
+.prose-serahin li {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .prose-serahin > :first-child {
   margin-top: 0;

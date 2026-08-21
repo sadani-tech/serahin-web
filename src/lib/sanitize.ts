@@ -47,13 +47,26 @@ const OPTIONS: sanitizeHtml.IOptions = {
 // Deteksi apakah konten sudah punya struktur baris sendiri (blok atau <br>).
 const HAS_LINE_STRUCTURE = /<(?:p|div|br|h[1-3]|ul|ol|li|blockquote)\b/i;
 
+/**
+ * Normalkan spasi non-breaking (NBSP U+00A0, narrow NBSP U+202F, & entitas
+ * `&nbsp;`) menjadi spasi biasa, dan hapus penggabung tak terlihat (word joiner
+ * U+2060, ZWNBSP/BOM U+FEFF). Konten yang di-paste dari WhatsApp/Instagram sering
+ * memakai NBSP di antara kata sehingga teks TIDAK bisa wrap dan menembus kotaknya.
+ */
+function normalizeSpaces(html: string): string {
+  return html
+    .replace(/[\u00A0\u202F]|&nbsp;|&#160;|&#xa0;/gi, " ")
+    .replace(/[\u2060\uFEFF]/g, "");
+}
+
 export function sanitizeRichText(html: string): string {
+  const spaced = normalizeSpaces(html);
   // Teks polos (mis. hasil import Excel) memakai newline "\n" untuk pindah
   // baris, tapi HTML mengabaikannya. Ubah newline ke <br> — hanya bila konten
   // belum punya struktur baris sendiri, agar tidak menghasilkan baris dobel.
-  const normalized = HAS_LINE_STRUCTURE.test(html)
-    ? html
-    : html.replace(/\r\n|\r|\n/g, "<br />");
+  const normalized = HAS_LINE_STRUCTURE.test(spaced)
+    ? spaced
+    : spaced.replace(/\r\n|\r|\n/g, "<br />");
   return sanitizeHtml(normalized, OPTIONS);
 }
 

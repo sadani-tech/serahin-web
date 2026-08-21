@@ -81,7 +81,7 @@ export default async function PortalPage({
 
   return (
     <div className="min-h-full bg-slate-50 py-10">
-      <div className="mx-auto max-w-2xl space-y-6 px-4">
+      <div className="mx-auto min-w-0 max-w-2xl space-y-6 px-4">
         {/* Header */}
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -250,8 +250,11 @@ export default async function PortalPage({
             </div>
             <div className="px-5 py-4">
               {isPelunasan && campaign.deskripsiPelunasan && (
-                <div className="mb-4 rounded-lg bg-slate-50 p-4 ring-1 ring-inset ring-slate-200">
-                  <RichText html={campaign.deskripsiPelunasan} />
+                <div className="mb-4 min-w-0 overflow-hidden rounded-lg bg-slate-50 p-4 ring-1 ring-inset ring-slate-200">
+                  <RichText
+                    html={campaign.deskripsiPelunasan}
+                    className="break-words"
+                  />
                 </div>
               )}
               <PortalPaymentForm
