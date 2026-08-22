@@ -69,13 +69,13 @@ export default async function ImportPreviewPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/import" className="text-sm text-slate-500 hover:text-slate-700">
+        <Link href="/import" className="text-sm text-sand-500 hover:text-sand-700">
           ← Batal & kembali
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Pratinjau Import
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-sand-500">
           {IMPORT_MODE_LABEL[draft.mode]} · {draft.namaFile}
           {targetNama ? ` · tujuan: ${targetNama}` : ""}
         </p>
@@ -109,8 +109,8 @@ export default async function ImportPreviewPage({
                 {v.kampanye.errors.join(", ")}
               </p>
             )}
-            <p className="font-medium text-slate-900">{v.kampanye.namaProduk}</p>
-            <p className="text-slate-600">
+            <p className="font-medium text-sand-900">{v.kampanye.namaProduk}</p>
+            <p className="text-sand-600">
               {formatRupiah(v.kampanye.harga)} ·{" "}
               {formatTanggal(v.kampanye.tanggalBuka)} –{" "}
               {formatTanggal(v.kampanye.tanggalTutup)} · {v.kampanye.paymentScheme}
@@ -202,7 +202,7 @@ function PreviewTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
             {head.map((h) => (
               <th key={h} className="px-4 py-2 font-medium">
                 {h}
@@ -211,11 +211,11 @@ function PreviewTable({
             <th className="px-4 py-2 font-medium">Keterangan</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-sand-100">
           {rows.map((r, i) => (
             <tr key={i} className={r.error ? "bg-rose-50" : ""}>
               {r.cells.map((c, j) => (
-                <td key={j} className="px-4 py-2 text-slate-700">
+                <td key={j} className="px-4 py-2 text-sand-700">
                   {c}
                 </td>
               ))}

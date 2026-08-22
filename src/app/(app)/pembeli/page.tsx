@@ -35,10 +35,10 @@ export default async function PembeliPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+        <h1 className="text-xl font-extrabold tracking-tight text-sand-900 sm:text-2xl">
           Pembeli
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-sand-500">
           Semua pembeli lintas kampanye — saring berdasarkan kampanye, status,
           atau cari nama/kontak.
         </p>

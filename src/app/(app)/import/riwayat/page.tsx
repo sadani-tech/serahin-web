@@ -43,10 +43,10 @@ export default async function RiwayatImportPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/import" className="text-sm text-slate-500 hover:text-slate-700">
+        <Link href="/import" className="text-sm text-sand-500 hover:text-sand-700">
           ← Import
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Riwayat Sesi Import
         </h1>
       </div>
@@ -61,9 +61,9 @@ export default async function RiwayatImportPage({
       <Card>
         <CardHeader title="Riwayat Migrasi Skema" subtitle="Audit migrasi otomatis, termasuk jumlah data gagal yang perlu ditinjau." />
         {migrations.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-500">Belum ada migrasi skema tercatat.</p>
+          <p className="px-5 py-6 text-sm text-sand-500">Belum ada migrasi skema tercatat.</p>
         ) : (
-          <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="px-5 py-3">Migrasi</th><th className="px-5 py-3">Kampanye</th><th className="px-5 py-3">Pesanan</th><th className="px-5 py-3">Gagal</th><th className="px-5 py-3">Detail</th></tr></thead><tbody className="divide-y">{migrations.map((migration) => <tr key={migration.id}><td className="px-5 py-3 font-medium">{migration.nama}</td><td className="px-5 py-3">{migration.jumlahKampanye}</td><td className="px-5 py-3">{migration.jumlahPesanan}</td><td className={`px-5 py-3 ${migration.jumlahGagal ? "font-medium text-rose-600" : "text-emerald-600"}`}>{migration.jumlahGagal}</td><td className="max-w-md whitespace-pre-wrap px-5 py-3 text-xs text-slate-500">{migration.gagalDetail ?? "-"}</td></tr>)}</tbody></table></div>
+          <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs uppercase text-sand-500"><th className="px-5 py-3">Migrasi</th><th className="px-5 py-3">Kampanye</th><th className="px-5 py-3">Pesanan</th><th className="px-5 py-3">Gagal</th><th className="px-5 py-3">Detail</th></tr></thead><tbody className="divide-y">{migrations.map((migration) => <tr key={migration.id}><td className="px-5 py-3 font-medium">{migration.nama}</td><td className="px-5 py-3">{migration.jumlahKampanye}</td><td className="px-5 py-3">{migration.jumlahPesanan}</td><td className={`px-5 py-3 ${migration.jumlahGagal ? "font-medium text-rose-600" : "text-emerald-600"}`}>{migration.jumlahGagal}</td><td className="max-w-md whitespace-pre-wrap px-5 py-3 text-xs text-sand-500">{migration.gagalDetail ?? "-"}</td></tr>)}</tbody></table></div>
         )}
       </Card>
     </div>

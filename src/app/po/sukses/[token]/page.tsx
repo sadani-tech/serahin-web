@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { api, ApiError } from "@/lib/api";
 import { formatRupiah } from "@/lib/format";
 import { PublicFooter } from "@/components/PublicFooter";
+import { SerahinLogo } from "@/components/brand";
 import { PortalLinkBox } from "./PortalLinkBox";
 
 export const dynamic = "force-dynamic";
@@ -46,27 +47,32 @@ export default async function PublicOrderSuccessPage({
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
 
   return (
-    <div className="min-h-full bg-slate-50 py-10">
-      <div className="mx-auto max-w-lg space-y-6 px-4">
-        <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl">
+    <div className="bg-serahin-dots relative min-h-full py-10">
+      <div
+        aria-hidden="true"
+        className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
+      />
+      <div className="relative mx-auto max-w-lg space-y-6 px-4">
+        <div className="flex flex-col items-center text-center">
+          <SerahinLogo size="md" layout="stacked" />
+          <div className="mx-auto mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-2xl ring-4 ring-brand-50">
             ✓
           </div>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-sand-900">
             Pesanan terkirim!
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-sand-500">
             Terima kasih. Pesanan Anda sedang menunggu verifikasi Admin.
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">
+        <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-lg">
+          <div className="border-b border-sand-100 px-5 py-3">
+            <h2 className="text-sm font-semibold text-sand-900">
               Ringkasan pesanan
             </h2>
           </div>
-          <dl className="divide-y divide-slate-100 text-sm">
+          <dl className="divide-y divide-sand-100 text-sm">
             <Row label="Produk" value={order.campaign.namaProduk} />
             {order.items.map((it) => (
               <Row
@@ -81,11 +87,11 @@ export default async function PublicOrderSuccessPage({
           </dl>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm font-semibold text-slate-900">
+        <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-lg">
+          <p className="mb-1 text-sm font-semibold text-sand-900">
             Pantau status pesanan Anda
           </p>
-          <p className="mb-3 text-xs text-slate-500">
+          <p className="mb-3 text-xs text-sand-500">
             Simpan link ini. Anda bisa mengecek status pesanan kapan saja tanpa
             login.
           </p>
@@ -101,8 +107,8 @@ export default async function PublicOrderSuccessPage({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between px-5 py-3">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="font-medium text-slate-900">{value}</dd>
+      <dt className="text-sand-500">{label}</dt>
+      <dd className="font-medium text-sand-900">{value}</dd>
     </div>
   );
 }

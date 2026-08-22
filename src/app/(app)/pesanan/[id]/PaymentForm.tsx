@@ -114,7 +114,7 @@ export function PaymentForm({
             accept="image/jpeg,image/png,image/webp,application/pdf"
             onChange={handleFileChange}
             required
-            className="file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm"
+            className="file:mr-3 file:rounded-md file:border-0 file:bg-sand-100 file:px-3 file:py-1 file:text-sm"
           />
           {preview ? (
             <div className="mt-2 space-y-1">
@@ -123,10 +123,10 @@ export function PaymentForm({
                 <img
                   src={preview}
                   alt="Pratinjau bukti"
-                  className="max-h-48 rounded-lg border border-slate-200"
+                  className="max-h-48 rounded-lg border border-sand-200"
                 />
               ) : (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <div className="rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-700">
                   📄 {fileName}
                 </div>
               )}
@@ -148,7 +148,7 @@ export function PaymentForm({
       </div>
 
       {jenis === "PELUNASAN" && (
-        <div className="space-y-3 rounded-lg bg-slate-50 p-3 ring-1 ring-inset ring-slate-200">
+        <div className="space-y-3 rounded-lg bg-sand-50 p-3 ring-1 ring-inset ring-sand-200">
           <Field
             label="Metode pengiriman"
             required
@@ -161,8 +161,8 @@ export function PaymentForm({
                     key={opt}
                     className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
                       metode === opt
-                        ? "border-slate-900 bg-white ring-1 ring-slate-900"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                        ? "border-brand-500 bg-white ring-1 ring-brand-500"
+                        : "border-sand-200 bg-white hover:border-sand-300"
                     }`}
                   >
                     <input
@@ -172,9 +172,9 @@ export function PaymentForm({
                       checked={metode === opt}
                       onChange={() => setMetode(opt)}
                       required
-                      className="h-4 w-4 accent-slate-900"
+                      className="h-4 w-4 accent-brand-600"
                     />
-                    <span className="font-medium text-slate-800">
+                    <span className="font-medium text-sand-800">
                       {METODE_PENGIRIMAN_LABEL[opt]}
                     </span>
                   </label>

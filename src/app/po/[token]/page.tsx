@@ -7,6 +7,7 @@ import type { PaymentScheme } from "@/lib/types";
 import { RichText } from "@/components/RichText";
 import { PublicFaq } from "@/components/PublicFaq";
 import { PublicFooter } from "@/components/PublicFooter";
+import { SerahinLogo } from "@/components/brand";
 import { isRichTextEmpty } from "@/lib/sanitize";
 import { PublicOrderForm } from "./PublicOrderForm";
 
@@ -54,35 +55,55 @@ export default async function PublicFormPage({
   const adaSisa = data.variants.some((v) => v.sisa > 0);
 
   return (
-    <div className="min-h-full bg-slate-50 py-10">
-      <div className="mx-auto max-w-lg space-y-6 px-4">
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Serahin · Formulir Pre-Order
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+    <div className="bg-serahin-dots relative min-h-full py-10">
+      <div
+        aria-hidden="true"
+        className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
+      />
+      <div className="relative mx-auto max-w-lg space-y-6 px-4">
+        <div className="flex flex-col items-center text-center">
+          <SerahinLogo size="md" layout="stacked" />
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 ring-1 ring-brand-200">
+            Formulir Pre-Order
+          </span>
+          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-sand-900">
             {data.namaProduk}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1.5 text-sm font-semibold text-sand-600">
             {formatRupiah(data.harga)} / unit ·{" "}
             {PAYMENT_SCHEME_LABEL[data.paymentScheme]}
           </p>
           {data.tanggalTutup && (
-            <p className="mt-0.5 text-xs text-slate-400">
-              PO ditutup: {formatTanggal(data.tanggalTutup)}
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-sun-100 px-3 py-1 text-xs font-bold text-sun-800 ring-1 ring-sun-600/25">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3.5 w-3.5"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <polyline points="12 7 12 12 15 14" />
+              </svg>
+              PO ditutup {formatTanggal(data.tanggalTutup)}
             </p>
           )}
         </div>
 
         {data.deskripsi && !isRichTextEmpty(data.deskripsi) && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-sm">
             <RichText html={data.deskripsi} />
           </div>
         )}
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-lg">
+          <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
+          <div className="p-6">
           {!data.bukaPesanan ? (
-            <p className="text-center text-sm text-slate-600">
+            <p className="text-center text-sm text-sand-600">
               Maaf, formulir pesanan untuk kampanye ini sedang tidak aktif.
             </p>
           ) : !adaSisa ? (
@@ -92,9 +113,10 @@ export default async function PublicFormPage({
           ) : (
             <PublicOrderForm formToken={token} variants={data.variants} />
           )}
+          </div>
         </div>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-sand-500">
           Pesanan Anda akan diverifikasi Admin terlebih dahulu. Setelah kirim,
           Anda akan mendapat link untuk memantau status pesanan.
         </p>

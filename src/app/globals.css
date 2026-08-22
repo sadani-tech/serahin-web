@@ -1,17 +1,165 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+/* ==================================================================== */
+/* Serahin Design System v1.9 — "Pesan hari ini, terima dengan hati"     */
+/* -------------------------------------------------------------------- */
+/* Palet brand:                                                          */
+/*   Hijau  #3D7940  → primary   (identitas, aksi utama)                 */
+/*   Oranye #F57223  → accent    (sorotan, CTA sekunder, energi)         */
+/*   Krem   #F1F5DC  → surface   (latar hangat khas Serahin)             */
+/*   Kuning #FFD600  → sun       (highlight ceria, indikator aktif)      */
+/*                                                                       */
+/* Semua pasangan warna teks/latar di bawah sudah diverifikasi kontras   */
+/* WCAG AA (>=4.5 teks kecil, >=3.0 elemen UI). CATATAN PENTING:         */
+/* oranye brand (accent-500) HANYA aman dengan teks GELAP (5.60);        */
+/* untuk tombol solid berteks putih pakai accent-600 (4.56).             */
+/* ==================================================================== */
+
+@theme {
+  /* ---- Netral hangat "sand" (menggantikan slate bawaan Tailwind) ---- */
+  /* Semua utility slate-* di seluruh aplikasi otomatis ikut palet ini. */
+  --color-slate-50: #fafaf4;
+  --color-slate-100: #f2f4e4;
+  --color-slate-200: #e3e7d0;
+  --color-slate-300: #cbd2b4;
+  --color-slate-400: #8a9673;
+  --color-slate-500: #5f6b55;
+  --color-slate-600: #4b5643;
+  --color-slate-700: #3b4435;
+  --color-slate-800: #2c3328;
+  --color-slate-900: #1d2319;
+  --color-slate-950: #121710;
+
+  /* ---- Alias eksplisit: sand-* (sama dengan slate, nama lebih jelas) ---- */
+  --color-sand-50: #fafaf4;
+  --color-sand-100: #f2f4e4;
+  --color-sand-200: #e3e7d0;
+  --color-sand-300: #cbd2b4;
+  --color-sand-400: #8a9673;
+  --color-sand-500: #5f6b55;
+  --color-sand-600: #4b5643;
+  --color-sand-700: #3b4435;
+  --color-sand-800: #2c3328;
+  --color-sand-900: #1d2319;
+
+  /* ---- Hijau brand (primary) ---- */
+  --color-brand-50: #eff6ef;
+  --color-brand-100: #d8ead9;
+  --color-brand-200: #b4d6b6;
+  --color-brand-300: #88bf8b;
+  --color-brand-400: #5a9f5e;
+  --color-brand-500: #3d7940;
+  --color-brand-600: #336635;
+  --color-brand-700: #2a532c;
+  --color-brand-800: #224324;
+  --color-brand-900: #1b351d;
+
+  /* emerald-* dipetakan ke hijau brand agar status "sukses/lunas" senada */
+  --color-emerald-50: #eff6ef;
+  --color-emerald-100: #d8ead9;
+  --color-emerald-200: #b4d6b6;
+  --color-emerald-300: #88bf8b;
+  --color-emerald-400: #5a9f5e;
+  --color-emerald-500: #3d7940;
+  --color-emerald-600: #336635;
+  --color-emerald-700: #2a532c;
+  --color-emerald-800: #224324;
+  --color-emerald-900: #1b351d;
+  --color-green-500: #3d7940;
+  --color-green-600: #336635;
+
+  /* ---- Oranye aksen ---- */
+  --color-accent-50: #fef4ed;
+  --color-accent-100: #fde3d0;
+  --color-accent-200: #fbc5a1;
+  --color-accent-300: #f9a26d;
+  --color-accent-400: #f78a45;
+  --color-accent-500: #f57223;
+  --color-accent-600: #c94f0f;
+  --color-accent-700: #9c3e0c;
+  --color-accent-800: #8e370c;
+  --color-accent-900: #742f0d;
+
+  --color-orange-50: #fef4ed;
+  --color-orange-100: #fde3d0;
+  --color-orange-200: #fbc5a1;
+  --color-orange-300: #f9a26d;
+  --color-orange-400: #f78a45;
+  --color-orange-500: #f57223;
+  --color-orange-600: #c94f0f;
+  --color-orange-700: #9c3e0c;
+  --color-orange-800: #8e370c;
+  --color-orange-900: #742f0d;
+
+  /* ---- Kuning matahari ---- */
+  --color-sun-50: #fffce5;
+  --color-sun-100: #fff7bf;
+  --color-sun-200: #ffee80;
+  --color-sun-300: #ffe440;
+  --color-sun-400: #ffd600;
+  --color-sun-500: #e6be00;
+  --color-sun-600: #b89600;
+  --color-sun-700: #8a7000;
+  --color-sun-800: #5c4b00;
+  --color-sun-900: #3d3200;
+
+  /* amber-* (dipakai luas utk peringatan) dipetakan ke kuning brand */
+  --color-amber-50: #fffce5;
+  --color-amber-100: #fff7bf;
+  --color-amber-200: #ffee80;
+  --color-amber-300: #ffe440;
+  --color-amber-400: #ffd600;
+  --color-amber-500: #e6be00;
+  --color-amber-600: #b89600;
+  --color-amber-700: #8a7000;
+  --color-amber-800: #5c4b00;
+  --color-amber-900: #3d3200;
+  --color-yellow-400: #ffd600;
+  --color-yellow-500: #e6be00;
+
+  /* ---- Merah bahaya (dihangatkan agar menyatu dgn palet) ---- */
+  --color-rose-50: #fef2f2;
+  --color-rose-100: #fde0dd;
+  --color-rose-200: #fac2bd;
+  --color-rose-300: #f4988f;
+  --color-rose-400: #ea6a5e;
+  --color-rose-500: #dc4536;
+  --color-rose-600: #c1321f;
+  --color-rose-700: #9f2718;
+  --color-rose-800: #822318;
+  --color-rose-900: #6c221a;
+  --color-red-500: #dc4536;
+  --color-red-600: #c1321f;
+
+  /* Krem brand murni — dipakai utk panel & latar publik */
+  --color-cream: #f1f5dc;
+  --color-cream-soft: #f7f9ec;
+
+  /* ---- Tipografi ---- */
+  --font-sans:
+    var(--font-nunito), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---- Radius: geometri membulat mengikuti logo ---- */
+  --radius-lg: 0.7rem;
+  --radius-xl: 0.95rem;
+  --radius-2xl: 1.35rem;
+  --radius-3xl: 1.9rem;
+
+  /* ---- Bayangan bernuansa hangat (bukan hitam netral) ---- */
+  --shadow-sm: 0 1px 2px 0 rgb(45 51 40 / 0.06);
+  --shadow-md:
+    0 4px 10px -2px rgb(45 51 40 / 0.08), 0 2px 4px -2px rgb(45 51 40 / 0.05);
+  --shadow-lg:
+    0 12px 24px -6px rgb(45 51 40 / 0.1), 0 4px 8px -4px rgb(45 51 40 / 0.06);
+  --shadow-brand: 0 6px 16px -4px rgb(61 121 64 / 0.32);
+  --shadow-accent: 0 6px 16px -4px rgb(245 114 35 / 0.3);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+:root {
+  --background: #fafaf4;
+  --foreground: #1d2319;
 }
 
 body {
@@ -19,6 +167,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 html {
@@ -30,14 +179,88 @@ html {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Prevent pull-to-refresh on mobile */
-body {
-  overscroll-behavior-y: none;
+/* ------------------------------------------------------------------ */
+/* Ciri khas Serahin — motif & aksen dekoratif                          */
+/* ------------------------------------------------------------------ */
+
+/* Latar bertekstur titik halus: dipakai pada area publik & hero login.
+   Memberi kedalaman tanpa mengganggu keterbacaan. */
+.bg-serahin-dots {
+  background-color: var(--color-cream);
+  background-image: radial-gradient(
+    circle at center,
+    rgb(61 121 64 / 0.09) 1.5px,
+    transparent 1.6px
+  );
+  background-size: 18px 18px;
 }
 
-/* Styling konten rich-text (v1.6 CMS) — tanpa plugin typography. */
+/* Pita gradien brand — aksen tipis di puncak kartu/halaman penting. */
+.bg-serahin-ribbon {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-brand-500) 0%,
+    var(--color-brand-400) 35%,
+    var(--color-sun-400) 68%,
+    var(--color-accent-500) 100%
+  );
+}
+
+/* Sorotan "sinar matahari" di belakang elemen hero (mengikuti logo). */
+.bg-serahin-sunburst {
+  background-image: radial-gradient(
+    ellipse 70% 55% at 50% 0%,
+    rgb(255 214 0 / 0.28) 0%,
+    rgb(255 214 0 / 0.08) 45%,
+    transparent 72%
+  );
+}
+
+/* Teks dengan garis bawah kuning ala stabilo — penegas judul brand. */
+.underline-sun {
+  background-image: linear-gradient(
+    transparent 62%,
+    rgb(255 214 0 / 0.55) 62%
+  );
+  background-repeat: no-repeat;
+}
+
+/* Fokus keyboard konsisten & jelas di seluruh aplikasi. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 0.35rem;
+}
+
+/* Animasi masuk lembut untuk kartu & panel. */
+@keyframes serahin-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: serahin-rise 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-rise {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Styling konten rich-text (v1.6 CMS) — tanpa plugin typography.       */
+/* ------------------------------------------------------------------ */
 .prose-serahin {
-  color: #334155;
+  color: var(--color-sand-700);
   line-height: 1.7;
   font-size: 0.925rem;
   max-width: 100%;
@@ -62,20 +285,22 @@ body {
 }
 .prose-serahin h1 {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  color: var(--color-sand-900);
   margin: 1em 0 0.5em;
+  letter-spacing: -0.01em;
 }
 .prose-serahin h2 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-sand-900);
   margin: 1em 0 0.5em;
+  letter-spacing: -0.01em;
 }
 .prose-serahin h3 {
   font-size: 1.1rem;
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 700;
+  color: var(--color-sand-900);
   margin: 1em 0 0.5em;
 }
 .prose-serahin ul,
@@ -92,56 +317,85 @@ body {
 .prose-serahin li {
   margin: 0.25em 0;
 }
+.prose-serahin li::marker {
+  color: var(--color-brand-500);
+}
 .prose-serahin a {
-  color: #0f766e;
+  color: var(--color-brand-700);
   text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+.prose-serahin a:hover {
+  color: var(--color-accent-700);
 }
 .prose-serahin img {
   max-width: 100%;
   height: auto;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   margin: 0.75em 0;
 }
 .prose-serahin blockquote {
-  border-left: 3px solid #cbd5e1;
-  padding-left: 1em;
-  color: #64748b;
+  border-left: 3px solid var(--color-brand-300);
+  background: var(--color-brand-50);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.5em 1em;
+  color: var(--color-sand-600);
   margin: 0.75em 0;
 }
 .prose-serahin strong {
-  font-weight: 600;
-  color: #0f172a;
+  font-weight: 700;
+  color: var(--color-sand-900);
 }
 
 /* ------------------------------------------------------------------ */
 /* Editor Quill (v1.8) — samakan tampilan dengan input Serahin lain.   */
 /* ------------------------------------------------------------------ */
 .serahin-quill .ql-toolbar.ql-snow {
-  border: 1px solid #cbd5e1;
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
-  background: #f8fafc;
+  border: 1px solid var(--color-sand-300);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  background: var(--color-sand-50);
 }
 .serahin-quill .ql-container.ql-snow {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-sand-300);
   border-top: none;
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   font-family: inherit;
   font-size: 0.875rem;
+  background: #fff;
 }
 .serahin-quill:focus-within .ql-toolbar.ql-snow,
 .serahin-quill:focus-within .ql-container.ql-snow {
-  border-color: #0f172a;
+  border-color: var(--color-brand-500);
 }
 .serahin-quill .ql-editor {
   min-height: 200px;
-  color: #334155;
+  color: var(--color-sand-700);
   line-height: 1.7;
 }
 .serahin-quill .ql-editor.ql-blank::before {
-  color: #94a3b8;
+  color: var(--color-sand-400);
   font-style: normal;
+}
+/* Ikon toolbar mengikuti warna brand saat aktif/hover. */
+.serahin-quill .ql-snow .ql-stroke {
+  stroke: var(--color-sand-600);
+}
+.serahin-quill .ql-snow .ql-fill {
+  fill: var(--color-sand-600);
+}
+.serahin-quill .ql-snow .ql-picker {
+  color: var(--color-sand-600);
+}
+.serahin-quill .ql-snow button:hover .ql-stroke,
+.serahin-quill .ql-snow button.ql-active .ql-stroke {
+  stroke: var(--color-brand-600);
+}
+.serahin-quill .ql-snow button:hover .ql-fill,
+.serahin-quill .ql-snow button.ql-active .ql-fill {
+  fill: var(--color-brand-600);
 }
 /* Spasi antar-paragraf rapat & konsisten dengan render prose-serahin
    (Enter tidak lagi terasa "terlalu jauh"). */

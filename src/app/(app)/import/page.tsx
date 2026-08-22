@@ -14,16 +14,16 @@ export default async function ImportPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
             Import Data Historis
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-sand-500">
             Masukkan riwayat kampanye & pesanan lama secara massal via Excel/CSV.
           </p>
         </div>
         <Link
           href="/import/riwayat"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className="text-sm font-medium text-sand-600 hover:text-sand-900"
         >
           Riwayat sesi import →
         </Link>
@@ -51,7 +51,7 @@ export default async function ImportPage() {
         </Card>
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-sand-400">
         Data akan ditampilkan sebagai pratinjau lebih dulu sebelum benar-benar
         masuk ke sistem. Baris bermasalah bisa dilewati, dan seluruh sesi dapat
         di-rollback dari halaman Riwayat.

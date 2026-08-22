@@ -187,19 +187,19 @@ export default async function CampaignDetailPage({
       <div>
         <Link
           href="/kampanye"
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← Daftar kampanye
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
                 {campaign.namaProduk}
               </h1>
               <CampaignBadge status={campaign.status} />
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-sand-500">
               {formatRupiah(campaign.harga)} / unit ·{" "}
               {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]}
               {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
@@ -226,7 +226,7 @@ export default async function CampaignDetailPage({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-sand-200">
         {(
           [
             ["info", "Info & Status"],
@@ -239,8 +239,8 @@ export default async function CampaignDetailPage({
             href={tabHref(t)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition ${
               tab === t
-                ? "border-slate-900 text-slate-900"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+                ? "border-brand-500 text-sand-900"
+                : "border-transparent text-sand-500 hover:text-sand-700"
             }`}
           >
             {label}
@@ -275,10 +275,10 @@ export default async function CampaignDetailPage({
                   }
                 />
                 <div className="col-span-2">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-sand-500">
                     Deskripsi
                   </dt>
-                  <dd className="mt-1 text-slate-700">
+                  <dd className="mt-1 text-sand-700">
                     {campaign.deskripsi ? (
                       <RichText html={campaign.deskripsi} />
                     ) : (
@@ -294,7 +294,7 @@ export default async function CampaignDetailPage({
                 title="Varian & kuota"
                 subtitle={`Total terisi ${kuotaTerisi} dari ${kuotaTotal} kuota`}
               />
-              <ScrollList className="divide-y divide-slate-100">
+              <ScrollList className="divide-y divide-sand-100">
                 {campaign.variants.map((v) => {
                   const terisi = terisiPerVarian.get(v.id) ?? 0;
                   const persen = v.kuotaMaks
@@ -304,9 +304,9 @@ export default async function CampaignDetailPage({
                   return (
                     <div key={v.id} className="px-5 py-3">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-slate-800">
+                        <span className="font-medium text-sand-800">
                           {v.namaVarian}
-                          <span className="ml-2 font-normal text-slate-500">
+                          <span className="ml-2 font-normal text-sand-500">
                             {formatRupiah(v.harga)}
                           </span>
                           {v.hargaPerluTinjau && (
@@ -315,14 +315,14 @@ export default async function CampaignDetailPage({
                             </span>
                           )}
                         </span>
-                        <span className={penuh ? "text-rose-600" : "text-slate-600"}>
+                        <span className={penuh ? "text-rose-600" : "text-sand-600"}>
                           {terisi} / {v.kuotaMaks}
                           {penuh && " · penuh"}
                         </span>
                       </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-sand-100">
                         <div
-                          className={`h-full rounded-full ${penuh ? "bg-rose-500" : "bg-slate-900"}`}
+                          className={`h-full rounded-full ${penuh ? "bg-rose-500" : "bg-brand-600"}`}
                           style={{ width: `${persen}%` }}
                         />
                       </div>
@@ -336,11 +336,11 @@ export default async function CampaignDetailPage({
           <div>
             <Card className="p-5">
               <StatusControl campaignId={id} current={campaign.status} />
-              <div className="mt-4 border-t border-slate-100 pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div className="mt-4 border-t border-sand-100 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
                   Alur status
                 </p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-sand-600">
                   {CAMPAIGN_STATUS_LABEL.OPEN} → {CAMPAIGN_STATUS_LABEL.CLOSED} →{" "}
                   {CAMPAIGN_STATUS_LABEL.PRODUKSI} →{" "}
                   {CAMPAIGN_STATUS_LABEL.SIAP_KIRIM} →{" "}
@@ -361,14 +361,14 @@ export default async function CampaignDetailPage({
 
             {/* Vendor & evaluasi (FR-7) */}
             <Card className="mt-6 p-5">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">
+              <h3 className="mb-3 text-sm font-semibold text-sand-900">
                 Vendor
               </h3>
               {campaign.vendor ? (
                 <>
                   <Link
                     href={`/vendor/${campaign.vendor.id}`}
-                    className="font-medium text-slate-900 hover:underline"
+                    className="font-medium text-sand-900 hover:underline"
                   >
                     {campaign.vendor.nama}
                   </Link>
@@ -378,14 +378,14 @@ export default async function CampaignDetailPage({
                     )}
                   </p>
 
-                  <div className="mt-4 border-t border-slate-100 pt-4">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <div className="mt-4 border-t border-sand-100 pt-4">
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-sand-500">
                       {campaign.evaluation
                         ? "Evaluasi vendor"
                         : "Isi evaluasi vendor"}
                     </p>
                     {campaign.status !== "SELESAI" && !campaign.evaluation && (
-                      <p className="mb-2 text-xs text-slate-500">
+                      <p className="mb-2 text-xs text-sand-500">
                         Biasanya diisi setelah kampanye berstatus Selesai.
                       </p>
                     )}
@@ -405,7 +405,7 @@ export default async function CampaignDetailPage({
                       }
                     />
                     {campaign.evaluation && (
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs text-sand-500">
                         {KETEPATAN_LABEL[campaign.evaluation.ketepatanWaktu]} ·{" "}
                         {KUALITAS_LABEL[campaign.evaluation.kesesuaianKualitas]}
                       </p>
@@ -413,11 +413,11 @@ export default async function CampaignDetailPage({
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-sand-500">
                   Belum ada vendor.{" "}
                   <Link
                     href={`/kampanye/${id}/edit`}
-                    className="text-slate-700 underline"
+                    className="text-sand-700 underline"
                   >
                     Pilih vendor
                   </Link>{" "}
@@ -441,16 +441,16 @@ export default async function CampaignDetailPage({
             }
           />
           {/* Filter */}
-          <form className="flex flex-wrap items-end gap-3 border-b border-slate-100 px-5 py-4">
+          <form className="flex flex-wrap items-end gap-3 border-b border-sand-100 px-5 py-4">
             <input type="hidden" name="tab" value="pesanan" />
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">
+              <label className="mb-1 block text-xs font-medium text-sand-500">
                 Status
               </label>
               <select
                 name="status"
                 defaultValue={filterStatus ?? ""}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
               >
                 <option value="">Semua status</option>
                 {Object.entries(ORDER_STATUS_LABEL).map(([v, l]) => (
@@ -461,13 +461,13 @@ export default async function CampaignDetailPage({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">
+              <label className="mb-1 block text-xs font-medium text-sand-500">
                 Varian
               </label>
               <select
                 name="variant"
                 defaultValue={filterVariant ?? ""}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+                className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
               >
                 <option value="">Semua varian</option>
                 {campaign.variants.map((v) => (
@@ -479,14 +479,14 @@ export default async function CampaignDetailPage({
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+              className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
             >
               Terapkan
             </button>
             {(filterStatus || filterVariant) && (
               <Link
                 href={tabHref("pesanan")}
-                className="px-2 py-1.5 text-sm text-slate-500 hover:text-slate-700"
+                className="px-2 py-1.5 text-sm text-sand-500 hover:text-sand-700"
               >
                 Reset
               </Link>
@@ -516,23 +516,23 @@ export default async function CampaignDetailPage({
                 <ol className="relative space-y-5 px-6 py-5">
                   {campaign.timelineEntries.map((e) => (
                     <li key={e.id} className="relative pl-6">
-                      <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-slate-900 ring-4 ring-white" />
+                      <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-slate-900">
+                        <p className="font-medium text-sand-900">
                           {e.judulUpdate}
                         </p>
                         {e.otomatis && (
-                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-500">
+                          <span className="rounded bg-sand-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-sand-500">
                             otomatis
                           </span>
                         )}
                       </div>
                       {e.catatan && (
-                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-600">
+                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-sand-600">
                           {e.catatan}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-sand-400">
                         {formatWaktu(e.createdAt)}
                         {e.dibuatOleh?.name ? ` · ${e.dibuatOleh.name}` : ""}
                       </p>
@@ -545,7 +545,7 @@ export default async function CampaignDetailPage({
           </div>
           <div>
             <Card className="p-5">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">
+              <h3 className="mb-3 text-sm font-semibold text-sand-900">
                 Tambah update
               </h3>
               <TimelineForm campaignId={id} />
@@ -566,10 +566,10 @@ function Info({
 }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      <dt className="text-xs font-medium uppercase tracking-wide text-sand-500">
         {label}
       </dt>
-      <dd className="mt-0.5 text-slate-700">{value}</dd>
+      <dd className="mt-0.5 text-sand-700">{value}</dd>
     </div>
   );
 }

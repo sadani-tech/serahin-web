@@ -21,7 +21,7 @@ export function OrderStatusControl({
   return (
     <form action={action} className="space-y-3">
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-sand-700">
           Ubah status pesanan
         </label>
         <Select

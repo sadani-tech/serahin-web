@@ -61,7 +61,7 @@ export function VariantImagesInput({
               <img
                 src={url}
                 alt={`Gambar ${i + 1}`}
-                className="h-16 w-16 rounded object-cover ring-1 ring-slate-200"
+                className="h-16 w-16 rounded object-cover ring-1 ring-sand-200"
               />
               <button
                 type="button"
@@ -72,7 +72,7 @@ export function VariantImagesInput({
                 ×
               </button>
               {i === 0 && (
-                <span className="absolute inset-x-0 bottom-0 rounded-b bg-slate-900/70 py-0.5 text-center text-[9px] font-medium text-white">
+                <span className="absolute inset-x-0 bottom-0 rounded-b bg-sand-900/70 py-0.5 text-center text-[9px] font-medium text-white">
                   Utama
                 </span>
               )}
@@ -92,8 +92,8 @@ export function VariantImagesInput({
             }}
             className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
               mode === m
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-brand-600 text-white"
+                : "bg-sand-100 text-sand-600 hover:bg-sand-200"
             }`}
           >
             {m === "upload" ? "Unggah" : "Tautan"}
@@ -121,7 +121,7 @@ export function VariantImagesInput({
               add(link);
               setLink("");
             }}
-            className="shrink-0 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-700"
+            className="shrink-0 rounded-lg bg-brand-600 px-3 text-sm font-medium text-white hover:bg-brand-700"
           >
             Tambah
           </button>
@@ -132,11 +132,11 @@ export function VariantImagesInput({
           accept="image/jpeg,image/png,image/webp"
           onChange={handleFile}
           disabled={uploading}
-          className="file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm"
+          className="file:mr-3 file:rounded-md file:border-0 file:bg-sand-100 file:px-3 file:py-1 file:text-sm"
         />
       )}
 
-      {uploading && <p className="text-xs text-slate-500">Mengunggah…</p>}
+      {uploading && <p className="text-xs text-sand-500">Mengunggah…</p>}
       {error && <p className="text-xs text-rose-600">{error}</p>}
     </div>
   );

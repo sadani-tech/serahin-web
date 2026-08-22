@@ -39,14 +39,14 @@ export function FormPublikControl({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <span className="text-xs font-medium uppercase tracking-wide text-sand-500">
           Formulir PO publik
         </span>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             efektifAktif
               ? "bg-emerald-100 text-emerald-800"
-              : "bg-slate-200 text-slate-600"
+              : "bg-sand-200 text-sand-600"
           }`}
         >
           {efektifAktif ? "Aktif" : "Nonaktif"}
@@ -54,7 +54,7 @@ export function FormPublikControl({
       </div>
 
       {!bisaAktif && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-sand-500">
           Form otomatis nonaktif karena kampanye tidak lagi berstatus Open.
         </p>
       )}
@@ -64,7 +64,7 @@ export function FormPublikControl({
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="flex-1 rounded-lg border border-sand-300 bg-sand-50 px-3 py-2 text-xs text-sand-700"
         />
         <Button type="button" variant="secondary" onClick={copy}>
           {copied ? "Tersalin ✓" : "Salin"}

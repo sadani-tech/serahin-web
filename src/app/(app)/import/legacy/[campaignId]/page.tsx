@@ -26,14 +26,14 @@ export default async function LegacyImportPage({
       <div>
         <Link
           href={`/kampanye/${campaignId}`}
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← {campaign.namaProduk}
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Import Format Lawas
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-sand-500">
           Untuk data mentah ekspor Google Form (kolom gabungan) ke kampanye{" "}
           {campaign.namaProduk}.
         </p>

@@ -23,7 +23,7 @@ export function NavigationProgress() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-1.5 z-50 bg-slate-900 animate-progress">
+    <div className="bg-serahin-ribbon fixed top-0 left-0 right-0 h-1.5 z-50 animate-progress">
       <style>{`
         @keyframes progress {
           0% { transform: translateX(-100%); }

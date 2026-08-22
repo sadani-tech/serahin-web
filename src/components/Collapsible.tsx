@@ -21,9 +21,9 @@ export function Collapsible({
         className="flex w-full items-center justify-between gap-2 text-left"
         aria-expanded={open}
       >
-        <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+        <h4 className="text-sm font-semibold text-sand-900">{title}</h4>
         <svg
-          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-sand-500 transition-transform ${open ? "rotate-180" : ""}`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

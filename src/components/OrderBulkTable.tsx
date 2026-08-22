@@ -109,8 +109,8 @@ export function OrderBulkTable({
     <div>
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 bg-slate-50 px-5 py-3">
-          <span className="text-sm font-medium text-slate-700">
+        <div className="flex flex-wrap items-center gap-3 border-b border-sand-100 bg-sand-50 px-5 py-3">
+          <span className="text-sm font-medium text-sand-700">
             {selected.size} dipilih
           </span>
           <Select
@@ -136,7 +136,7 @@ export function OrderBulkTable({
           <button
             type="button"
             onClick={() => setSelected(new Set())}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            className="text-sm text-sand-500 hover:text-sand-700"
           >
             Batal
           </button>
@@ -150,14 +150,14 @@ export function OrderBulkTable({
       >
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
               <th className="px-5 py-3">
                 <input
                   ref={headRef}
                   type="checkbox"
                   checked={allChecked}
                   onChange={toggleAll}
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded border-sand-300"
                   aria-label="Pilih semua"
                 />
               </th>
@@ -168,40 +168,40 @@ export function OrderBulkTable({
               <th className="px-5 py-3 font-medium">Sisa tagihan</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-sand-100">
             {rows.map((o) => {
               const checked = selected.has(o.id);
               return (
                 <tr
                   key={o.id}
-                  className={checked ? "bg-slate-50" : "hover:bg-slate-50"}
+                  className={checked ? "bg-sand-50" : "hover:bg-sand-50"}
                 >
                   <td className="px-5 py-3">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(o.id)}
-                      className="h-4 w-4 rounded border-slate-300"
+                      className="h-4 w-4 rounded border-sand-300"
                       aria-label={`Pilih ${o.namaPembeli}`}
                     />
                   </td>
                   <td className="px-5 py-3">
                     <Link
                       href={`/pesanan/${o.id}`}
-                      className="font-medium text-slate-900 hover:underline"
+                      className="font-medium text-sand-900 hover:underline"
                     >
                       {o.namaPembeli}
                     </Link>
-                    <div className="text-xs text-slate-500">{o.kontak}</div>
+                    <div className="text-xs text-sand-500">{o.kontak}</div>
                   </td>
-                  <td className="px-5 py-3 text-slate-700">{o.varianLabel}</td>
-                  <td className="px-5 py-3 text-slate-700">{o.totalQty}</td>
+                  <td className="px-5 py-3 text-sand-700">{o.varianLabel}</td>
+                  <td className="px-5 py-3 text-sand-700">{o.totalQty}</td>
                   <td className="px-5 py-3">
                     <OrderBadge status={o.status} />
                   </td>
                   <td className="px-5 py-3">
                     {!o.aktif ? (
-                      <span className="text-slate-400">-</span>
+                      <span className="text-sand-400">-</span>
                     ) : o.sisa > 0 ? (
                       <span className="font-medium text-rose-600">
                         {formatRupiah(o.sisa)}

@@ -58,7 +58,7 @@ export function LegacyUploadForm({ campaignId }: { campaignId: string }) {
           type="file"
           accept=".xlsx,.xls,.csv"
           required
-          className="file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm"
+          className="file:mr-3 file:rounded-md file:border-0 file:bg-sand-100 file:px-3 file:py-1 file:text-sm"
         />
       </Field>
 

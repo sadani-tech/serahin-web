@@ -145,16 +145,16 @@ function DialogCard({
       className="fixed inset-0 z-[110] flex items-center justify-center p-4"
     >
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-sand-900/50 backdrop-blur-sm"
         onClick={onCancel}
       />
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-slate-200">
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-sand-200">
         <div className="flex items-start gap-3">
           <span
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
               dialog.variant === "danger"
                 ? "bg-rose-100 text-rose-600"
-                : "bg-slate-100 text-slate-600"
+                : "bg-sand-100 text-sand-600"
             }`}
           >
             {dialog.variant === "danger" ? (
@@ -171,12 +171,12 @@ function DialogCard({
           <div className="min-w-0 flex-1">
             <h2
               id="confirm-dialog-title"
-              className="text-base font-semibold text-slate-900"
+              className="text-base font-semibold text-sand-900"
             >
               {dialog.title}
             </h2>
             {dialog.description && (
-              <div className="mt-1 text-sm text-slate-600">
+              <div className="mt-1 text-sm text-sand-600">
                 {dialog.description}
               </div>
             )}

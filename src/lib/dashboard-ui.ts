@@ -10,5 +10,5 @@ export const STALE_TIMELINE_DAYS = 7;
 export function persenKuotaColor(persen: number): string {
   if (persen >= 100) return "bg-rose-500";
   if (persen >= 75) return "bg-amber-500";
-  return "bg-slate-900";
+  return "bg-brand-600";
 }

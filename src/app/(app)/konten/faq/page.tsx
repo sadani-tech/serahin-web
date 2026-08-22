@@ -24,14 +24,14 @@ export default async function FaqPage() {
       <div className="mb-6">
         <Link
           href="/konten"
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← Kembali ke Konten
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           FAQ
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-sand-500">
           Pertanyaan yang sering diajukan. FAQ global tampil di semua form
           publik; FAQ kampanye hanya di form kampanye terkait.
         </p>

@@ -39,18 +39,18 @@ export function FaqManager({
   return (
     <div className="space-y-8">
       <Card className="p-5">
-        <h2 className="mb-4 text-base font-semibold text-slate-900">
+        <h2 className="mb-4 text-base font-semibold text-sand-900">
           Tambah FAQ
         </h2>
         <FaqFields action={createFaq} campaigns={campaigns} submitLabel="Tambah FAQ" />
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-base font-semibold text-slate-900">
+        <h2 className="text-base font-semibold text-sand-900">
           Daftar FAQ ({faqs.length})
         </h2>
         {faqs.length === 0 ? (
-          <Card className="p-8 text-center text-sm text-slate-500">
+          <Card className="p-8 text-center text-sm text-sand-500">
             Belum ada FAQ. Tambahkan pertanyaan pertama di atas.
           </Card>
         ) : (
@@ -68,7 +68,7 @@ export function FaqManager({
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
-                    className="text-xs text-slate-500 hover:underline"
+                    className="text-xs text-sand-500 hover:underline"
                   >
                     Batal edit
                   </button>
@@ -77,18 +77,18 @@ export function FaqManager({
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-sand-400">
                         #{f.urutan}
                       </span>
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-sand-900">
                         {f.pertanyaan}
                       </p>
                       {f.campaignId ? (
-                        <span className={badge("bg-indigo-100 text-indigo-800 ring-indigo-600/20")}>
+                        <span className={badge("bg-brand-100 text-brand-800 ring-brand-600/25")}>
                           {campaignName(f.campaignId)}
                         </span>
                       ) : (
-                        <span className={badge("bg-slate-100 text-slate-600 ring-slate-600/20")}>
+                        <span className={badge("bg-sand-100 text-sand-600 ring-sand-600/20")}>
                           Global
                         </span>
                       )}
@@ -98,7 +98,7 @@ export function FaqManager({
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-sand-600">
                       {f.jawaban}
                     </p>
                   </div>
@@ -106,7 +106,7 @@ export function FaqManager({
                     <button
                       type="button"
                       onClick={() => setEditingId(f.id)}
-                      className="text-sm font-medium text-slate-600 hover:underline"
+                      className="text-sm font-medium text-sand-600 hover:underline"
                     >
                       Edit
                     </button>
@@ -188,12 +188,12 @@ function FaqFields({
           />
         </Field>
         <Field label="Status">
-          <label className="mt-2 flex items-center gap-2 text-sm text-slate-700">
+          <label className="mt-2 flex items-center gap-2 text-sm text-sand-700">
             <input
               type="checkbox"
               name="aktif"
               defaultChecked={initial?.aktif ?? true}
-              className="h-4 w-4 rounded border-slate-300"
+              className="h-4 w-4 rounded border-sand-300"
             />
             Aktif (tampil publik)
           </label>

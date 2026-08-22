@@ -115,14 +115,14 @@ export default async function OrderDetailPage({
       <div>
         <Link
           href={`/kampanye/${order.campaignId}?tab=pesanan`}
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← {order.campaign.namaProduk}
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
                 {order.namaPembeli || "(Nama belum diisi)"}
               </h1>
               <OrderBadge status={order.status} />
@@ -132,7 +132,7 @@ export default async function OrderDetailPage({
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-sand-500">
               {order.kontak || "kontak kosong"} · {order.items.length} varian ·{" "}
               {totalQty} unit
             </p>
@@ -146,7 +146,7 @@ export default async function OrderDetailPage({
       </div>
 
       {dibatalkan && order.alasanBatal && (
-        <div className="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600">
+        <div className="rounded-lg bg-sand-100 px-4 py-3 text-sm text-sand-600">
           <b>Pesanan dibatalkan.</b> Alasan: {order.alasanBatal}
         </div>
       )}
@@ -171,17 +171,17 @@ export default async function OrderDetailPage({
           {/* Billing */}
           <Card>
             <CardHeader title="Ringkasan tagihan" />
-            <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4 sm:divide-y-0">
+            <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
               <div className="px-5 py-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-sand-500">
                   Total
                 </p>
-                <p className="mt-1 text-lg font-semibold text-slate-900">
+                <p className="mt-1 text-lg font-semibold text-sand-900">
                   {formatRupiah(billing.total)}
                 </p>
               </div>
               <div className="px-5 py-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-sand-500">
                   Terbayar
                 </p>
                 <p className="mt-1 text-lg font-semibold text-emerald-600">
@@ -189,7 +189,7 @@ export default async function OrderDetailPage({
                 </p>
               </div>
               <div className="px-5 py-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-sand-500">
                   Sisa tagihan
                 </p>
                 <p
@@ -199,14 +199,14 @@ export default async function OrderDetailPage({
                 </p>
               </div>
               <div className="px-5 py-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-sand-500">
                   {order.campaign.paymentScheme === "DP_PELUNASAN"
                     ? order.campaign.dpTipe === "NOMINAL"
                       ? "Target DP (nominal)"
                       : `Target DP (${order.campaign.dpPercent ?? 50}%)`
                     : "Menunggu verifikasi"}
                 </p>
-                <p className="mt-1 text-lg font-semibold text-slate-700">
+                <p className="mt-1 text-lg font-semibold text-sand-700">
                   {order.campaign.paymentScheme === "DP_PELUNASAN"
                     ? formatRupiah(billing.dpTarget)
                     : formatRupiah(billing.menungguVerifikasi)}
@@ -218,7 +218,7 @@ export default async function OrderDetailPage({
           {/* Item pesanan (keranjang) — v1.5 */}
           <Card>
             <CardHeader title={`Item pesanan (${order.items.length})`} />
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-sand-100">
               {order.items.map((it) => (
                 <div
                   key={it.id}
@@ -230,28 +230,28 @@ export default async function OrderDetailPage({
                       <img
                         src={it.variant.gambarUrl}
                         alt={it.variant.namaVarian}
-                        className="h-10 w-10 rounded object-cover ring-1 ring-slate-200"
+                        className="h-10 w-10 rounded object-cover ring-1 ring-sand-200"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded bg-slate-100 text-xs text-slate-400">
+                      <div className="flex h-10 w-10 items-center justify-center rounded bg-sand-100 text-xs text-sand-400">
                         —
                       </div>
                     )}
                     <div>
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-sand-900">
                         {it.variant.namaVarian}
                         {it.warna && (
-                          <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                          <span className="ml-2 rounded-full bg-sand-100 px-2 py-0.5 text-xs font-medium text-sand-600">
                             {it.warna}
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-sand-500">
                         {it.jumlah} × {formatRupiah(it.hargaSaatPesan)}
                       </p>
                     </div>
                   </div>
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-sand-800">
                     {formatRupiah(Number(it.hargaSaatPesan) * it.jumlah)}
                   </span>
                 </div>
@@ -268,7 +268,7 @@ export default async function OrderDetailPage({
             {order.payments.length === 0 ? (
               <EmptyState title="Belum ada pembayaran tercatat" />
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-sand-100">
                 {order.payments.map((p) => (
                   <div
                     key={p.id}
@@ -276,15 +276,15 @@ export default async function OrderDetailPage({
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900">
+                        <span className="font-medium text-sand-900">
                           {formatRupiah(p.jumlah)}
                         </span>
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                        <span className="rounded bg-sand-100 px-1.5 py-0.5 text-xs text-sand-600">
                           {PAYMENT_TYPE_LABEL[p.jenis]}
                         </span>
                         <PaymentBadge status={p.statusVerifikasi} />
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-sand-500">
                         {formatTanggal(p.tanggal)}
                         {p.buktiFile && (
                           <>
@@ -293,7 +293,7 @@ export default async function OrderDetailPage({
                               href={p.buktiFile}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-slate-700 underline"
+                              className="text-sand-700 underline"
                             >
                               Lihat bukti
                             </a>
@@ -311,7 +311,7 @@ export default async function OrderDetailPage({
             )}
 
             {!dibatalkan && (
-              <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4">
+              <div className="border-t border-sand-100 bg-sand-50/50 px-5 py-4">
                 <Collapsible title="Catat pembayaran baru">
                   <PaymentForm
                     orderId={id}
@@ -333,8 +333,8 @@ export default async function OrderDetailPage({
               <ol className="space-y-4 px-6 py-5">
                 {order.statusLogs.map((log) => (
                   <li key={log.id} className="relative pl-6">
-                    <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-slate-900 ring-4 ring-white" />
-                    <p className="text-sm text-slate-800">
+                    <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
+                    <p className="text-sm text-sand-800">
                       {log.statusLama
                         ? `${ORDER_STATUS_LABEL[log.statusLama]} → `
                         : ""}
@@ -343,11 +343,11 @@ export default async function OrderDetailPage({
                       </span>
                     </p>
                     {log.catatan && (
-                      <p className="mt-0.5 text-sm text-slate-600">
+                      <p className="mt-0.5 text-sm text-sand-600">
                         {log.catatan}
                       </p>
                     )}
-                    <p className="mt-0.5 text-xs text-slate-400">
+                    <p className="mt-0.5 text-xs text-sand-400">
                       {formatWaktu(log.createdAt)}
                       {log.dibuatOleh?.name ? ` · ${log.dibuatOleh.name}` : ""}
                     </p>
@@ -365,19 +365,19 @@ export default async function OrderDetailPage({
           </Card>
           {order.metodePengiriman && (
             <Card className="p-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
                 Pengiriman (pelunasan)
               </p>
-              <p className="mt-1 text-sm font-medium text-slate-900">
+              <p className="mt-1 text-sm font-medium text-sand-900">
                 {METODE_PENGIRIMAN_LABEL[order.metodePengiriman]}
               </p>
               {order.metodePengiriman === "EKSPEDISI" && (
-                <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                <p className="mt-1 whitespace-pre-wrap text-sm text-sand-700">
                   {order.alamatPengiriman || "(Alamat belum diisi)"}
                 </p>
               )}
               {order.metodePengiriman === "SHOPEE" && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-sand-500">
                   Pembeli checkout via Shopee — tidak memerlukan alamat manual.
                 </p>
               )}
@@ -395,10 +395,10 @@ export default async function OrderDetailPage({
           )}
           {order.catatan && (
             <Card className="p-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
                 Catatan pesanan
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+              <p className="mt-1 whitespace-pre-wrap text-sm text-sand-700">
                 {order.catatan}
               </p>
             </Card>

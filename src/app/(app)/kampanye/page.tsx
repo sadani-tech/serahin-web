@@ -27,10 +27,10 @@ export default async function KampanyeListPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+          <h1 className="text-xl font-extrabold tracking-tight text-sand-900 sm:text-2xl">
             Kampanye PO
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-sand-500">
             Semua batch Pre-Order dalam satu tempat.
           </p>
         </div>

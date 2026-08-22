@@ -50,7 +50,7 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
   return (
     <div>
       {selected.size > 0 && (
-        <div className="space-y-3 border-b border-slate-200 bg-slate-50 p-4">
+        <div className="space-y-3 border-b border-sand-200 bg-sand-50 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm font-medium">{selected.size} pesanan dipilih</span>
             <Button type="button" disabled={busy} onClick={() => submit("APPROVE")}>Setujui</Button>
@@ -60,24 +60,24 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
             value={alasan}
             onChange={(event) => setAlasan(event.target.value)}
             placeholder="Alasan penolakan (wajib untuk aksi Tolak)"
-            className="min-h-20 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className="min-h-20 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm"
           />
           {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
         </div>
       )}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left text-xs uppercase text-slate-500">
+          <thead><tr className="border-b text-left text-xs uppercase text-sand-500">
             <th className="px-4 py-3"><input ref={headRef} type="checkbox" checked={allChecked} onChange={() => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)))} /></th>
             <th className="px-4 py-3">Pembeli</th><th className="px-4 py-3">Kampanye</th><th className="px-4 py-3">Item</th><th className="px-4 py-3">Indikator</th>
           </tr></thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.map((row) => <tr key={row.id} className={row.flagDuplikat ? "bg-amber-50" : "hover:bg-slate-50"}>
+          <tbody className="divide-y divide-sand-100">
+            {rows.map((row) => <tr key={row.id} className={row.flagDuplikat ? "bg-amber-50" : "hover:bg-sand-50"}>
               <td className="px-4 py-3"><input type="checkbox" checked={selected.has(row.id)} onChange={() => toggle(row.id)} /></td>
-              <td className="px-4 py-3"><Link className="font-medium hover:underline" href={`/pesanan/${row.id}`}>{row.namaPembeli}</Link><div className="text-xs text-slate-500">{row.kontak}</div></td>
+              <td className="px-4 py-3"><Link className="font-medium hover:underline" href={`/pesanan/${row.id}`}>{row.namaPembeli}</Link><div className="text-xs text-sand-500">{row.kontak}</div></td>
               <td className="px-4 py-3">{row.campaign.namaProduk}</td>
               <td className="px-4 py-3">{row.items.map((item) => `${item.variant.namaVarian} × ${item.jumlah}`).join(", ")}</td>
-              <td className="px-4 py-3">{row.flagDuplikat ? <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Duplikat mencurigakan</span> : <span className="text-slate-400">Normal</span>}</td>
+              <td className="px-4 py-3">{row.flagDuplikat ? <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Duplikat mencurigakan</span> : <span className="text-sand-400">Normal</span>}</td>
             </tr>)}
           </tbody>
         </table>
