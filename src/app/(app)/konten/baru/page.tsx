@@ -8,11 +8,11 @@ export default function KontenBaruPage() {
       <div className="mb-6">
         <Link
           href="/konten"
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← Kembali ke Konten
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Halaman Baru
         </h1>
       </div>

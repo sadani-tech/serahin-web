@@ -32,14 +32,14 @@ export default async function KampanyeBaruPage() {
       <div className="mb-6">
         <Link
           href="/kampanye"
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← Kembali ke daftar kampanye
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Kampanye PO Baru
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-sand-500">
           Buat batch Pre-Order baru beserta varian dan kuotanya.
         </p>
       </div>

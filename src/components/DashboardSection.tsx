@@ -32,7 +32,7 @@ export function DashboardSection({
       <Card>
         <CardHeader title={title} subtitle={subtitle} />
         <ScrollList>
-          <ul className="divide-y divide-slate-100">{children}</ul>
+          <ul className="divide-y divide-sand-100">{children}</ul>
         </ScrollList>
       </Card>
     );
@@ -46,7 +46,7 @@ export function DashboardSection({
       <EmptyState title={emptyMessage} description={emptyDescription} action={action} />
       {action && (
         <div className="flex justify-center pt-2">
-          <button onClick={() => setShowEmpty(false)} className="text-sm text-slate-500 hover:text-slate-700">
+          <button onClick={() => setShowEmpty(false)} className="text-sm text-sand-500 hover:text-sand-700">
             Sembunyikan section
           </button>
         </div>
@@ -80,7 +80,7 @@ export function ActiveCampaignsCard({
           action={<LinkButton href="/kampanye/baru">+ Kampanye Baru</LinkButton>}
         />
         <div className="flex justify-center pt-2">
-          <button onClick={() => setShowEmpty(false)} className="text-sm text-slate-500 hover:text-slate-700">
+          <button onClick={() => setShowEmpty(false)} className="text-sm text-sand-500 hover:text-sand-700">
             Sembunyikan section
           </button>
         </div>
@@ -91,19 +91,19 @@ export function ActiveCampaignsCard({
   return (
     <Card>
       <CardHeader title="Kampanye aktif" subtitle="Progres kuota terisi per kampanye" />
-      <ScrollList className="divide-y divide-slate-100">
+      <ScrollList className="divide-y divide-sand-100">
         {items.map((c) => (
-          <Link key={c.id} href={`/kampanye/${c.id}`} className="block px-5 py-3 hover:bg-slate-50">
+          <Link key={c.id} href={`/kampanye/${c.id}`} className="block px-5 py-3 hover:bg-sand-50">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-900">{c.namaProduk}</span>
+                <span className="font-medium text-sand-900">{c.namaProduk}</span>
                 <CampaignBadge status={c.status} />
               </div>
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-sand-600">
                 {c.terisi} / {c.kuotaTotal} ({c.persen}%)
               </span>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-sand-100">
               <div className={`h-full rounded-full ${persenKuotaColor(c.persen)}`} style={{ width: `${Math.min(100, c.persen)}%` }} />
             </div>
           </Link>

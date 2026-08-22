@@ -45,10 +45,10 @@ function CampaignDateFilters({
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <Field label="Kampanye (boleh pilih beberapa)">
-        <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-slate-300 p-2">
-          <p className="px-1 text-xs text-slate-500">Tanpa pilihan = semua kampanye</p>
+        <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-sand-300 p-2">
+          <p className="px-1 text-xs text-sand-500">Tanpa pilihan = semua kampanye</p>
           {campaigns.map((campaign) => (
-            <label key={campaign.id} className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-slate-50">
+            <label key={campaign.id} className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-sand-50">
               <input type="checkbox" checked={state.campaigns.includes(campaign.id)} onChange={() => toggleCampaign(campaign.id)} />
               {campaign.namaProduk}
             </label>
@@ -103,10 +103,10 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
       {/* 4.1 Pesanan */}
       <Card className="space-y-4 p-5">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-sand-900">
             Ekspor Pesanan
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-sand-500">
             Daftar pesanan lengkap dengan rincian item keranjang, status, total,
             dan sisa tagihan.
           </p>
@@ -163,10 +163,10 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
       {/* 4.2 Keuangan */}
       <Card className="space-y-4 p-5">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-sand-900">
             Rekap Pembayaran
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-sand-500">
             Excel/CSV untuk rincian per-transaksi, atau PDF untuk ringkasan
             visual.
           </p>
@@ -224,10 +224,10 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
       {/* 4.3 Kontak */}
       <Card className="space-y-4 p-5">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-sand-900">
             Ekspor Kontak
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-sand-500">
             Nama & kontak pembeli. Data ini bersifat privat — setiap ekspor
             dicatat (siapa, kapan, jumlah).
           </p>
@@ -247,13 +247,13 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
               ].map(([val, label]) => (
                 <label
                   key={val}
-                  className="flex items-center gap-1.5 text-sm text-slate-700"
+                  className="flex items-center gap-1.5 text-sm text-sand-700"
                 >
                   <input
                     type="checkbox"
                     checked={kontakCols.includes(val)}
                     onChange={() => toggleCol(val)}
-                    className="h-4 w-4 rounded border-slate-300"
+                    className="h-4 w-4 rounded border-sand-300"
                   />
                   {label}
                 </label>

@@ -24,10 +24,10 @@ export function CopyPortalLink({ token }: { token: string }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
         Link portal pembeli
       </p>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-sand-500">
         Bagikan link ini ke pembeli agar bisa cek status sendiri (read-only).
       </p>
       <div className="flex gap-2">
@@ -35,7 +35,7 @@ export function CopyPortalLink({ token }: { token: string }) {
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="flex-1 rounded-lg border border-sand-300 bg-sand-50 px-3 py-2 text-xs text-sand-700"
         />
         <Button type="button" variant="secondary" onClick={copy}>
           {copied ? "Tersalin ✓" : "Salin"}

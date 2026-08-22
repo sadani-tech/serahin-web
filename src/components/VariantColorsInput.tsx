@@ -29,14 +29,14 @@ export function VariantColorsInput({
           {value.map((c, i) => (
             <span
               key={`${c}-${i}`}
-              className="inline-flex items-center gap-1 rounded-full bg-slate-100 py-1 pl-3 pr-1.5 text-xs font-medium text-slate-700"
+              className="inline-flex items-center gap-1 rounded-full bg-sand-100 py-1 pl-3 pr-1.5 text-xs font-medium text-sand-700"
             >
               {c}
               <button
                 type="button"
                 onClick={() => remove(i)}
                 aria-label={`Hapus ${c}`}
-                className="flex h-4 w-4 items-center justify-center rounded-full text-slate-400 hover:bg-slate-300 hover:text-slate-700"
+                className="flex h-4 w-4 items-center justify-center rounded-full text-sand-400 hover:bg-sand-300 hover:text-sand-700"
               >
                 ×
               </button>
@@ -59,7 +59,7 @@ export function VariantColorsInput({
         <button
           type="button"
           onClick={add}
-          className="shrink-0 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-700"
+          className="shrink-0 rounded-lg bg-brand-600 px-3 text-sm font-medium text-white hover:bg-brand-700"
         >
           Tambah
         </button>

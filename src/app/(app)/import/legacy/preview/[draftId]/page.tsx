@@ -39,14 +39,14 @@ export default async function LegacyPreviewPage({
       <div>
         <Link
           href={`/import/legacy/${draft.targetCampaignId}`}
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← Batal & ulang
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Pratinjau Import Format Lawas
         </h1>
-        <p className="mt-1 text-sm text-slate-500">{draft.namaFile}</p>
+        <p className="mt-1 text-sm text-sand-500">{draft.namaFile}</p>
       </div>
 
       <LegacyPreview

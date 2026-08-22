@@ -7,6 +7,7 @@ import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
+import { SerahinLogo } from "@/components/brand";
 import { RichText } from "@/components/RichText";
 import { PortalPaymentForm } from "./PortalPaymentForm";
 
@@ -80,51 +81,59 @@ export default async function PortalPage({
     billing.dibayar >= billing.dpTarget;
 
   return (
-    <div className="min-h-full bg-slate-50 py-10">
-      <div className="mx-auto min-w-0 max-w-2xl space-y-6 px-4">
+    <div className="bg-serahin-dots relative min-h-full py-10">
+      <div
+        aria-hidden="true"
+        className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
+      />
+      <div className="relative mx-auto min-w-0 max-w-2xl space-y-6 px-4">
         {/* Header */}
-        <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Serahin · Status Pesanan
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+        <div className="flex flex-col items-center text-center">
+          <SerahinLogo size="md" layout="stacked" />
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 ring-1 ring-brand-200">
+            Status Pesanan
+          </span>
+          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-sand-900">
             {campaign.namaProduk}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1.5 text-sm font-semibold text-sand-600">
             {order.items.length} varian · {totalQty} unit
           </p>
         </div>
 
         {/* Status */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white text-center shadow-lg">
+          <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
+          <div className="p-6">
+          <p className="text-xs font-bold uppercase tracking-wider text-sand-500">
             Status pesanan Anda
           </p>
           <div className="mt-2 flex justify-center">
             <OrderBadge status={order.status} />
           </div>
           {(dibatalkan || ditolak) && order.alasanBatal && (
-            <p className="mt-3 rounded-lg bg-slate-100 px-4 py-2 text-sm text-slate-600">
+            <p className="mt-3 rounded-lg bg-sand-100 px-4 py-2 text-sm text-sand-600">
               {ditolak ? "Pesanan ditolak" : "Pesanan dibatalkan"}. Alasan:{" "}
               {order.alasanBatal}
             </p>
           )}
           {baruMasuk && (
-            <p className="mt-3 rounded-lg bg-sky-50 px-4 py-2 text-sm text-sky-700">
+            <p className="mt-3 rounded-lg bg-brand-50 px-4 py-2 text-sm text-brand-800">
               Pesanan Anda sudah kami terima dan sedang menunggu verifikasi
               Admin. Status akan diperbarui setelah diverifikasi.
             </p>
           )}
+          </div>
         </div>
 
         {/* Rincian item (FR-3.4) */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">
+        <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+          <div className="border-b border-sand-100 px-5 py-3">
+            <h2 className="text-sm font-semibold text-sand-900">
               Rincian pesanan
             </h2>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-sand-100">
             {order.items.map((it) => (
               <div
                 key={it.id}
@@ -136,28 +145,28 @@ export default async function PortalPage({
                     <img
                       src={it.variant.gambarUrl}
                       alt={it.variant.namaVarian}
-                      className="h-10 w-10 rounded object-cover ring-1 ring-slate-200"
+                      className="h-10 w-10 rounded object-cover ring-1 ring-sand-200"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded bg-slate-100 text-xs text-slate-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded bg-sand-100 text-xs text-sand-400">
                       —
                     </div>
                   )}
                   <div>
-                    <p className="font-medium text-slate-900">
+                    <p className="font-medium text-sand-900">
                       {it.variant.namaVarian}
                       {it.warna && (
-                        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        <span className="ml-2 rounded-full bg-sand-100 px-2 py-0.5 text-xs font-medium text-sand-600">
                           {it.warna}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-sand-500">
                       {it.jumlah} × {formatRupiah(it.hargaSaatPesan)}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-sand-800">
                   {formatRupiah(Number(it.hargaSaatPesan) * it.jumlah)}
                 </span>
               </div>
@@ -166,26 +175,26 @@ export default async function PortalPage({
         </div>
 
         {/* Ringkasan pembayaran */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">
+        <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+          <div className="border-b border-sand-100 px-5 py-3">
+            <h2 className="text-sm font-semibold text-sand-900">
               Ringkasan pembayaran
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-sand-500">
               Skema: {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]}
             </p>
           </div>
-          <dl className="grid grid-cols-3 divide-x divide-slate-100">
+          <dl className="grid grid-cols-3 divide-x divide-sand-100">
             <div className="px-5 py-4 text-center">
-              <dt className="text-xs uppercase tracking-wide text-slate-500">
+              <dt className="text-xs uppercase tracking-wide text-sand-500">
                 Total
               </dt>
-              <dd className="mt-1 font-semibold text-slate-900">
+              <dd className="mt-1 font-semibold text-sand-900">
                 {formatRupiah(billing.total)}
               </dd>
             </div>
             <div className="px-5 py-4 text-center">
-              <dt className="text-xs uppercase tracking-wide text-slate-500">
+              <dt className="text-xs uppercase tracking-wide text-sand-500">
                 Terbayar
               </dt>
               <dd className="mt-1 font-semibold text-emerald-600">
@@ -193,7 +202,7 @@ export default async function PortalPage({
               </dd>
             </div>
             <div className="px-5 py-4 text-center">
-              <dt className="text-xs uppercase tracking-wide text-slate-500">
+              <dt className="text-xs uppercase tracking-wide text-sand-500">
                 Sisa
               </dt>
               <dd
@@ -204,21 +213,21 @@ export default async function PortalPage({
             </div>
           </dl>
           {billing.menungguVerifikasi > 0 && (
-            <p className="border-t border-slate-100 px-5 py-2 text-center text-xs text-amber-700">
+            <p className="border-t border-sand-100 px-5 py-2 text-center text-xs text-amber-700">
               {formatRupiah(billing.menungguVerifikasi)} sedang menunggu
               verifikasi Admin.
             </p>
           )}
           {order.metodePengiriman && (
-            <div className="border-t border-slate-100 px-5 py-3 text-sm">
-              <p className="text-xs uppercase tracking-wide text-slate-500">
+            <div className="border-t border-sand-100 px-5 py-3 text-sm">
+              <p className="text-xs uppercase tracking-wide text-sand-500">
                 Metode pengiriman
               </p>
-              <p className="mt-0.5 font-medium text-slate-800">
+              <p className="mt-0.5 font-medium text-sand-800">
                 {METODE_PENGIRIMAN_LABEL[order.metodePengiriman]}
               </p>
               {order.metodePengiriman === "EKSPEDISI" && order.alamatPengiriman && (
-                <p className="mt-0.5 whitespace-pre-wrap text-slate-600">
+                <p className="mt-0.5 whitespace-pre-wrap text-sand-600">
                   {order.alamatPengiriman}
                 </p>
               )}
@@ -238,19 +247,19 @@ export default async function PortalPage({
 
         {/* Pembayaran mandiri pembeli (pelunasan) */}
         {bisaBayar && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+            <div className="border-b border-sand-100 px-5 py-3">
+              <h2 className="text-sm font-semibold text-sand-900">
                 {isPelunasan ? "Lakukan pelunasan" : "Kirim pembayaran"}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-sand-500">
                 Sisa tagihan {formatRupiah(billing.sisa)}. Unggah bukti transfer
                 untuk diverifikasi Admin.
               </p>
             </div>
             <div className="px-5 py-4">
               {isPelunasan && campaign.deskripsiPelunasan && (
-                <div className="mb-4 min-w-0 overflow-hidden rounded-lg bg-slate-50 p-4 ring-1 ring-inset ring-slate-200">
+                <div className="mb-4 min-w-0 overflow-hidden rounded-lg bg-sand-50 p-4 ring-1 ring-inset ring-sand-200">
                   <RichText
                     html={campaign.deskripsiPelunasan}
                     className="break-words"
@@ -268,31 +277,31 @@ export default async function PortalPage({
         )}
 
         {/* Timeline kampanye */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">
+        <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+          <div className="border-b border-sand-100 px-5 py-3">
+            <h2 className="text-sm font-semibold text-sand-900">
               Progres produksi
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-sand-500">
               Estimasi kirim: {formatTanggal(campaign.estimasiKirim)}
             </p>
           </div>
           {campaign.timelineEntries.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-slate-500">
+            <p className="px-5 py-8 text-center text-sm text-sand-500">
               Belum ada update progres.
             </p>
           ) : (
             <ol className="space-y-4 px-6 py-5">
               {campaign.timelineEntries.map((e) => (
                 <li key={e.id} className="relative pl-6">
-                  <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-slate-900 ring-4 ring-white" />
-                  <p className="font-medium text-slate-900">{e.judulUpdate}</p>
+                  <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
+                  <p className="font-medium text-sand-900">{e.judulUpdate}</p>
                   {e.catatan && (
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-600">
+                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-sand-600">
                       {e.catatan}
                     </p>
                   )}
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="mt-0.5 text-xs text-sand-400">
                     {formatWaktu(e.createdAt)}
                   </p>
                 </li>
@@ -301,7 +310,7 @@ export default async function PortalPage({
           )}
         </div>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-sand-400">
           Halaman ini hanya untuk melihat status. Untuk perubahan, hubungi
           penjual. Jangan bagikan tautan ini ke orang lain.
         </p>

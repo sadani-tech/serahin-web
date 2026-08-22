@@ -26,19 +26,19 @@ export function PortalLinkBox({ token }: { token: string }) {
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          className="flex-1 rounded-lg border border-sand-300 bg-sand-50 px-3 py-2 text-xs text-sand-700"
         />
         <button
           type="button"
           onClick={copy}
-          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
           {copied ? "Tersalin ✓" : "Salin"}
         </button>
       </div>
       <a
         href={url}
-        className="block rounded-lg bg-slate-100 px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-200"
+        className="block rounded-lg bg-sand-100 px-3 py-2 text-center text-sm font-medium text-sand-700 hover:bg-sand-200"
       >
         Buka halaman status pesanan →
       </a>

@@ -26,10 +26,10 @@ export default async function KontenPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
             Konten
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-sand-500">
             Kelola halaman statis (S&K, Tentang) dan FAQ yang tampil di halaman
             publik.
           </p>
@@ -53,26 +53,26 @@ export default async function KontenPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                   <th className="px-5 py-3 font-medium">Judul</th>
                   <th className="px-5 py-3 font-medium">Slug</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Diperbarui</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-sand-100">
                 {pages.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50">
+                  <tr key={p.id} className="hover:bg-sand-50">
                     <td className="px-5 py-3">
                       <Link
                         href={`/konten/${p.id}`}
-                        className="font-medium text-slate-900 hover:underline"
+                        className="font-medium text-sand-900 hover:underline"
                       >
                         {p.judul}
                       </Link>
                     </td>
                     <td className="px-5 py-3">
-                      <code className="text-xs text-slate-500">/{p.slug}</code>
+                      <code className="text-xs text-sand-500">/{p.slug}</code>
                     </td>
                     <td className="px-5 py-3">
                       {p.status === "PUBLISH" ? (
@@ -80,12 +80,12 @@ export default async function KontenPage() {
                           Publish
                         </span>
                       ) : (
-                        <span className={badge("bg-slate-100 text-slate-600 ring-slate-600/20")}>
+                        <span className={badge("bg-sand-100 text-sand-600 ring-sand-600/20")}>
                           Draft
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-slate-500">
+                    <td className="px-5 py-3 text-sand-500">
                       {formatWaktu(p.updatedAt)}
                     </td>
                   </tr>

@@ -133,7 +133,7 @@ export function PublicOrderForm({
 
       {/* Keranjang varian (FR-3.1/3.1a) */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-700">Pilih varian</p>
+        <p className="text-sm font-medium text-sand-700">Pilih varian</p>
         <ScrollList maxRows={5} rowHeight={4.75} className="space-y-2 pr-1">
         {variants.map((v) => {
           const habis = v.sisa <= 0;
@@ -151,7 +151,7 @@ export function PublicOrderForm({
             <div
               key={v.id}
               className={`rounded-lg border p-3 ${
-                habis ? "border-slate-100 bg-slate-50" : "border-slate-200"
+                habis ? "border-sand-100 bg-sand-50" : "border-sand-200"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -159,13 +159,13 @@ export function PublicOrderForm({
                   <ProductImage
                     src={v.gambarUrl}
                     alt={v.namaVarian}
-                    className={`h-12 w-12 rounded object-cover ring-1 ring-slate-200 ${habis ? "opacity-50" : ""}`}
+                    className={`h-12 w-12 rounded object-cover ring-1 ring-sand-200 ${habis ? "opacity-50" : ""}`}
                     iconClassName="h-6 w-6"
                     onClick={imgs.length ? () => openPreview(0) : undefined}
                   />
                   {imgs.length > 0 && (
                     <span
-                      className="pointer-events-none absolute bottom-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-900/70 text-white"
+                      className="pointer-events-none absolute bottom-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-sand-900/70 text-white"
                       aria-hidden="true"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
@@ -175,10 +175,10 @@ export function PublicOrderForm({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={`truncate font-medium ${habis ? "text-slate-500" : "text-slate-900"}`}>
+                  <p className={`truncate font-medium ${habis ? "text-sand-500" : "text-sand-900"}`}>
                     {v.namaVarian}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-sand-500">
                     {formatRupiah(v.harga)}
                     {!habis && ` · sisa ${v.sisa}`}
                   </p>
@@ -192,7 +192,7 @@ export function PublicOrderForm({
                     <button
                       type="button"
                       onClick={() => setQ(v.id, q - 1)}
-                      className="h-7 w-7 rounded bg-slate-100 text-slate-700"
+                      className="h-7 w-7 rounded bg-sand-100 text-sand-700"
                     >
                       −
                     </button>
@@ -202,7 +202,7 @@ export function PublicOrderForm({
                       onClick={() =>
                         setQ(v.id, Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION, q + 1))
                       }
-                      className="h-7 w-7 rounded bg-slate-100 text-slate-700"
+                      className="h-7 w-7 rounded bg-sand-100 text-sand-700"
                     >
                       +
                     </button>
@@ -218,7 +218,7 @@ export function PublicOrderForm({
                       key={`${src}-${idx}`}
                       src={src}
                       alt={`${v.namaVarian} ${idx + 1}`}
-                      className="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-slate-200"
+                      className="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-sand-200"
                       iconClassName="h-6 w-6"
                       onClick={() => openPreview(idx)}
                     />
@@ -237,7 +237,7 @@ export function PublicOrderForm({
                     className={`w-full rounded-lg border px-3 py-2 text-sm ${
                       (qty[v.id] ?? 0) > 0 && !warnaSel[v.id]
                         ? "border-rose-300"
-                        : "border-slate-300"
+                        : "border-sand-300"
                     }`}
                   >
                     <option value="">— pilih warna —</option>
@@ -289,9 +289,9 @@ export function PublicOrderForm({
         )}
       </Field>
 
-      <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-        <span className="text-sm text-slate-500">Total</span>
-        <span className="text-lg font-semibold text-slate-900">
+      <div className="flex items-center justify-between border-t border-sand-100 pt-3">
+        <span className="text-sm text-sand-500">Total</span>
+        <span className="text-lg font-semibold text-sand-900">
           {formatRupiah(total)}
         </span>
       </div>
@@ -312,7 +312,7 @@ export function PublicOrderForm({
             ? "Ya, lanjutkan"
             : "Kirim Pesanan"}
       </Button>
-      <p className="text-center text-xs text-slate-400">
+      <p className="text-center text-xs text-sand-400">
         Maksimal {MAX_UNIT_PER_SUBMISSION} unit per varian.
       </p>
     </form>

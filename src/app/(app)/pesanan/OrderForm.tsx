@@ -150,7 +150,7 @@ export function OrderForm({
 
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-sm font-semibold text-sand-900">
             Item pesanan (keranjang)
           </h3>
           <Button
@@ -181,17 +181,17 @@ export function OrderForm({
               return (
                 <div
                   key={r.variantId}
-                  className="flex items-center gap-3 rounded-lg border border-slate-200 p-3"
+                  className="flex items-center gap-3 rounded-lg border border-sand-200 p-3"
                 >
                   <input type="hidden" name="itemVariantId" value={r.variantId} />
                   <input type="hidden" name="itemJumlah" value={r.jumlah} />
                   <input type="hidden" name="itemWarna" value={r.warna ?? ""} />
 
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-slate-900">
+                    <p className="truncate font-medium text-sand-900">
                       {v ? v.namaVarian : "Varian tidak tersedia"}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-sand-500">
                       {v ? formatRupiah(v.harga) : "—"}
                       {v ? ` · sisa ${Math.max(0, v.sisa)}` : ""}
                     </p>
@@ -200,7 +200,7 @@ export function OrderForm({
                         value={r.warna ?? ""}
                         onChange={(e) => setWarna(r.variantId, e.target.value)}
                         className={`mt-1.5 rounded-lg border px-2 py-1 text-xs ${
-                          r.warna ? "border-slate-300" : "border-rose-300"
+                          r.warna ? "border-sand-300" : "border-rose-300"
                         }`}
                       >
                         <option value="">— pilih warna —</option>
@@ -218,7 +218,7 @@ export function OrderForm({
                       type="button"
                       onClick={() => setQty(r.variantId, r.jumlah - 1)}
                       disabled={r.jumlah <= 1}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-sand-100 text-sand-700 hover:bg-sand-200 disabled:opacity-40"
                       aria-label="Kurangi"
                     >
                       −
@@ -230,21 +230,21 @@ export function OrderForm({
                       type="button"
                       onClick={() => setQty(r.variantId, r.jumlah + 1)}
                       disabled={atMax}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-sand-100 text-sand-700 hover:bg-sand-200 disabled:opacity-40"
                       aria-label="Tambah"
                     >
                       +
                     </button>
                   </div>
 
-                  <div className="w-28 text-right text-sm font-medium text-slate-900">
+                  <div className="w-28 text-right text-sm font-medium text-sand-900">
                     {v ? formatRupiah(v.harga * r.jumlah) : "—"}
                   </div>
 
                   <button
                     type="button"
                     onClick={() => removeItem(r.variantId)}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sand-400 transition hover:bg-rose-50 hover:text-rose-600"
                     aria-label="Hapus item"
                     title="Hapus item"
                   >
@@ -261,11 +261,11 @@ export function OrderForm({
           </ScrollList>
         )}
 
-        <div className="mt-4 flex justify-between border-t border-slate-100 pt-3 text-sm">
-          <span className="text-slate-500">
+        <div className="mt-4 flex justify-between border-t border-sand-100 pt-3 text-sm">
+          <span className="text-sand-500">
             {cart.length} item · {cart.reduce((s, r) => s + r.jumlah, 0)} unit
           </span>
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-sand-900">
             Total: {formatRupiah(total)}
           </span>
         </div>
@@ -273,10 +273,10 @@ export function OrderForm({
 
       {withBuktiPembayaran && (
         <Card className="p-5">
-          <h3 className="mb-1 text-sm font-semibold text-slate-900">
+          <h3 className="mb-1 text-sm font-semibold text-sand-900">
             Pembayaran awal
           </h3>
-          <p className="mb-4 text-xs text-slate-500">
+          <p className="mb-4 text-xs text-sand-500">
             Catat nominal yang sudah dibayar beserta buktinya. Pembayaran akan
             berstatus menunggu verifikasi.
           </p>

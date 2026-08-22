@@ -29,7 +29,7 @@ export function StatusControl({
     >
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-48 flex-1">
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-sand-700">
             Ubah status kampanye
           </label>
           <Select
@@ -55,7 +55,7 @@ export function StatusControl({
           placeholder="Catatan (opsional) — mis. alasan perubahan status. Akan tercatat di timeline."
         />
       )}
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-sand-500">
         Perubahan status otomatis tercatat di timeline kampanye.
       </p>
     </form>

@@ -29,11 +29,11 @@ export const CAMPAIGN_STATUS_ORDER: CampaignStatus[] = [
 ];
 
 export const CAMPAIGN_STATUS_BADGE: Record<CampaignStatus, string> = {
-  OPEN: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
-  CLOSED: "bg-amber-100 text-amber-800 ring-amber-600/20",
-  PRODUKSI: "bg-blue-100 text-blue-800 ring-blue-600/20",
-  SIAP_KIRIM: "bg-indigo-100 text-indigo-800 ring-indigo-600/20",
-  SELESAI: "bg-slate-100 text-slate-700 ring-slate-600/20",
+  OPEN: "bg-brand-100 text-brand-800 ring-brand-600/25",
+  CLOSED: "bg-sun-100 text-sun-800 ring-sun-600/25",
+  PRODUKSI: "bg-accent-500 text-sand-900 ring-accent-600/30",
+  SIAP_KIRIM: "bg-sun-400 text-sand-900 ring-sun-600/30",
+  SELESAI: "bg-brand-800 text-brand-50 ring-brand-900/30",
 };
 
 /** Kampanye menolak pesanan baru mulai status CLOSED ke atas (FR-1.6). */
@@ -70,16 +70,16 @@ export const ORDER_STATUS_ORDER: OrderStatus[] = [
 ];
 
 export const ORDER_STATUS_BADGE: Record<OrderStatus, string> = {
-  BARU_MASUK: "bg-sky-100 text-sky-800 ring-sky-600/20",
-  MENUNGGU_DP: "bg-rose-100 text-rose-800 ring-rose-600/20",
-  DP_DITERIMA: "bg-amber-100 text-amber-800 ring-amber-600/20",
-  LUNAS: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
-  PRODUKSI: "bg-blue-100 text-blue-800 ring-blue-600/20",
-  SIAP_KIRIM: "bg-indigo-100 text-indigo-800 ring-indigo-600/20",
-  DIKIRIM: "bg-violet-100 text-violet-800 ring-violet-600/20",
-  SELESAI: "bg-slate-100 text-slate-700 ring-slate-600/20",
-  DIBATALKAN: "bg-slate-200 text-slate-500 ring-slate-600/20 line-through",
-  DITOLAK: "bg-slate-200 text-slate-500 ring-slate-600/20 line-through",
+  BARU_MASUK: "bg-sun-100 text-sun-800 ring-sun-600/25",
+  MENUNGGU_DP: "bg-rose-100 text-rose-800 ring-rose-600/25",
+  DP_DITERIMA: "bg-accent-100 text-accent-800 ring-accent-600/25",
+  LUNAS: "bg-brand-100 text-brand-800 ring-brand-600/25",
+  PRODUKSI: "bg-accent-500 text-sand-900 ring-accent-600/30",
+  SIAP_KIRIM: "bg-sun-400 text-sand-900 ring-sun-600/30",
+  DIKIRIM: "bg-brand-500 text-white ring-brand-700/30",
+  SELESAI: "bg-brand-800 text-brand-50 ring-brand-900/30",
+  DIBATALKAN: "bg-sand-200 text-sand-600 ring-sand-500/25 line-through",
+  DITOLAK: "bg-sand-200 text-sand-600 ring-sand-500/25 line-through",
 };
 
 /**
@@ -110,9 +110,9 @@ export const PAYMENT_VERIFICATION_LABEL: Record<PaymentVerification, string> = {
 };
 
 export const PAYMENT_VERIFICATION_BADGE: Record<PaymentVerification, string> = {
-  MENUNGGU_VERIFIKASI: "bg-amber-100 text-amber-800 ring-amber-600/20",
-  TERVERIFIKASI: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
-  DITOLAK: "bg-rose-100 text-rose-800 ring-rose-600/20",
+  MENUNGGU_VERIFIKASI: "bg-sun-100 text-sun-800 ring-sun-600/25",
+  TERVERIFIKASI: "bg-brand-100 text-brand-800 ring-brand-600/25",
+  DITOLAK: "bg-rose-100 text-rose-800 ring-rose-600/25",
 };
 
 export const PAYMENT_SCHEME_LABEL: Record<PaymentScheme, string> = {
@@ -130,5 +130,5 @@ export const METODE_PENGIRIMAN_LABEL: Record<MetodePengiriman, string> = {
 };
 
 export function badge(base: string): string {
-  return `inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${base}`;
+  return `inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ring-1 ring-inset ${base}`;
 }

@@ -100,7 +100,7 @@ export function CampaignForm({
       {state?.error && <FormError message={state.error} />}
 
       <Card className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">
+        <h3 className="mb-4 text-sm font-semibold text-sand-900">
           Detail Produk
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -127,14 +127,14 @@ export function CampaignForm({
             </Field>
           </div>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-sand-500">
           Sejak v1.5, harga ditetapkan per varian (lihat bagian Varian & Kuota),
           bukan satu harga untuk seluruh kampanye.
         </p>
       </Card>
 
       <Card className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">
+        <h3 className="mb-4 text-sm font-semibold text-sand-900">
           Jadwal PO
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -172,7 +172,7 @@ export function CampaignForm({
       </Card>
 
       <Card className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">
+        <h3 className="mb-4 text-sm font-semibold text-sand-900">
           Skema Pembayaran
         </h3>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -265,7 +265,7 @@ export function CampaignForm({
       </Card>
 
       <Card className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">Vendor</h3>
+        <h3 className="mb-4 text-sm font-semibold text-sand-900">Vendor</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Vendor pelaksana" hint="Opsional — pilih dari vendor tersimpan.">
             <Select
@@ -282,11 +282,11 @@ export function CampaignForm({
             </Select>
           </Field>
           {selectedVendor && (
-            <div className="rounded-lg bg-slate-50 p-3 text-sm ring-1 ring-inset ring-slate-200">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <div className="rounded-lg bg-sand-50 p-3 text-sm ring-1 ring-inset ring-sand-200">
+              <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
                 Riwayat vendor (FR-7.5)
               </p>
-              <p className="mt-1 text-slate-700">
+              <p className="mt-1 text-sand-700">
                 Rating rata-rata:{" "}
                 <span className="font-medium text-amber-600">
                   {selectedVendor.avgRating ?? "—"}
@@ -309,7 +309,7 @@ export function CampaignForm({
 
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-sm font-semibold text-sand-900">
             Varian & Kuota
           </h3>
           <Button type="button" variant="secondary" onClick={addVariant}>
@@ -324,7 +324,7 @@ export function CampaignForm({
         />
         <ScrollList maxRows={10} rowHeight={3.5} className="space-y-3 pr-1">
           {variants.map((v, i) => (
-            <div key={i} className="rounded-lg border border-slate-200 p-3">
+            <div key={i} className="rounded-lg border border-sand-200 p-3">
               <div className="flex flex-wrap items-end gap-2">
                 <div className="min-w-40 flex-1">
                   <Field label={i === 0 ? "Nama varian" : ""}>
@@ -398,7 +398,7 @@ export function CampaignForm({
           ))}
         </ScrollList>
         {variants.some((v) => v.terisi && v.terisi > 0) && (
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-sand-500">
             Kuota tidak dapat diturunkan di bawah jumlah pesanan yang sudah
             terisi. Varian yang sudah punya pesanan tidak bisa dihapus.
           </p>

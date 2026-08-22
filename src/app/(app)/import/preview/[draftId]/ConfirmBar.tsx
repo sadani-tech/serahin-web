@@ -38,8 +38,8 @@ export function ConfirmBar({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-        <div className="text-sm text-slate-600">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sand-200 bg-white px-5 py-4 shadow-sm">
+        <div className="text-sm text-sand-600">
           <span className="font-semibold text-emerald-600">
             {pesananValid} pesanan valid
           </span>

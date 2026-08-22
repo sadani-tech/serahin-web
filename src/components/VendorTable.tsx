@@ -75,7 +75,7 @@ export default function VendorTable({ vendors }: Props) {
         <div className="overflow-x-auto max-h-96">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                 <th className="px-5 py-3 font-medium">Vendor</th>
                 <th className="px-5 py-3 font-medium">Spesialisasi</th>
                 <th className="px-5 py-3 font-medium">Kampanye</th>
@@ -84,21 +84,21 @@ export default function VendorTable({ vendors }: Props) {
                 <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-sand-100">
               {pageVendors.map((v) => {
                 const stats = computeVendorStats(v.evaluations);
                 return (
-                  <tr key={v.id} className="hover:bg-slate-50">
+                  <tr key={v.id} className="hover:bg-sand-50">
                     <td className="px-5 py-3">
-                      <Link href={`/vendor/${v.id}`} className="font-medium text-slate-900 hover:underline">
+                      <Link href={`/vendor/${v.id}`} className="font-medium text-sand-900 hover:underline">
                         {v.nama}
                       </Link>
-                      {v.kontak && <div className="text-xs text-slate-500">{v.kontak}</div>}
+                      {v.kontak && <div className="text-xs text-sand-500">{v.kontak}</div>}
                     </td>
-                    <td className="px-5 py-3 text-slate-700">{v.spesialisasi ?? "-"}</td>
-                    <td className="px-5 py-3 text-slate-700">{v._count.campaigns}</td>
+                    <td className="px-5 py-3 text-sand-700">{v.spesialisasi ?? "-"}</td>
+                    <td className="px-5 py-3 text-sand-700">{v._count.campaigns}</td>
                     <td className="px-5 py-3 text-amber-600">{ratingStars(stats.avgRating)}</td>
-                    <td className="px-5 py-3 text-slate-700">
+                    <td className="px-5 py-3 text-sand-700">
                       {stats.jumlahTelat > 0 ? (
                         <span className="text-rose-600">
                           {stats.jumlahTelat}× ({stats.totalHariTelat} hari)
@@ -122,7 +122,7 @@ export default function VendorTable({ vendors }: Props) {
           {/* pagination controls */}
           <div className="flex justify-center space-x-2 py-2">
             <button
-              className="rounded px-3 py-1 text-sm bg-slate-200 disabled:opacity-50"
+              className="rounded px-3 py-1 text-sm bg-sand-200 disabled:opacity-50"
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page === 1}
             >
@@ -130,7 +130,7 @@ export default function VendorTable({ vendors }: Props) {
             </button>
             <span className="px-2 text-sm">{page} / {totalPages}</span>
             <button
-              className="rounded px-3 py-1 text-sm bg-slate-200 disabled:opacity-50"
+              className="rounded px-3 py-1 text-sm bg-sand-200 disabled:opacity-50"
               onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
               disabled={page === totalPages}
             >

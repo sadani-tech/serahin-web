@@ -29,7 +29,7 @@ export function CopyButton({
       type="button"
       onClick={handleCopy}
       disabled={!text}
-      className={`rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`rounded-md bg-sand-100 px-2 py-1 text-xs font-medium text-sand-600 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {copied ? "Tersalin!" : label}
     </button>

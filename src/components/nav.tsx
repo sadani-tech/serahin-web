@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SerahinLogo } from "@/components/brand";
 
 export type NavUser = { name?: string; email?: string } | null;
 
@@ -122,7 +123,9 @@ export function NavLinks() {
             key={link.href}
             href={link.href}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+              active
+                ? "bg-brand-600 text-white shadow-brand"
+                : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"
             }`}
           >
             {link.label}
@@ -149,8 +152,8 @@ export function NavIconActions() {
             aria-label={link.label}
             className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
               active
-                ? "bg-slate-900 text-white"
-                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                ? "bg-brand-600 text-white shadow-brand"
+                : "text-sand-500 hover:bg-brand-50 hover:text-brand-700"
             }`}
           >
             {link.icon}
@@ -171,7 +174,7 @@ export function MobileMenuButton({
   return (
     <button
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 md:hidden"
+      className="flex h-9 w-9 items-center justify-center rounded-xl text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 md:hidden"
       aria-label={open ? "Tutup menu" : "Buka menu"}
     >
       {open ? (
@@ -211,7 +214,7 @@ export function MobileDrawer({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+        className={`fixed inset-0 z-40 bg-sand-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -223,11 +226,11 @@ export function MobileDrawer({
         }`}
       >
         {/* Drawer header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <span className="text-lg font-bold text-slate-900">Serahin</span>
+        <div className="flex items-center justify-between border-b border-sand-200 bg-cream-soft px-5 py-4">
+          <SerahinLogo size="sm" />
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="h-4 w-4">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -237,7 +240,7 @@ export function MobileDrawer({
 
         {/* Nav links */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+          <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-sand-400">
             Menu
           </p>
           <ul className="space-y-0.5">
@@ -249,10 +252,12 @@ export function MobileDrawer({
                     href={link.href}
                     onClick={onClose}
                     className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                      active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
+                      active
+                        ? "bg-brand-600 text-white shadow-brand"
+                        : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
                     }`}
                   >
-                    <span className={active ? "text-white" : "text-slate-400"}>
+                    <span className={active ? "text-sun-300" : "text-sand-400"}>
                       {link.icon}
                     </span>
                     {link.label}
@@ -264,17 +269,17 @@ export function MobileDrawer({
         </nav>
 
         {/* User + logout */}
-        <div className="border-t border-slate-100 p-4">
+        <div className="border-t border-sand-200 p-4">
           {user && (
-            <div className="mb-3 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+            <div className="mb-3 flex items-center gap-3 rounded-xl bg-cream px-3 py-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
                 {(user.name ?? user.email ?? "A").charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-slate-900">
+                <p className="truncate text-sm font-bold text-sand-900">
                   {user.name ?? "Admin"}
                 </p>
-                <p className="truncate text-xs text-slate-500">{user.email}</p>
+                <p className="truncate text-xs text-sand-500">{user.email}</p>
               </div>
             </div>
           )}
@@ -304,7 +309,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden">
+      <nav className="safe-bottom fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur md:hidden">
         <div className="flex items-stretch">
           {bottomNavLinks.map((link) => {
             const active = isActive(link.href, link.exact);
@@ -313,12 +318,12 @@ export function BottomNav() {
                 key={link.href}
                 href={link.href}
                 className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
-                  active ? "text-slate-900" : "text-slate-400"
+                  active ? "text-brand-700" : "text-sand-400"
                 }`}
               >
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
-                    active ? "bg-slate-900 text-white scale-110" : ""
+                    active ? "bg-brand-600 text-white scale-110" : ""
                   }`}
                 >
                   {link.icon}
@@ -332,12 +337,12 @@ export function BottomNav() {
           <button
             onClick={() => setMenuOpen((o) => !o)}
             className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
-              menuOpen ? "text-slate-900" : "text-slate-400"
+              menuOpen ? "text-brand-700" : "text-sand-400"
             }`}
           >
             <span
               className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
-                menuOpen ? "bg-slate-900 text-white scale-110" : ""
+                menuOpen ? "bg-brand-600 text-white scale-110" : ""
               }`}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className="h-5 w-5">
@@ -351,11 +356,11 @@ export function BottomNav() {
 
       {/* More panel */}
       <div
-        className={`fixed inset-x-0 bottom-[57px] z-20 border-t border-slate-200 bg-white shadow-lg transition-all duration-200 md:hidden ${
+        className={`fixed inset-x-0 bottom-[57px] z-20 border-t border-sand-200 bg-white shadow-lg transition-all duration-200 md:hidden ${
           menuOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="grid grid-cols-3 gap-px bg-slate-100 p-px">
+        <div className="grid grid-cols-3 gap-px bg-sand-100 p-px">
           {moreLinks.map((link) => {
             const active = isActive(link.href, link.exact);
             return (
@@ -364,10 +369,10 @@ export function BottomNav() {
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
                 className={`flex flex-col items-center gap-2 bg-white px-3 py-4 text-xs font-medium transition-colors ${
-                  active ? "text-slate-900" : "text-slate-500"
+                  active ? "text-brand-700" : "text-sand-500"
                 }`}
               >
-                <span className={`rounded-xl p-2 ${active ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`rounded-xl p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
                   {link.icon}
                 </span>
                 {link.label}
@@ -377,7 +382,7 @@ export function BottomNav() {
         </div>
         <button
           onClick={() => setMenuOpen(false)}
-          className="w-full py-2 text-center text-xs text-slate-400"
+          className="w-full py-2 text-center text-xs font-semibold text-sand-400"
         >
           Tutup
         </button>

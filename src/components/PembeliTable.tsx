@@ -87,10 +87,10 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
         <button
           type="button"
           onClick={() => toggleSort(k)}
-          className="inline-flex items-center gap-1 hover:text-slate-700"
+          className="inline-flex items-center gap-1 hover:text-sand-700"
         >
           {label}
-          <span className="text-slate-400">
+          <span className="text-sand-400">
             {active ? (filters.order === "asc" ? "▲" : "▼") : "↕"}
           </span>
         </button>
@@ -111,7 +111,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
             }}
           >
             <div className="flex-1">
-              <label className="mb-1 block text-xs font-medium text-slate-500">
+              <label className="mb-1 block text-xs font-medium text-sand-500">
                 Cari pembeli
               </label>
               <Input
@@ -122,14 +122,14 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
             </div>
             <button
               type="submit"
-              className="mb-0.5 self-end rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+              className="mb-0.5 self-end rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               Cari
             </button>
           </form>
 
           <div className="w-full md:w-56">
-            <label className="mb-1 block text-xs font-medium text-slate-500">
+            <label className="mb-1 block text-xs font-medium text-sand-500">
               Kampanye diikuti
             </label>
             <Select
@@ -148,7 +148,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
           </div>
 
           <div className="w-full md:w-48">
-            <label className="mb-1 block text-xs font-medium text-slate-500">
+            <label className="mb-1 block text-xs font-medium text-sand-500">
               Status
             </label>
             <Select
@@ -170,7 +170,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
             <button
               type="button"
               onClick={resetFilters}
-              className="mb-0.5 self-end rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              className="mb-0.5 self-end rounded-lg px-3 py-2 text-sm font-medium text-sand-600 hover:bg-sand-100"
             >
               Reset
             </button>
@@ -193,7 +193,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                   <SortHeader label="Pembeli" k="namaPembeli" />
                   <th className="px-5 py-3 font-medium">Kontak</th>
                   <th className="px-5 py-3 font-medium">Kampanye</th>
@@ -202,19 +202,19 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
                   <SortHeader label="Tanggal" k="createdAt" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-sand-100">
                 {rows.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50">
+                  <tr key={o.id} className="hover:bg-sand-50">
                     <td className="px-5 py-3">
                       <Link
                         href={`/pesanan/${o.id}`}
-                        className="font-medium text-slate-900 hover:underline"
+                        className="font-medium text-sand-900 hover:underline"
                       >
                         {o.namaPembeli}
                       </Link>
                     </td>
-                    <td className="px-5 py-3 text-slate-600">{o.kontak}</td>
-                    <td className="px-5 py-3 text-slate-700">
+                    <td className="px-5 py-3 text-sand-600">{o.kontak}</td>
+                    <td className="px-5 py-3 text-sand-700">
                       <Link
                         href={`/kampanye/${o.campaign.id}`}
                         className="hover:underline"
@@ -225,10 +225,10 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
                     <td className="px-5 py-3">
                       <OrderBadge status={o.status} />
                     </td>
-                    <td className="px-5 py-3 text-slate-700">
+                    <td className="px-5 py-3 text-sand-700">
                       {o.items.reduce((s, it) => s + it.jumlah, 0)}
                     </td>
-                    <td className="px-5 py-3 text-slate-600">
+                    <td className="px-5 py-3 text-sand-600">
                       {formatTanggal(o.createdAt)}
                     </td>
                   </tr>
@@ -240,7 +240,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
 
         {/* Pagination */}
         {meta.total > 0 && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-600">
+          <div className="flex items-center justify-between border-t border-sand-100 px-5 py-3 text-sm text-sand-600">
             <span>
               {start}–{end} dari {meta.total}
             </span>
@@ -248,7 +248,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
               <button
                 onClick={() => updateQuery({ page: String(meta.page - 1) })}
                 disabled={meta.page <= 1}
-                className="rounded px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded px-3 py-1 hover:bg-sand-100 disabled:opacity-40"
               >
                 ‹ Prev
               </button>
@@ -258,7 +258,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
               <button
                 onClick={() => updateQuery({ page: String(meta.page + 1) })}
                 disabled={meta.page >= meta.totalPages}
-                className="rounded px-3 py-1 hover:bg-slate-100 disabled:opacity-40"
+                className="rounded px-3 py-1 hover:bg-sand-100 disabled:opacity-40"
               >
                 Next ›
               </button>

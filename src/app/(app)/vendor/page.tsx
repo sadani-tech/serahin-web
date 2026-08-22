@@ -24,10 +24,10 @@ export default async function VendorListPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
             Vendor
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-sand-500">
             Riwayat performa vendor untuk keputusan kampanye berikutnya.
           </p>
         </div>

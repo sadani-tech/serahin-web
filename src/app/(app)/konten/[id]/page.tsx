@@ -40,11 +40,11 @@ export default async function KontenEditPage({
         <div>
           <Link
             href="/konten"
-            className="text-sm text-slate-500 hover:text-slate-700"
+            className="text-sm text-sand-500 hover:text-sand-700"
           >
             ← Kembali ke Konten
           </Link>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
             Edit Halaman
           </h1>
         </div>
@@ -52,7 +52,7 @@ export default async function KontenEditPage({
           <Link
             href={`/halaman/${page.slug}`}
             target="_blank"
-            className="mt-6 text-sm font-medium text-teal-700 hover:underline"
+            className="mt-6 text-sm font-medium text-brand-700 hover:underline"
           >
             Lihat halaman publik ↗
           </Link>
@@ -71,7 +71,7 @@ export default async function KontenEditPage({
         submitLabel="Simpan Perubahan"
       />
 
-      <form action={deleteAction} className="mt-6 border-t border-slate-200 pt-6">
+      <form action={deleteAction} className="mt-6 border-t border-sand-200 pt-6">
         <SubmitButton variant="danger" loadingText="Menghapus…">
           Hapus Halaman
         </SubmitButton>

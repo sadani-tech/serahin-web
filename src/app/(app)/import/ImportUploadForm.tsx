@@ -60,15 +60,15 @@ export function ImportUploadForm({
           href={templateHref ?? "#"}
           className={`text-sm font-medium ${
             templateHref
-              ? "text-slate-900 underline hover:text-slate-700"
-              : "cursor-not-allowed text-slate-400"
+              ? "text-sand-900 underline hover:text-sand-700"
+              : "cursor-not-allowed text-sand-400"
           }`}
           aria-disabled={!templateHref}
         >
           ↓ Unduh template {mode === "KAMPANYE_PENUH" ? "Mode A (4 sheet)" : "Mode B (2 sheet)"}
         </a>
         {mode === "PESANAN" && !campaignId && !fixedCampaignId && (
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-sand-400">
             Pilih kampanye dulu untuk mengunduh template.
           </p>
         )}
@@ -80,7 +80,7 @@ export function ImportUploadForm({
           type="file"
           accept=".xlsx,.xls,.csv"
           required
-          className="file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm"
+          className="file:mr-3 file:rounded-md file:border-0 file:bg-sand-100 file:px-3 file:py-1 file:text-sm"
         />
       </Field>
 

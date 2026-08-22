@@ -46,7 +46,7 @@ export function ProductImage({
   if (!src || broken) {
     return (
       <div
-        className={`flex items-center justify-center bg-slate-100 text-slate-400 ${
+        className={`flex items-center justify-center bg-sand-100 text-sand-400 ${
           clickable ? "cursor-pointer" : ""
         } ${className}`}
         onClick={onClick}

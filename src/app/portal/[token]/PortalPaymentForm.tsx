@@ -86,8 +86,8 @@ export function PortalPaymentForm({
                   key={opt}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                     metode === opt
-                      ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                      : "border-sand-200 hover:border-sand-300"
                   }`}
                 >
                   <input
@@ -96,9 +96,9 @@ export function PortalPaymentForm({
                     value={opt}
                     checked={metode === opt}
                     onChange={() => setMetode(opt)}
-                    className="h-4 w-4 accent-slate-900"
+                    className="h-4 w-4 accent-brand-600"
                   />
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-sand-800">
                     {METODE_PENGIRIMAN_LABEL[opt]}
                   </span>
                 </label>
@@ -182,7 +182,7 @@ export function PortalPaymentForm({
             ? "Kirim pelunasan"
             : "Kirim pembayaran"}
       </Button>
-      <p className="text-center text-xs text-slate-400">
+      <p className="text-center text-xs text-sand-400">
         Pembayaran akan diverifikasi Admin terlebih dahulu.
       </p>
     </form>

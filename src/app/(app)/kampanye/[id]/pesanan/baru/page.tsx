@@ -61,34 +61,34 @@ export default async function TambahPesananPage({
       <div className="mb-6">
         <Link
           href={`/kampanye/${id}?tab=pesanan`}
-          className="text-sm text-slate-500 hover:text-slate-700"
+          className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← Kembali ke kampanye
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Tambah Pesanan
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-sand-500">
           {campaign.namaProduk}
         </p>
       </div>
 
       <Card className="mb-6 p-4">
-        <p className="text-sm text-slate-700">
+        <p className="text-sm text-sand-700">
           Kampanye tutup:{" "}
-          <span className="font-medium text-slate-900">
+          <span className="font-medium text-sand-900">
             {formatTanggal(campaign.tanggalTutup)}
           </span>
         </p>
         {deskripsiPlain && (
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <span className="text-xs font-medium uppercase tracking-wide text-sand-500">
                 Deskripsi kampanye
               </span>
               <CopyButton text={deskripsiPlain} label="Salin deskripsi" />
             </div>
-            <p className="whitespace-pre-wrap text-sm text-slate-600">
+            <p className="whitespace-pre-wrap text-sm text-sand-600">
               {deskripsiPlain}
             </p>
           </div>

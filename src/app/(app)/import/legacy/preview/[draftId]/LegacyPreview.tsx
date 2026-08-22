@@ -53,8 +53,8 @@ export function LegacyPreview({
     <form action={formAction} className="space-y-4">
       {state?.error && <FormError message={state.error} />}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-        <p className="text-sm text-slate-600">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sand-200 bg-white px-5 py-4 shadow-sm">
+        <p className="text-sm text-sand-600">
           {rows.length} baris · DP flat {formatRupiah(dpNominal)} · status{" "}
           {defaultStatusLabel}
           {manualRows.length > 0 && (
@@ -77,10 +77,10 @@ export function LegacyPreview({
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-sand-200 bg-white">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
               <th className="px-3 py-2 font-medium">Data mentah</th>
               <th className="px-3 py-2 font-medium">Nama</th>
               <th className="px-3 py-2 font-medium">Kontak</th>
@@ -89,23 +89,23 @@ export function LegacyPreview({
               <th className="px-3 py-2 font-medium">Bukti</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-sand-100">
             {rows.map((r) => (
               <tr key={r.index} className={r.needsManualVarian ? "bg-amber-50" : ""}>
-                <td className="px-3 py-2 align-top text-xs text-slate-500">
+                <td className="px-3 py-2 align-top text-xs text-sand-500">
                   <div>{r.rawNamaNomor || "—"}</div>
                   <div>{r.rawPesananQty || "—"}</div>
                 </td>
-                <td className="px-3 py-2 align-top text-slate-700">
+                <td className="px-3 py-2 align-top text-sand-700">
                   {r.nama || (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">
+                    <span className="rounded bg-sand-100 px-1.5 py-0.5 text-[10px] uppercase text-sand-500">
                       kosong
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2 align-top text-slate-700">
+                <td className="px-3 py-2 align-top text-sand-700">
                   {r.kontak || (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase text-slate-500">
+                    <span className="rounded bg-sand-100 px-1.5 py-0.5 text-[10px] uppercase text-sand-500">
                       kosong
                     </span>
                   )}
@@ -129,29 +129,29 @@ export function LegacyPreview({
                       <option value="SKIP">Lewati baris ini</option>
                     </select>
                   ) : (
-                    <span className="text-slate-700">
+                    <span className="text-sand-700">
                       {variantNama.get(r.variantId ?? "") ?? r.varianInput}
                     </span>
                   )}
                   {r.varianInput && r.needsManualVarian && (
-                    <div className="mt-0.5 text-[11px] text-slate-400">
+                    <div className="mt-0.5 text-[11px] text-sand-400">
                       teks: “{r.varianInput}”
                     </div>
                   )}
                 </td>
-                <td className="px-3 py-2 align-top text-slate-700">{r.jumlah}</td>
+                <td className="px-3 py-2 align-top text-sand-700">{r.jumlah}</td>
                 <td className="px-3 py-2 align-top">
                   {r.rawBukti ? (
                     <a
                       href={r.rawBukti}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-slate-600 underline"
+                      className="text-xs text-sand-600 underline"
                     >
                       link
                     </a>
                   ) : (
-                    <span className="text-slate-400">—</span>
+                    <span className="text-sand-400">—</span>
                   )}
                 </td>
               </tr>

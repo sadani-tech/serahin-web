@@ -62,15 +62,15 @@ export default async function VendorDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/vendor" className="text-sm text-slate-500 hover:text-slate-700">
+        <Link href="/vendor" className="text-sm text-sand-500 hover:text-sand-700">
           ← Daftar vendor
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
               {vendor.nama}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-sand-500">
               {vendor.spesialisasi ?? "Tanpa spesialisasi"}
               {vendor.kontak ? ` · ${vendor.kontak}` : ""}
             </p>
@@ -83,15 +83,15 @@ export default async function VendorDetailPage({
 
       {/* Ringkasan performa (FR-7.4) */}
       <Card>
-        <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4 sm:divide-y-0">
+        <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
           <div className="px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Kampanye</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">
+            <p className="text-xs uppercase tracking-wide text-sand-500">Kampanye</p>
+            <p className="mt-1 text-2xl font-semibold text-sand-900">
               {vendor.campaigns.length}
             </p>
           </div>
           <div className="px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-sand-500">
               Rating rata-rata
             </p>
             <p className="mt-1 text-lg font-semibold text-amber-600">
@@ -99,7 +99,7 @@ export default async function VendorDetailPage({
             </p>
           </div>
           <div className="px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-sand-500">
               Kampanye telat
             </p>
             <p className="mt-1 text-2xl font-semibold text-rose-600">
@@ -107,10 +107,10 @@ export default async function VendorDetailPage({
             </p>
           </div>
           <div className="px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">
+            <p className="text-xs uppercase tracking-wide text-sand-500">
               Total hari telat
             </p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">
+            <p className="mt-1 text-2xl font-semibold text-sand-900">
               {stats.totalHariTelat}
             </p>
           </div>
@@ -119,10 +119,10 @@ export default async function VendorDetailPage({
 
       {vendor.catatanUmum && (
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
             Catatan umum
           </p>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+          <p className="mt-1 whitespace-pre-wrap text-sm text-sand-700">
             {vendor.catatanUmum}
           </p>
         </Card>
@@ -130,10 +130,10 @@ export default async function VendorDetailPage({
 
       {vendor.pricelist && (
         <Card className="p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
             Pricelist
           </p>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+          <p className="mt-1 whitespace-pre-wrap text-sm text-sand-700">
             {vendor.pricelist}
           </p>
         </Card>
@@ -145,16 +145,16 @@ export default async function VendorDetailPage({
         {vendor.campaigns.length === 0 ? (
           <EmptyState title="Belum pernah dikaitkan ke kampanye" />
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-sand-100">
             {vendor.campaigns.map((c) => (
               <Link
                 key={c.id}
                 href={`/kampanye/${c.id}`}
-                className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50"
+                className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-sand-50"
               >
                 <div>
-                  <p className="font-medium text-slate-900">{c.namaProduk}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-medium text-sand-900">{c.namaProduk}</p>
+                  <p className="text-xs text-sand-500">
                     {formatTanggal(c.createdAt)}
                   </p>
                 </div>
@@ -174,13 +174,13 @@ export default async function VendorDetailPage({
             description="Isi evaluasi dari halaman kampanye setelah kampanye selesai."
           />
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-sand-100">
             {vendor.evaluations.map((e) => (
               <div key={e.id} className="px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
                     href={`/kampanye/${e.campaign.id}`}
-                    className="font-medium text-slate-900 hover:underline"
+                    className="font-medium text-sand-900 hover:underline"
                   >
                     {e.campaign.namaProduk}
                   </Link>
@@ -188,7 +188,7 @@ export default async function VendorDetailPage({
                     {ratingStars(e.rating)}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-sand-600">
                   {KETEPATAN_LABEL[e.ketepatanWaktu]}
                   {e.ketepatanWaktu === "TELAT" && e.jumlahHariTelat
                     ? ` (${e.jumlahHariTelat} hari)`
@@ -196,7 +196,7 @@ export default async function VendorDetailPage({
                   · {KUALITAS_LABEL[e.kesesuaianKualitas]}
                 </p>
                 {e.catatan && (
-                  <p className="mt-1 text-sm text-slate-500">{e.catatan}</p>
+                  <p className="mt-1 text-sm text-sand-500">{e.catatan}</p>
                 )}
               </div>
             ))}

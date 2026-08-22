@@ -66,7 +66,7 @@ export function FileUploadField({
         accept={accept}
         required={required}
         onChange={handleChange}
-        className="file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm"
+        className="file:mr-3 file:rounded-md file:border-0 file:bg-sand-100 file:px-3 file:py-1 file:text-sm"
       />
       {fileName ? (
         <div className="mt-2 space-y-1">
@@ -75,10 +75,10 @@ export function FileUploadField({
             <img
               src={preview}
               alt="Pratinjau bukti pembayaran"
-              className="max-h-48 rounded-lg border border-slate-200"
+              className="max-h-48 rounded-lg border border-sand-200"
             />
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <div className="rounded-lg border border-sand-200 bg-sand-50 px-3 py-2 text-sm text-sand-700">
               📄 {fileName}
             </div>
           )}
