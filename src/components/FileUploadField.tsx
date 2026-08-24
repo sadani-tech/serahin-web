@@ -14,6 +14,7 @@ export function FileUploadField({
   label = "Bukti pembayaran",
   hint = "JPG, PNG, WEBP, atau PDF (maks 5MB)",
   required = false,
+  disabled = false,
   accept = DEFAULT_ACCEPT,
   maxSizeMB = 5,
 }: {
@@ -21,6 +22,7 @@ export function FileUploadField({
   label?: string;
   hint?: string;
   required?: boolean;
+  disabled?: boolean;
   accept?: string;
   maxSizeMB?: number;
 }) {
@@ -65,6 +67,7 @@ export function FileUploadField({
         type="file"
         accept={accept}
         required={required}
+        disabled={disabled}
         onChange={handleChange}
         className="file:mr-3 file:rounded-md file:border-0 file:bg-sand-100 file:px-3 file:py-1 file:text-sm"
       />
@@ -82,13 +85,15 @@ export function FileUploadField({
               📄 {fileName}
             </div>
           )}
-          <button
-            type="button"
-            onClick={reset}
-            className="text-xs text-rose-600 hover:text-rose-700"
-          >
-            Hapus
-          </button>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-xs text-rose-600 hover:text-rose-700"
+            >
+              Hapus
+            </button>
+          )}
         </div>
       ) : null}
     </Field>

@@ -10,7 +10,7 @@ import type { CampaignStatus, DpTipe, PaymentScheme } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 type CampaignDetail = {
-  vendorId: string | null;
+  vendors: { id: string; nama: string }[];
   namaProduk: string;
   deskripsi: string | null;
   deskripsiPelunasan: string | null;
@@ -33,6 +33,13 @@ type CampaignDetail = {
     gambarUrl: string | null;
     images: string[];
     warna: string[];
+    kategori: string | null;
+    label: string | null;
+    ukuran: string | null;
+    material: string | null;
+    sku: string | null;
+    deskripsi: string | null;
+    vendorId: string | null;
     hargaPerluTinjau: boolean;
     terisi: number;
   }[];
@@ -93,7 +100,7 @@ export default async function EditCampaignPage({
         submitLabel="Simpan Perubahan"
         vendors={vendorOptions}
         initial={{
-          vendorId: campaign.vendorId ?? undefined,
+          vendorIds: campaign.vendors.map((vendor) => vendor.id),
           namaProduk: campaign.namaProduk,
           deskripsi: campaign.deskripsi ?? undefined,
           deskripsiPelunasan: campaign.deskripsiPelunasan ?? undefined,
@@ -114,6 +121,13 @@ export default async function EditCampaignPage({
             harga: toNumber(v.harga),
             images: v.images ?? [],
             warna: v.warna ?? [],
+            kategori: v.kategori ?? "Others",
+            label: v.label ?? "",
+            ukuran: v.ukuran ?? "",
+            material: v.material ?? "",
+            sku: v.sku ?? "",
+            deskripsi: v.deskripsi ?? "",
+            vendorId: v.vendorId ?? "",
             perluTinjau: v.hargaPerluTinjau,
             terisi: v.terisi,
           })),

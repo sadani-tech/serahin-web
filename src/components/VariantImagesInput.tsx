@@ -53,6 +53,30 @@ export function VariantImagesInput({
 
   return (
     <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-sand-700">Gambar varian</span>
+        <div className="flex gap-1" aria-label="Metode penambahan gambar">
+          {(["upload", "link"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setMode(m);
+                setError(null);
+              }}
+              aria-pressed={mode === m}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                mode === m
+                  ? "bg-brand-600 text-white"
+                  : "bg-sand-100 text-sand-600 hover:bg-sand-200"
+              }`}
+            >
+              {m === "upload" ? "Unggah" : "Tautan"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {value.map((url, i) => (
@@ -81,30 +105,11 @@ export function VariantImagesInput({
         </div>
       )}
 
-      <div className="flex gap-1">
-        {(["upload", "link"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => {
-              setMode(m);
-              setError(null);
-            }}
-            className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
-              mode === m
-                ? "bg-brand-600 text-white"
-                : "bg-sand-100 text-sand-600 hover:bg-sand-200"
-            }`}
-          >
-            {m === "upload" ? "Unggah" : "Tautan"}
-          </button>
-        ))}
-      </div>
-
       {mode === "link" ? (
         <div className="flex gap-2">
           <Input
             value={link}
+            aria-label="Tautan gambar varian"
             onChange={(e) => setLink(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -129,6 +134,7 @@ export function VariantImagesInput({
       ) : (
         <Input
           type="file"
+          aria-label="Unggah gambar varian"
           accept="image/jpeg,image/png,image/webp"
           onChange={handleFile}
           disabled={uploading}

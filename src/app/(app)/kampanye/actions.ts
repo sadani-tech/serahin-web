@@ -51,6 +51,13 @@ type VariantPayload = {
   harga: number;
   images: string[];
   warna: string[];
+  kategori: string;
+  label?: string;
+  ukuran?: string;
+  material?: string;
+  sku?: string;
+  deskripsi?: string;
+  vendorId?: string;
 };
 
 /** Parse field `variantsJson` (dikirim CampaignForm) menjadi payload varian. */
@@ -74,6 +81,7 @@ function parseVariants(formData: FormData): VariantPayload[] {
     const warna = Array.isArray(v.warna)
       ? v.warna.map((s) => String(s).trim()).filter(Boolean)
       : [];
+    const text = (key: string) => String(v[key] ?? "").trim();
     out.push({
       id: v.id ? String(v.id) : undefined,
       namaVarian,
@@ -81,6 +89,15 @@ function parseVariants(formData: FormData): VariantPayload[] {
       harga: Number(v.harga) || 0,
       images,
       warna,
+      kategori: text("kategori"),
+      // Kirim string kosong untuk field yang dibersihkan agar API menyimpannya
+      // sebagai null, bukan mempertahankan metadata lama.
+      label: text("label"),
+      ukuran: text("ukuran"),
+      material: text("material"),
+      sku: text("sku"),
+      deskripsi: text("deskripsi"),
+      vendorId: text("vendorId") || undefined,
     });
   }
   return out;
@@ -105,7 +122,7 @@ export async function createCampaign(
       dpPercent: getFormDataNumber(formData, "dpPercent"),
       dpNominal: getFormDataNumber(formData, "dpNominal"),
       deadlinePelunasan: getFormDataValue(formData, "deadlinePelunasan"),
-      vendorId: getFormDataValue(formData, "vendorId") || null,
+      vendorIds: formData.getAll("vendorIds").map(String),
       variants,
     });
   } catch (e) {
@@ -136,7 +153,7 @@ export async function updateCampaign(
       dpPercent: getFormDataNumber(formData, "dpPercent"),
       dpNominal: getFormDataNumber(formData, "dpNominal"),
       deadlinePelunasan: getFormDataValue(formData, "deadlinePelunasan"),
-      vendorId: getFormDataValue(formData, "vendorId") || null,
+      vendorIds: formData.getAll("vendorIds").map(String),
       variants,
     });
   } catch (e) {
