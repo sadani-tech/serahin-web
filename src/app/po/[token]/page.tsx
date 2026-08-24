@@ -34,6 +34,12 @@ type FormInfo = {
     gambarUrl: string | null;
     images: string[];
     warna: string[];
+    kategori: string;
+    label: string | null;
+    ukuran: string | null;
+    material: string | null;
+    sku: string | null;
+    deskripsi: string | null;
   }[];
 };
 

@@ -85,6 +85,7 @@ const evalSchema = z.object({
 
 export async function saveEvaluation(
   campaignId: string,
+  vendorId: string,
   _prev: VendorFormState,
   formData: FormData,
 ): Promise<VendorFormState> {
@@ -99,7 +100,7 @@ export async function saveEvaluation(
     return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   }
   try {
-    await api.post("/vendor/evaluations", { campaignId, ...parsed.data });
+    await api.post("/vendor/evaluations", { campaignId, vendorId, ...parsed.data });
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
   }

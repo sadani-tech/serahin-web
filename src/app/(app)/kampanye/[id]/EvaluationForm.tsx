@@ -9,9 +9,11 @@ import { saveEvaluation, type VendorFormState } from "@/app/(app)/vendor/actions
 
 export function EvaluationForm({
   campaignId,
+  vendorId,
   initial,
 }: {
   campaignId: string;
+  vendorId: string;
   initial?: {
     ketepatanWaktu?: KetepatanWaktu;
     jumlahHariTelat?: number | null;
@@ -20,7 +22,7 @@ export function EvaluationForm({
     catatan?: string | null;
   };
 }) {
-  const action = saveEvaluation.bind(null, campaignId);
+  const action = saveEvaluation.bind(null, campaignId, vendorId);
   const [state, formAction, pending] = useActionState<VendorFormState, FormData>(
     action,
     undefined,

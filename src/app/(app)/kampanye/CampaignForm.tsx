@@ -8,8 +8,8 @@ import {
   Field,
   FormError,
   Input,
-  ScrollList,
   Select,
+  Textarea,
 } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { VariantImagesInput } from "@/components/VariantImagesInput";
@@ -26,6 +26,13 @@ type VariantRow = {
   harga: number | string;
   images: string[]; // galeri gambar (URL); [0] = utama
   warna: string[]; // opsi warna
+  kategori: string;
+  label: string;
+  ukuran: string;
+  material: string;
+  sku: string;
+  deskripsi: string;
+  vendorId: string;
   perluTinjau?: boolean; // harga hasil migrasi (OQ3)
   terisi?: number; // untuk info di mode edit
 };
@@ -52,7 +59,7 @@ export type CampaignFormValues = {
   dpPercent?: number | string;
   dpNominal?: number | string;
   deadlinePelunasan?: string;
-  vendorId?: string;
+  vendorIds?: string[];
   variants?: VariantRow[];
 };
 
@@ -74,14 +81,25 @@ export function CampaignForm({
   useOverlayWhilePending(pending);
   const [scheme, setScheme] = useState(initial?.paymentScheme ?? "DP_PELUNASAN");
   const [dpTipe, setDpTipe] = useState<DpTipe>(initial?.dpTipe ?? "PERSEN");
-  const [vendorId, setVendorId] = useState(initial?.vendorId ?? "");
-  const selectedVendor = vendors.find((v) => v.id === vendorId);
+  const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>(
+    initial?.vendorIds ?? [],
+  );
+  const selectedVendors = vendors.filter((vendor) =>
+    selectedVendorIds.includes(vendor.id),
+  );
   const emptyVariant = (): VariantRow => ({
     namaVarian: "",
     kuotaMaks: "",
     harga: "",
     images: [],
     warna: [],
+    kategori: "",
+    label: "",
+    ukuran: "",
+    material: "",
+    sku: "",
+    deskripsi: "",
+    vendorId: selectedVendorIds.length === 1 ? selectedVendorIds[0] : "",
   });
   const [variants, setVariants] = useState<VariantRow[]>(
     initial?.variants && initial.variants.length > 0
@@ -94,6 +112,28 @@ export function CampaignForm({
     setVariants((v) => (v.length > 1 ? v.filter((_, idx) => idx !== i) : v));
   const updateVariant = (i: number, patch: Partial<VariantRow>) =>
     setVariants((v) => v.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+
+  const toggleVendor = (vendorId: string) => {
+    const selected = selectedVendorIds.includes(vendorId);
+    const nextVendorIds = selected
+      ? selectedVendorIds.filter((id) => id !== vendorId)
+      : [...selectedVendorIds, vendorId];
+    setSelectedVendorIds(nextVendorIds);
+    setVariants((current) =>
+      current.map((variant) => ({
+        ...variant,
+        vendorId: selected
+          ? variant.vendorId === vendorId
+            ? nextVendorIds.length === 1
+              ? nextVendorIds[0]
+              : ""
+            : variant.vendorId
+          : selectedVendorIds.length === 0 && !variant.vendorId
+            ? vendorId
+            : variant.vendorId,
+      })),
+    );
+  };
 
   return (
     <form action={formAction} className="space-y-6">
@@ -266,45 +306,40 @@ export function CampaignForm({
 
       <Card className="p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">Vendor</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Vendor pelaksana" hint="Opsional — pilih dari vendor tersimpan.">
-            <Select
-              name="vendorId"
-              value={vendorId}
-              onChange={(e) => setVendorId(e.target.value)}
-            >
-              <option value="">— tanpa vendor —</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.nama}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          {selectedVendor && (
-            <div className="rounded-lg bg-sand-50 p-3 text-sm ring-1 ring-inset ring-sand-200">
-              <p className="text-xs font-medium uppercase tracking-wide text-sand-500">
-                Riwayat vendor (FR-7.5)
-              </p>
-              <p className="mt-1 text-sand-700">
-                Rating rata-rata:{" "}
-                <span className="font-medium text-amber-600">
-                  {selectedVendor.avgRating ?? "—"}
-                </span>{" "}
-                · {selectedVendor.jumlahKampanye} kampanye ·{" "}
-                <span
-                  className={
-                    selectedVendor.jumlahTelat > 0
-                      ? "font-medium text-rose-600"
-                      : ""
-                  }
-                >
-                  {selectedVendor.jumlahTelat}× telat
+        <p className="mb-3 text-xs text-sand-500">
+          Pilih satu atau lebih vendor. Vendor per item ditentukan pada bagian varian.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {vendors.map((vendor) => {
+            const selected = selectedVendorIds.includes(vendor.id);
+            return (
+              <label
+                key={vendor.id}
+                className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${
+                  selected ? "border-brand-500 bg-brand-50" : "border-sand-200 bg-white"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  name="vendorIds"
+                  value={vendor.id}
+                  checked={selected}
+                  onChange={() => toggleVendor(vendor.id)}
+                  className="mt-0.5 h-4 w-4 accent-brand-600"
+                />
+                <span className="min-w-0 text-sm">
+                  <span className="block font-semibold text-sand-900">{vendor.nama}</span>
+                  <span className="mt-0.5 block text-xs text-sand-500">
+                    Rating {vendor.avgRating ?? "—"} · {vendor.jumlahKampanye} kampanye · {vendor.jumlahTelat}× telat
+                  </span>
                 </span>
-              </p>
-            </div>
-          )}
+              </label>
+            );
+          })}
         </div>
+        {vendors.length === 0 && (
+          <p className="text-sm text-sand-500">Belum ada vendor tersimpan.</p>
+        )}
       </Card>
 
       <Card className="p-5">
@@ -322,7 +357,14 @@ export function CampaignForm({
           name="variantsJson"
           value={JSON.stringify(variants)}
         />
-        <ScrollList maxRows={10} rowHeight={3.5} className="space-y-3 pr-1">
+        <datalist id="kategori-umum">
+          <option value="Sepatu" />
+          <option value="Tas" />
+          <option value="Baju" />
+          <option value="Elektronik" />
+          <option value="Others" />
+        </datalist>
+        <div className="space-y-3">
           {variants.map((v, i) => (
             <div key={i} className="rounded-lg border border-sand-200 p-3">
               <div className="flex flex-wrap items-end gap-2">
@@ -376,12 +418,69 @@ export function CampaignForm({
                 </Button>
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <Field label="Gambar varian (galeri, opsional)">
-                  <VariantImagesInput
-                    value={v.images}
-                    onChange={(images) => updateVariant(i, { images })}
+                {selectedVendors.length > 0 && (
+                  <Field label="Vendor item" required>
+                    <Select
+                      value={v.vendorId}
+                      onChange={(e) => updateVariant(i, { vendorId: e.target.value })}
+                      required
+                    >
+                      <option value="">— pilih vendor —</option>
+                      {selectedVendors.map((vendor) => (
+                        <option key={vendor.id} value={vendor.id}>{vendor.nama}</option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
+                <Field label="Kategori" required>
+                  <Input
+                    value={v.kategori}
+                    onChange={(e) => updateVariant(i, { kategori: e.target.value })}
+                    list="kategori-umum"
+                    placeholder="mis. Tas"
+                    required
                   />
                 </Field>
+                <Field label="Label katalog (opsional)">
+                  <Input
+                    value={v.label}
+                    onChange={(e) => updateVariant(i, { label: e.target.value })}
+                    placeholder="mis. New Arrival"
+                  />
+                </Field>
+                <Field label="Ukuran (opsional)">
+                  <Input
+                    value={v.ukuran}
+                    onChange={(e) => updateVariant(i, { ukuran: e.target.value })}
+                    placeholder="mis. M atau 40 × 25 cm"
+                  />
+                </Field>
+                <Field label="Material (opsional)">
+                  <Input
+                    value={v.material}
+                    onChange={(e) => updateVariant(i, { material: e.target.value })}
+                    placeholder="mis. Kanvas"
+                  />
+                </Field>
+                <Field label="SKU produk (opsional)">
+                  <Input
+                    value={v.sku}
+                    onChange={(e) => updateVariant(i, { sku: e.target.value })}
+                    placeholder="mis. TAS-001"
+                  />
+                </Field>
+                <Field label="Deskripsi varian (opsional)">
+                  <Textarea
+                    value={v.deskripsi}
+                    onChange={(e) => updateVariant(i, { deskripsi: e.target.value })}
+                    placeholder="Detail khusus varian ini"
+                    rows={2}
+                  />
+                </Field>
+                <VariantImagesInput
+                  value={v.images}
+                  onChange={(images) => updateVariant(i, { images })}
+                />
                 <Field label="Opsi warna (opsional)">
                   <VariantColorsInput
                     value={v.warna}
@@ -396,7 +495,7 @@ export function CampaignForm({
               )}
             </div>
           ))}
-        </ScrollList>
+        </div>
         {variants.some((v) => v.terisi && v.terisi > 0) && (
           <p className="mt-3 text-xs text-sand-500">
             Kuota tidak dapat diturunkan di bawah jumlah pesanan yang sudah

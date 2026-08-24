@@ -32,6 +32,13 @@ type VendorDetail = {
     status: CampaignStatus;
     createdAt: string;
   }[];
+  variants: {
+    id: string;
+    namaVarian: string;
+    sku: string | null;
+    kategori: string | null;
+    campaign: { id: string; namaProduk: string };
+  }[];
   evaluations: (EvalInput & {
     id: string;
     kesesuaianKualitas: KesesuaianKualitas;
@@ -160,6 +167,32 @@ export default async function VendorDetailPage({
                 </div>
                 <CampaignBadge status={c.status} />
               </Link>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card>
+        <CardHeader title="Item yang dikerjakan" />
+        {vendor.variants.length === 0 ? (
+          <EmptyState title="Belum ada item yang dikaitkan ke vendor" />
+        ) : (
+          <div className="divide-y divide-sand-100">
+            {vendor.variants.map((variant) => (
+              <div key={variant.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                <div>
+                  <p className="font-medium text-sand-900">{variant.namaVarian}</p>
+                  <p className="text-xs text-sand-500">
+                    {[variant.kategori, variant.sku].filter(Boolean).join(" · ") || "Tanpa metadata"}
+                  </p>
+                </div>
+                <Link
+                  href={`/kampanye/${variant.campaign.id}`}
+                  className="text-sm font-medium text-brand-700 hover:underline"
+                >
+                  {variant.campaign.namaProduk}
+                </Link>
+              </div>
             ))}
           </div>
         )}

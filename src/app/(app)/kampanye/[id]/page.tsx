@@ -70,6 +70,7 @@ type CampaignDetail = {
     kuotaMaks: number;
     harga: string;
     hargaPerluTinjau: boolean;
+    vendor: { id: string; nama: string } | null;
   }[];
   timelineEntries: {
     id: string;
@@ -92,14 +93,15 @@ type CampaignDetail = {
     }[];
     payments: { jumlah: string; statusVerifikasi: PaymentVerification }[];
   }[];
-  vendor: { id: string; nama: string; evaluations: EvalInput[] } | null;
-  evaluation: {
+  vendors: { id: string; nama: string; evaluations: EvalInput[] }[];
+  evaluations: {
+    vendorId: string;
     ketepatanWaktu: KetepatanWaktu;
     jumlahHariTelat: number | null;
     kesesuaianKualitas: KesesuaianKualitas;
     rating: number;
     catatan: string | null;
-  } | null;
+  }[];
 };
 
 export default async function CampaignDetailPage({
@@ -364,54 +366,64 @@ export default async function CampaignDetailPage({
               <h3 className="mb-3 text-sm font-semibold text-sand-900">
                 Vendor
               </h3>
-              {campaign.vendor ? (
-                <>
-                  <Link
-                    href={`/vendor/${campaign.vendor.id}`}
-                    className="font-medium text-sand-900 hover:underline"
-                  >
-                    {campaign.vendor.nama}
-                  </Link>
-                  <p className="mt-1 text-sm text-amber-600">
-                    {ratingStars(
-                      computeVendorStats(campaign.vendor.evaluations).avgRating,
-                    )}
-                  </p>
+              {campaign.vendors.length > 0 ? (
+                <div className="space-y-5">
+                  {campaign.vendors.map((vendor) => {
+                    const evaluation = campaign.evaluations.find(
+                      (item) => item.vendorId === vendor.id,
+                    );
+                    const vendorVariants = campaign.variants.filter(
+                      (variant) => variant.vendor?.id === vendor.id,
+                    );
+                    return (
+                      <section key={vendor.id} className="rounded-xl border border-sand-200 p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <Link
+                              href={`/vendor/${vendor.id}`}
+                              className="font-semibold text-sand-900 hover:underline"
+                            >
+                              {vendor.nama}
+                            </Link>
+                            <p className="mt-1 text-sm text-amber-600">
+                              {ratingStars(computeVendorStats(vendor.evaluations).avgRating)}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-sand-100 px-2.5 py-1 text-xs font-semibold text-sand-600">
+                            {vendorVariants.length} item
+                          </span>
+                        </div>
+                        {vendorVariants.length > 0 && (
+                          <p className="mt-2 text-xs text-sand-600">
+                            {vendorVariants.map((variant) => variant.namaVarian).join(", ")}
+                          </p>
+                        )}
 
-                  <div className="mt-4 border-t border-sand-100 pt-4">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-sand-500">
-                      {campaign.evaluation
-                        ? "Evaluasi vendor"
-                        : "Isi evaluasi vendor"}
-                    </p>
-                    {campaign.status !== "SELESAI" && !campaign.evaluation && (
-                      <p className="mb-2 text-xs text-sand-500">
-                        Biasanya diisi setelah kampanye berstatus Selesai.
-                      </p>
-                    )}
-                    <EvaluationForm
-                      campaignId={id}
-                      initial={
-                        campaign.evaluation
-                          ? {
-                              ketepatanWaktu: campaign.evaluation.ketepatanWaktu,
-                              jumlahHariTelat: campaign.evaluation.jumlahHariTelat,
-                              kesesuaianKualitas:
-                                campaign.evaluation.kesesuaianKualitas,
-                              rating: campaign.evaluation.rating,
-                              catatan: campaign.evaluation.catatan,
-                            }
-                          : undefined
-                      }
-                    />
-                    {campaign.evaluation && (
-                      <p className="mt-2 text-xs text-sand-500">
-                        {KETEPATAN_LABEL[campaign.evaluation.ketepatanWaktu]} ·{" "}
-                        {KUALITAS_LABEL[campaign.evaluation.kesesuaianKualitas]}
-                      </p>
-                    )}
-                  </div>
-                </>
+                        <div className="mt-4 border-t border-sand-100 pt-4">
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-sand-500">
+                            {evaluation ? "Evaluasi vendor" : "Isi evaluasi vendor"}
+                          </p>
+                          {campaign.status !== "SELESAI" && !evaluation && (
+                            <p className="mb-2 text-xs text-sand-500">
+                              Biasanya diisi setelah kampanye berstatus Selesai.
+                            </p>
+                          )}
+                          <EvaluationForm
+                            campaignId={id}
+                            vendorId={vendor.id}
+                            initial={evaluation}
+                          />
+                          {evaluation && (
+                            <p className="mt-2 text-xs text-sand-500">
+                              {KETEPATAN_LABEL[evaluation.ketepatanWaktu]} ·{" "}
+                              {KUALITAS_LABEL[evaluation.kesesuaianKualitas]}
+                            </p>
+                          )}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
               ) : (
                 <p className="text-sm text-sand-500">
                   Belum ada vendor.{" "}
