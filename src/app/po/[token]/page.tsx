@@ -14,7 +14,7 @@ import { PublicOrderForm } from "./PublicOrderForm";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Formulir Pesanan — Serahin",
+  title: "Katalog Pre-Order — Serahin",
   robots: { index: false, follow: false },
 };
 
@@ -53,28 +53,44 @@ export default async function PublicFormPage({
   }
 
   const adaSisa = data.variants.some((v) => v.sisa > 0);
+  const hargaVarian = data.variants.map((v) => v.harga);
+  const hargaTerendah = Math.min(...hargaVarian);
+  const hargaTertinggi = Math.max(...hargaVarian);
+  const labelHarga =
+    hargaVarian.length === 0
+      ? formatRupiah(data.harga)
+      : hargaTerendah === hargaTertinggi
+        ? formatRupiah(hargaTerendah)
+        : `${formatRupiah(hargaTerendah)} – ${formatRupiah(hargaTertinggi)}`;
+  const alasanTidakBisaPesan = !data.bukaPesanan
+    ? "Maaf, formulir pesanan untuk kampanye ini sedang tidak aktif."
+    : !adaSisa
+      ? "Semua varian sudah habis kuotanya."
+      : undefined;
 
   return (
-    <div className="bg-serahin-dots relative min-h-full py-10">
+    <div className="bg-serahin-dots relative min-h-full pb-10">
       <div
         aria-hidden="true"
         className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
       />
-      <div className="relative mx-auto max-w-lg space-y-6 px-4">
-        <div className="flex flex-col items-center text-center">
+      <main className="relative mx-auto max-w-6xl space-y-7 px-4 pt-7 sm:px-6 sm:pt-10">
+        <section className="mx-auto max-w-3xl text-center">
           <SerahinLogo size="md" layout="stacked" />
-          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 ring-1 ring-brand-200">
-            Formulir Pre-Order
-          </span>
-          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-sand-900">
+          <div className="mt-5 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 ring-1 ring-brand-200">
+              Katalog Pre-Order
+            </span>
+          </div>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-sand-900 sm:text-4xl">
             {data.namaProduk}
           </h1>
-          <p className="mt-1.5 text-sm font-semibold text-sand-600">
-            {formatRupiah(data.harga)} / unit ·{" "}
+          <p className="mt-2 text-base font-bold text-brand-700 sm:text-lg">
+            {labelHarga} <span className="text-sand-400">·</span>{" "}
             {PAYMENT_SCHEME_LABEL[data.paymentScheme]}
           </p>
           {data.tanggalTutup && (
-            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-sun-100 px-3 py-1 text-xs font-bold text-sun-800 ring-1 ring-sun-600/25">
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sun-100 px-3 py-1.5 text-xs font-bold text-sun-800 ring-1 ring-sun-600/25">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -91,40 +107,29 @@ export default async function PublicFormPage({
               PO ditutup {formatTanggal(data.tanggalTutup)}
             </p>
           )}
-        </div>
+        </section>
 
         {data.deskripsi && !isRichTextEmpty(data.deskripsi) && (
-          <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-sm">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
             <RichText html={data.deskripsi} />
           </div>
         )}
 
-        <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-lg">
-          <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
-          <div className="p-6">
-          {!data.bukaPesanan ? (
-            <p className="text-center text-sm text-sand-600">
-              Maaf, formulir pesanan untuk kampanye ini sedang tidak aktif.
-            </p>
-          ) : !adaSisa ? (
-            <p className="text-center text-sm text-rose-600">
-              Semua varian sudah habis kuotanya.
-            </p>
-          ) : (
-            <PublicOrderForm formToken={token} variants={data.variants} />
-          )}
-          </div>
-        </div>
+        <PublicOrderForm
+          formToken={token}
+          variants={data.variants}
+          orderingDisabled={Boolean(alasanTidakBisaPesan)}
+          unavailableMessage={alasanTidakBisaPesan}
+        />
 
-        <p className="text-center text-xs text-sand-500">
+        <p className="mx-auto max-w-xl text-center text-xs text-sand-500">
           Pesanan Anda akan diverifikasi Admin terlebih dahulu. Setelah kirim,
           Anda akan mendapat link untuk memantau status pesanan.
         </p>
 
         <PublicFaq campaignId={data.id} />
-
         <PublicFooter />
-      </div>
+      </main>
     </div>
   );
 }
