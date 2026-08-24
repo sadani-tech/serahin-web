@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "./constants";
+import type { PublicOrderState } from "./constants";
 
 // Keranjang dikirim sebagai satu field JSON ("cart") dari state klien.
 function parseCart(formData: FormData) {
@@ -20,17 +20,16 @@ function parseCart(formData: FormData) {
     for (const it of parsed) {
       const vid = String((it as { variantId?: unknown })?.variantId ?? "");
       if (!vid) continue;
-      let j = Math.max(
+      const j = Math.max(
         1,
         Math.round(Number((it as { jumlah?: unknown })?.jumlah ?? 1)) || 1,
       );
-      j = Math.min(j, MAX_UNIT_PER_SUBMISSION);
       const warna =
         String((it as { warna?: unknown })?.warna ?? "").trim() || undefined;
       const ex = items.find(
         (x) => x.variantId === vid && (x.warna ?? "") === (warna ?? ""),
       );
-      if (ex) ex.jumlah = Math.min(MAX_UNIT_PER_SUBMISSION, ex.jumlah + j);
+      if (ex) ex.jumlah = ex.jumlah + j;
       else items.push({ variantId: vid, jumlah: j, warna });
     }
   }

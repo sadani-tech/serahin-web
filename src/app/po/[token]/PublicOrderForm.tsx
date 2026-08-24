@@ -8,7 +8,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
-import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "../constants";
+import type { PublicOrderState } from "../constants";
 
 export type PublicVariantOption = {
   id: string;
@@ -242,7 +242,7 @@ export function PublicOrderForm({
             return (
               <article
                 key={v.id}
-                className={`animate-rise overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
+                className={`animate-rise flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
                   habis ? "border-sand-200 opacity-75" : "border-sand-200"
                 }`}
                 style={{ animationDelay: `${Math.min(index * 35, 210)}ms` }}
@@ -298,7 +298,7 @@ export function PublicOrderForm({
                   )}
                 </div>
 
-                <div className="space-y-2.5 p-3 sm:space-y-3 sm:p-4">
+                <div className="flex flex-1 flex-col space-y-2.5 p-3 sm:space-y-3 sm:p-4">
                   <div>
                     <h3 className="line-clamp-2 text-sm font-extrabold leading-snug text-sand-900 sm:text-base">{v.namaVarian}</h3>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -359,15 +359,15 @@ export function PublicOrderForm({
                     </fieldset>
                   ) : null}
 
-                  <div className="border-t border-sand-100 pt-2.5">
+                  <div className="mt-auto border-t border-sand-100 pt-2.5">
                     <span className="mb-1.5 block text-[0.7rem] font-bold text-sand-600 sm:text-xs">Jumlah</span>
                     <div className="grid grid-cols-3 gap-1.5">
                       <button type="button" onClick={() => setQ(v.id, jumlah - 1)} disabled={disabled || jumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian}`} className="flex h-11 items-center justify-center rounded-xl bg-sand-100 text-xl font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
                       <output className="flex h-11 items-center justify-center rounded-xl bg-sand-50 px-1 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian}`}>{jumlah}</output>
                       <button
                         type="button"
-                        onClick={() => setQ(v.id, Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION, jumlah + 1))}
-                        disabled={disabled || jumlah >= Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION)}
+                        onClick={() => setQ(v.id, Math.min(v.sisa, jumlah + 1))}
+                        disabled={disabled || jumlah >= v.sisa}
                         aria-label={`Tambah jumlah ${v.namaVarian}`}
                         className="flex h-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                       >
@@ -484,7 +484,6 @@ export function PublicOrderForm({
               <span className="text-sm font-bold text-sand-600">Total pesanan</span>
               <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
             </div>
-            <p className="mt-1 text-xs text-sand-500">Maksimal {MAX_UNIT_PER_SUBMISSION} unit per varian.</p>
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
           <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}>
