@@ -60,29 +60,65 @@ export async function createPublicOrder(
     "",
   );
   const jumlahBayar = jumlahBayarRaw ? Number(jumlahBayarRaw) : 0;
-  if (jumlahBayar <= 0) return { error: "Jumlah bayar wajib diisi." };
-
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
   const confirmPerubahanKuota = formData.get("confirmPerubahanKuota") === "1";
 
-  // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran (FR-upload-bukti)
-  const fd = new FormData();
-  fd.set("namaPembeli", namaPembeli);
-  fd.set("kontak", kontak);
-  fd.set("items", JSON.stringify(items));
-  fd.set("jumlahBayar", String(jumlahBayar));
-  fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
-  fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");
+  // v2.1 — pembeli memilih "Bayar otomatis" (payment gateway).
+  const gateway = formData.get("metodeBayar") === "GATEWAY";
 
-  // Bukti pembayaran opsional — dikirim hanya jika file valid dipilih
-  const bukti = formData.get("buktiPembayaran");
-  if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
+  type OrderResult = {
+    tokenAkses?: string;
+    paymentUrl?: string;
+    needsConfirm?: boolean;
+    needsCartConfirm?: boolean;
+    warning?: string;
+  };
+  let result: OrderResult;
 
-  let result: { tokenAkses?: string; needsConfirm?: boolean; needsCartConfirm?: boolean; warning?: string };
-  try {
-    result = await api.postForm(`/public/form/${formToken}/order`, fd);
-  } catch (e) {
-    return { error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan." };
+  if (gateway) {
+    // Body JSON — pembeli membayar di halaman provider, tidak ada unggahan bukti.
+    try {
+      result = await api.post<OrderResult>(
+        `/public/form/${formToken}/order/gateway`,
+        {
+          namaPembeli,
+          kontak,
+          items,
+          ...(jumlahBayar > 0 ? { jumlahBayar } : {}),
+          confirmDuplikat,
+          confirmPerubahanKuota,
+        },
+      );
+    } catch (e) {
+      return {
+        error: e instanceof ApiError ? e.message : "Gagal memulai pembayaran.",
+      };
+    }
+  } else {
+    if (jumlahBayar <= 0) return { error: "Jumlah bayar wajib diisi." };
+
+    // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran.
+    const fd = new FormData();
+    fd.set("namaPembeli", namaPembeli);
+    fd.set("kontak", kontak);
+    fd.set("items", JSON.stringify(items));
+    fd.set("jumlahBayar", String(jumlahBayar));
+    fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
+    fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");
+
+    const bukti = formData.get("buktiPembayaran");
+    if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
+
+    try {
+      result = await api.postForm<OrderResult>(
+        `/public/form/${formToken}/order`,
+        fd,
+      );
+    } catch (e) {
+      return {
+        error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan.",
+      };
+    }
   }
 
   if (result.needsConfirm) {
@@ -91,5 +127,10 @@ export async function createPublicOrder(
   if (result.needsCartConfirm) {
     return { warning: result.warning, needsCartConfirm: true };
   }
-  redirect(`/po/sukses/${result.tokenAkses}`);
+  // Gateway: langsung ke halaman pembayaran provider. Manual: ke halaman sukses.
+  redirect(
+    gateway && result.paymentUrl
+      ? result.paymentUrl
+      : `/po/sukses/${result.tokenAkses}`,
+  );
 }

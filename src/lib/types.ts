@@ -32,7 +32,11 @@ export type MetodePengiriman = "SHOPEE" | "EKSPEDISI";
 export type PaymentVerification =
   | "MENUNGGU_VERIFIKASI"
   | "TERVERIFIKASI"
-  | "DITOLAK";
+  | "DITOLAK"
+  | "KEDALUWARSA";
+
+// v2.1 — kanal pembayaran (transfer manual vs payment gateway).
+export type PaymentChannel = "MANUAL_TRANSFER" | "GATEWAY";
 
 export type SumberPesanan = "MANUAL" | "FORM_PUBLIK" | "IMPORT";
 
