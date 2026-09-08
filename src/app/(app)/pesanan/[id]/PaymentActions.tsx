@@ -3,13 +3,14 @@
 import { verifyPayment, deletePayment } from "../actions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useApiTransition } from "@/hooks/useNavLoading";
+import type { PaymentVerification } from "@/lib/types";
 
 export function PaymentActions({
   paymentId,
   status,
 }: {
   paymentId: string;
-  status: "MENUNGGU_VERIFIKASI" | "TERVERIFIKASI" | "DITOLAK";
+  status: PaymentVerification;
 }) {
   const { confirm } = useConfirm();
   const { pending, run } = useApiTransition();

@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { api, ApiError } from "@/lib/api";
 
@@ -57,4 +58,56 @@ export async function submitPortalPayment(
 
   revalidatePath(`/portal/${token}`);
   return { ok: true };
+}
+
+/**
+ * v2.1 — pembeli memulai pembayaran otomatis (gateway) dari portal. Backend
+ * membuat charge di payment-service dan mengembalikan paymentUrl; kita arahkan
+ * pembeli ke sana. Metode pengiriman (v1.8) tetap wajib pada tahap pelunasan.
+ */
+export async function startPortalGatewayPayment(
+  token: string,
+  _prev: PortalPaymentState,
+  formData: FormData,
+): Promise<PortalPaymentState> {
+  const jumlahRaw = String(formData.get("jumlahBayar") ?? "").replace(/\D/g, "");
+  const jumlah = jumlahRaw ? Number(jumlahRaw) : 0;
+  if (jumlah <= 0) return { error: "Jumlah pembayaran wajib diisi." };
+
+  const body: {
+    jumlahBayar: number;
+    metodePengiriman?: string;
+    alamatPengiriman?: string;
+  } = { jumlahBayar: jumlah };
+
+  const metode = String(formData.get("metodePengiriman") ?? "").trim();
+  if (metode === "SHOPEE" || metode === "EKSPEDISI") {
+    body.metodePengiriman = metode;
+    const alamat = String(formData.get("alamatPengiriman") ?? "").trim();
+    if (metode === "EKSPEDISI") {
+      if (!alamat) {
+        return {
+          error:
+            "Alamat pengiriman lengkap wajib diisi untuk Manual by Ekspedisi.",
+        };
+      }
+      body.alamatPengiriman = alamat;
+    }
+  }
+
+  let paymentUrl: string | undefined;
+  try {
+    const res = await api.post<{ paymentUrl?: string }>(
+      `/public/order/${token}/payment/gateway`,
+      body,
+    );
+    paymentUrl = res.paymentUrl;
+  } catch (e) {
+    return {
+      error: e instanceof ApiError ? e.message : "Gagal memulai pembayaran.",
+    };
+  }
+
+  if (!paymentUrl) return { error: "Gagal memulai pembayaran." };
+  redirect(paymentUrl);
 }

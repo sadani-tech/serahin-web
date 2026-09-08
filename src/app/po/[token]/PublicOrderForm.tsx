@@ -36,11 +36,13 @@ function getCategory(value?: string | null) {
 export function PublicOrderForm({
   formToken,
   variants,
+  gatewayEnabled = false,
   orderingDisabled = false,
   unavailableMessage,
 }: {
   formToken: string;
   variants: PublicVariantOption[];
+  gatewayEnabled?: boolean;
   orderingDisabled?: boolean;
   unavailableMessage?: string;
 }) {
@@ -53,6 +55,11 @@ export function PublicOrderForm({
   const [wa, setWa] = useState("");
   const [email, setEmail] = useState("");
   const [jumlahBayar, setJumlahBayar] = useState("");
+  // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
+  const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
+    gatewayEnabled ? "GATEWAY" : "MANUAL",
+  );
+  const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
   const [qty, setQty] = useState<Record<string, number>>({});
   const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
@@ -147,6 +154,7 @@ export function PublicOrderForm({
     const fd = new FormData(e.currentTarget);
     fd.set("cart", JSON.stringify(items));
     fd.set("jumlahBayar", jumlahBayar);
+    fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
     startTransition(() => formAction(fd));
   }
 
@@ -474,11 +482,57 @@ export function PublicOrderForm({
           <Field label="Email" required>
             <Input name="email" type="email" required disabled={orderingDisabled} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
           </Field>
-          <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
-          <Field label="Jumlah yang dibayarkan" required hint={bayarLebihDariTotal ? undefined : jumlahBayar ? `= ${formatRupiah(Number(jumlahBayar))}` : "Nominal transfer sesuai bukti pembayaran."}>
-            <CurrencyInput name="jumlahBayar" required disabled={orderingDisabled} value={jumlahBayar} onValueChange={setJumlahBayar} placeholder="150.000" />
-            {bayarLebihDariTotal && <span className="mt-1 block text-xs font-medium text-rose-700">Jumlah yang dibayarkan tidak boleh lebih dari total harga.</span>}
-          </Field>
+          {gatewayEnabled && (
+            <Field label="Metode pembayaran" required>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["GATEWAY", "Bayar otomatis", "QRIS / VA / e-wallet / kartu — verifikasi instan"],
+                    ["MANUAL", "Transfer manual", "Transfer bank lalu unggah bukti — diverifikasi Admin"],
+                  ] as const
+                ).map(([value, judul, sub]) => (
+                  <label
+                    key={value}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${
+                      metodeBayar === value
+                        ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                        : "border-sand-200 hover:border-sand-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="metodeBayarRadio"
+                      value={value}
+                      checked={metodeBayar === value}
+                      onChange={() => setMetodeBayar(value)}
+                      disabled={orderingDisabled}
+                      className="mt-0.5 h-4 w-4 accent-brand-600"
+                    />
+                    <span>
+                      <span className="block font-bold text-sand-800">{judul}</span>
+                      <span className="block text-xs text-sand-500">{sub}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+          )}
+
+          {gateway ? (
+            <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+              Setelah menekan tombol di bawah, Anda akan diarahkan ke halaman
+              pembayaran. Pesanan otomatis terverifikasi begitu pembayaran
+              berhasil — tidak perlu unggah bukti.
+            </div>
+          ) : (
+            <>
+              <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
+              <Field label="Jumlah yang dibayarkan" required hint={bayarLebihDariTotal ? undefined : jumlahBayar ? `= ${formatRupiah(Number(jumlahBayar))}` : "Nominal transfer sesuai bukti pembayaran."}>
+                <CurrencyInput name="jumlahBayar" required disabled={orderingDisabled} value={jumlahBayar} onValueChange={setJumlahBayar} placeholder="150.000" />
+                {bayarLebihDariTotal && <span className="mt-1 block text-xs font-medium text-rose-700">Jumlah yang dibayarkan tidak boleh lebih dari total harga.</span>}
+              </Field>
+            </>
+          )}
           <div className="rounded-xl bg-cream-soft px-4 py-3">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm font-bold text-sand-600">Total pesanan</span>
@@ -487,7 +541,11 @@ export function PublicOrderForm({
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
           <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}>
-            {state?.needsConfirm || state?.needsCartConfirm ? "Ya, lanjutkan" : "Kirim Pesanan"}
+            {state?.needsConfirm || state?.needsCartConfirm
+              ? "Ya, lanjutkan"
+              : gateway
+                ? "Bayar Sekarang"
+                : "Kirim Pesanan"}
           </Button>
         </div>
       </section>
