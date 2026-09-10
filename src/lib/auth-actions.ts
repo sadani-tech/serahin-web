@@ -6,6 +6,12 @@ import { PUBLIC_API_URL, TOKEN_COOKIE } from "@/lib/api";
 
 export type LoginState = { error?: string } | undefined;
 
+function safeCallbackUrl(value: string): string {
+  return value.startsWith("/") && !value.startsWith("//") && !value.includes("\\")
+    ? value
+    : "/dashboard";
+}
+
 /** Login: minta JWT ke backend, simpan di cookie httpOnly, arahkan ke tujuan. */
 export async function loginAction(
   _prev: LoginState,
@@ -13,7 +19,8 @@ export async function loginAction(
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const callbackUrl = String(formData.get("callbackUrl") ?? "/") || "/";
+  const callbackUrl =
+    String(formData.get("callbackUrl") ?? "/dashboard") || "/dashboard";
 
   const res = await fetch(`${PUBLIC_API_URL}/auth/login`, {
     method: "POST",
@@ -36,12 +43,12 @@ export async function loginAction(
     maxAge: 60 * 60 * 24 * 7, // 7 hari (samakan dgn JWT_EXPIRES_IN)
   });
 
-  redirect(callbackUrl.startsWith("/") ? callbackUrl : "/");
+  redirect(safeCallbackUrl(callbackUrl));
 }
 
 /** Logout: hapus cookie token. */
 export async function logoutAction(): Promise<void> {
   const store = await cookies();
   store.delete(TOKEN_COOKIE);
-  redirect("/login");
+  redirect("/");
 }

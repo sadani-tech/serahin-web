@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers as requestHeaders } from "next/headers";
 
 /**
  * Klien REST server-side untuk backend NestJS (menggantikan akses Prisma
@@ -10,12 +10,27 @@ import { cookies } from "next/headers";
  * "client-side" di sini, itu tidak akan pernah membawa token.
  */
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
+const API_TIMEOUT_MS = Number(process.env.API_TIMEOUT_MS ?? 15_000);
 export const TOKEN_COOKIE = "token";
 
+function requestSignal(): AbortSignal | undefined {
+  return Number.isFinite(API_TIMEOUT_MS) && API_TIMEOUT_MS > 0
+    ? AbortSignal.timeout(API_TIMEOUT_MS)
+    : undefined;
+}
+
 async function authHeader(): Promise<Record<string, string>> {
-  const store = await cookies();
+  const [store, incoming] = await Promise.all([cookies(), requestHeaders()]);
   const token = store.get(TOKEN_COOKIE)?.value;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const forwarded =
+    incoming.get("x-forwarded-for") ??
+    incoming.get("x-real-ip") ??
+    incoming.get("cf-connecting-ip");
+  const clientIp = forwarded?.split(",")[0]?.trim().slice(0, 64);
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(clientIp ? { "X-Forwarded-For": clientIp } : {}),
+  };
 }
 
 export class ApiError extends Error {
@@ -56,6 +71,7 @@ export const api = {
     const res = await fetch(`${API_URL}${withQuery(path, query)}`, {
       headers: { ...(await authHeader()) },
       cache: "no-store",
+      signal: requestSignal(),
     });
     return parse(res) as Promise<T>;
   },
@@ -76,6 +92,7 @@ export const api = {
       headers: { "Content-Type": "application/json", ...(await authHeader()) },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store",
+      signal: requestSignal(),
     });
     return parse(res) as Promise<T>;
   },
@@ -86,6 +103,7 @@ export const api = {
       headers: { "Content-Type": "application/json", ...(await authHeader()) },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store",
+      signal: requestSignal(),
     });
     return parse(res) as Promise<T>;
   },

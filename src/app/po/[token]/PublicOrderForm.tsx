@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useMemo, useState } from "react";
+import Link from "next/link";
 import { Button, Field, FormError, Input } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
@@ -9,6 +10,7 @@ import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
 import type { PublicOrderState } from "../constants";
+import { publicSite } from "@/lib/public-site";
 
 export type PublicVariantOption = {
   id: string;
@@ -39,12 +41,16 @@ export function PublicOrderForm({
   gatewayEnabled = false,
   orderingDisabled = false,
   unavailableMessage,
+  checkoutSource = "CAMPAIGN_LINK",
+  idPrefix = formToken,
 }: {
   formToken: string;
   variants: PublicVariantOption[];
   gatewayEnabled?: boolean;
   orderingDisabled?: boolean;
   unavailableMessage?: string;
+  checkoutSource?: "CAMPAIGN_LINK" | "HOME_CATALOG";
+  idPrefix?: string;
 }) {
   const action = createPublicOrder.bind(null, formToken);
   const [state, formAction, pending] = useActionState<PublicOrderState, FormData>(
@@ -78,6 +84,7 @@ export function PublicOrderForm({
   const items = selectedVariants.map((v) => ({
     variantId: v.id,
     jumlah: qty[v.id] ?? 0,
+    expectedHarga: v.harga,
     warna: warnaSel[v.id] || undefined,
   }));
   const total = variants.reduce((sum, v) => sum + v.harga * (qty[v.id] ?? 0), 0);
@@ -155,11 +162,12 @@ export function PublicOrderForm({
     fd.set("cart", JSON.stringify(items));
     fd.set("jumlahBayar", jumlahBayar);
     fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
+    fd.set("checkoutSource", checkoutSource);
     startTransition(() => formAction(fd));
   }
 
   function scrollToCheckout() {
-    document.getElementById("checkout")?.scrollIntoView({
+    document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
@@ -167,6 +175,13 @@ export function PublicOrderForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <input type="hidden" name="checkoutSource" value={checkoutSource} />
+      <input type="hidden" name="policyVersion" value={publicSite.policyVersion} />
+      <input
+        type="hidden"
+        name="whatsappConsentVersion"
+        value={publicSite.whatsappConsentVersion}
+      />
       <p className="sr-only" aria-live="polite">
         Keranjang berisi {jumlahItem} item dengan total {formatRupiah(total)}.
       </p>
@@ -462,12 +477,12 @@ export function PublicOrderForm({
         </div>
       </section>
 
-      <section id="checkout" className="scroll-mt-24 rounded-2xl border border-sand-200 bg-white shadow-lg" aria-labelledby="checkout-heading">
+      <section id={`${idPrefix}-checkout`} className="scroll-mt-24 rounded-2xl border border-sand-200 bg-white shadow-lg" aria-labelledby={`${idPrefix}-checkout-heading`}>
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl space-y-5 p-5 sm:p-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Tahap akhir</p>
-            <h2 id="checkout-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Lengkapi pesanan Anda</h2>
+            <h2 id={`${idPrefix}-checkout-heading`} className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Lengkapi pesanan Anda</h2>
             <p className="mt-1 text-sm text-sand-500">Data ini dipakai Admin untuk memverifikasi pesanan dan pembayaran Anda.</p>
           </div>
 
@@ -538,6 +553,55 @@ export function PublicOrderForm({
               <span className="text-sm font-bold text-sand-600">Total pesanan</span>
               <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
             </div>
+          </div>
+          <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                name="acceptPolicies"
+                value="1"
+                required
+                disabled={orderingDisabled}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>
+                Saya menyetujui{" "}
+                <Link href="/terms" target="_blank" className="font-bold text-brand-700 underline">
+                  Syarat & Ketentuan
+                </Link>
+                ,{" "}
+                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Privasi
+                </Link>
+                , dan{" "}
+                <Link href="/refund-policy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Refund
+                </Link>
+                .
+              </span>
+            </label>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                name="whatsappConsent"
+                value="1"
+                disabled={orderingDisabled}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>
+                Saya bersedia menerima update transaksional pesanan dari Serahin
+                melalui nomor WhatsApp yang saya isi. Persetujuan ini dapat ditarik
+                melalui halaman{" "}
+                <Link href="/data-deletion#communication-preferences" target="_blank" className="font-bold text-brand-700 underline">
+                  preferensi komunikasi
+                </Link>{" "}
+                dan tunduk pada{" "}
+                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Privasi
+                </Link>
+                .
+              </span>
+            </label>
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
           <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}>

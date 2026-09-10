@@ -15,7 +15,12 @@ function parseCart(formData: FormData) {
       parsed = [];
     }
   }
-  const items: { variantId: string; jumlah: number; warna?: string }[] = [];
+  const items: {
+    variantId: string;
+    jumlah: number;
+    expectedHarga?: number;
+    warna?: string;
+  }[] = [];
   if (Array.isArray(parsed)) {
     for (const it of parsed) {
       const vid = String((it as { variantId?: unknown })?.variantId ?? "");
@@ -26,11 +31,24 @@ function parseCart(formData: FormData) {
       );
       const warna =
         String((it as { warna?: unknown })?.warna ?? "").trim() || undefined;
+      const hargaRaw = (it as { expectedHarga?: unknown })?.expectedHarga;
+      const expectedHarga = Number(hargaRaw);
+      const validExpectedHarga =
+        hargaRaw !== undefined && Number.isFinite(expectedHarga) && expectedHarga >= 0
+          ? expectedHarga
+          : undefined;
       const ex = items.find(
         (x) => x.variantId === vid && (x.warna ?? "") === (warna ?? ""),
       );
       if (ex) ex.jumlah = ex.jumlah + j;
-      else items.push({ variantId: vid, jumlah: j, warna });
+      else {
+        items.push({
+          variantId: vid,
+          jumlah: j,
+          expectedHarga: validExpectedHarga,
+          warna,
+        });
+      }
     }
   }
   return items;
@@ -62,6 +80,21 @@ export async function createPublicOrder(
   const jumlahBayar = jumlahBayarRaw ? Number(jumlahBayarRaw) : 0;
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
   const confirmPerubahanKuota = formData.get("confirmPerubahanKuota") === "1";
+  const checkoutSource =
+    formData.get("checkoutSource") === "HOME_CATALOG"
+      ? "HOME_CATALOG"
+      : "CAMPAIGN_LINK";
+  const acceptPolicies = formData.get("acceptPolicies") === "1";
+  const whatsappConsent = formData.get("whatsappConsent") === "1";
+  const whatsappConsentVersion = String(
+    formData.get("whatsappConsentVersion") ?? "",
+  ).trim();
+  if (!acceptPolicies) {
+    return {
+      error:
+        "Setujui Syarat & Ketentuan, Kebijakan Privasi, dan Kebijakan Refund untuk melanjutkan.",
+    };
+  }
 
   // v2.1 — pembeli memilih "Bayar otomatis" (payment gateway).
   const gateway = formData.get("metodeBayar") === "GATEWAY";
@@ -87,6 +120,10 @@ export async function createPublicOrder(
           ...(jumlahBayar > 0 ? { jumlahBayar } : {}),
           confirmDuplikat,
           confirmPerubahanKuota,
+          checkoutSource,
+          acceptPolicies,
+          whatsappConsent,
+          ...(whatsappConsentVersion ? { whatsappConsentVersion } : {}),
         },
       );
     } catch (e) {
@@ -105,6 +142,12 @@ export async function createPublicOrder(
     fd.set("jumlahBayar", String(jumlahBayar));
     fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
     fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");
+    fd.set("checkoutSource", checkoutSource);
+    fd.set("acceptPolicies", "1");
+    fd.set("whatsappConsent", whatsappConsent ? "1" : "0");
+    if (whatsappConsentVersion) {
+      fd.set("whatsappConsentVersion", whatsappConsentVersion);
+    }
 
     const bukti = formData.get("buktiPembayaran");
     if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
