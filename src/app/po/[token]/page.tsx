@@ -26,6 +26,7 @@ type FormInfo = {
   paymentScheme: PaymentScheme;
   tanggalTutup: string | null;
   bukaPesanan: boolean;
+  gatewayEnabled?: boolean;
   variants: {
     id: string;
     namaVarian: string;
@@ -124,6 +125,7 @@ export default async function PublicFormPage({
         <PublicOrderForm
           formToken={token}
           variants={data.variants}
+          gatewayEnabled={Boolean(data.gatewayEnabled)}
           orderingDisabled={Boolean(alasanTidakBisaPesan)}
           unavailableMessage={alasanTidakBisaPesan}
         />

@@ -5,7 +5,7 @@ import { getPublicFaq } from "@/lib/cms";
  * FAQ khusus kampanye (bila campaignId diberikan).
  */
 export async function PublicFaq({ campaignId }: { campaignId?: string }) {
-  const faqs = await getPublicFaq(campaignId);
+  const faqs = await getPublicFaq(campaignId).catch(() => []);
   if (faqs.length === 0) return null;
 
   return (

@@ -164,6 +164,22 @@ export async function updateCampaign(
   redirect(`/kampanye/${id}`);
 }
 
+export async function duplicateCampaign(
+  id: string,
+  _prev: CampaignFormState,
+): Promise<CampaignFormState> {
+  let duplicated: { id: string };
+  try {
+    duplicated = await api.post<{ id: string }>(`/kampanye/${id}/duplicate`);
+  } catch (e) {
+    return {
+      error: e instanceof ApiError ? e.message : "Gagal menduplikasi kampanye",
+    };
+  }
+  revalidatePath("/kampanye");
+  redirect(`/kampanye/${duplicated.id}/edit`);
+}
+
 export async function changeCampaignStatus(campaignId: string, formData: FormData) {
   const status = String(formData.get("status") ?? "");
   const catatan = String(formData.get("catatan") ?? "");

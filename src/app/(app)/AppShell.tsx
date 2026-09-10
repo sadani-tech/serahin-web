@@ -38,7 +38,7 @@ export function AppShell({
                 open={drawerOpen}
                 onClick={() => setDrawerOpen((o) => !o)}
               />
-              <SerahinLogo href="/" size="sm" />
+              <SerahinLogo href="/dashboard" size="sm" />
               <span
                 aria-hidden
                 className="hidden h-6 w-px bg-sand-200 md:inline-block"

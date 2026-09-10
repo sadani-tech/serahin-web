@@ -7,28 +7,49 @@ import { FileUploadField } from "@/components/FileUploadField";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
-import { submitPortalPayment, type PortalPaymentState } from "../actions";
+import {
+  startPortalGatewayPayment,
+  submitPortalPayment,
+  type PortalPaymentState,
+} from "../actions";
 
 // Form pelunasan/pembayaran mandiri pembeli di portal. Ditampilkan hanya bila
 // masih ada sisa tagihan & tidak ada pembayaran yang menunggu verifikasi.
 // Pada tahap pelunasan (isPelunasan), pembeli wajib memilih metode pengiriman;
 // opsi Ekspedisi mewajibkan alamat lengkap, Shopee tidak butuh alamat (v1.8).
+//
+// v2.1 — bila gatewayEnabled, pembeli bisa memilih "Bayar otomatis" (QRIS / VA /
+// e-wallet / kartu) yang mengarahkan ke halaman pembayaran; atau tetap transfer
+// manual + unggah bukti seperti sebelumnya.
 export function PortalPaymentForm({
   token,
   sisa,
   isPelunasan,
+  gatewayEnabled = false,
   linkCheckoutShopee,
 }: {
   token: string;
   sisa: number;
   isPelunasan: boolean;
+  gatewayEnabled?: boolean;
   linkCheckoutShopee?: string | null;
 }) {
-  const action = submitPortalPayment.bind(null, token);
-  const [state, formAction, pending] = useActionState<
+  const manualAction = submitPortalPayment.bind(null, token);
+  const [state, formAction, manualPending] = useActionState<
     PortalPaymentState,
     FormData
-  >(action, undefined);
+  >(manualAction, undefined);
+  const gatewayAction = startPortalGatewayPayment.bind(null, token);
+  const [gwState, gwFormAction, gwPending] = useActionState<
+    PortalPaymentState,
+    FormData
+  >(gatewayAction, undefined);
+
+  const pending = manualPending || gwPending;
+  const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
+    gatewayEnabled ? "GATEWAY" : "MANUAL",
+  );
+  const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
   const [jumlah, setJumlah] = useState(String(sisa));
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
   const [alamat, setAlamat] = useState("");
@@ -55,7 +76,7 @@ export function PortalPaymentForm({
       fd.set("metodePengiriman", metode);
       fd.set("alamatPengiriman", metode === "EKSPEDISI" ? alamat.trim() : "");
     }
-    startTransition(() => formAction(fd));
+    startTransition(() => (gateway ? gwFormAction(fd) : formAction(fd)));
   }
 
   if (state?.ok) {
@@ -67,10 +88,47 @@ export function PortalPaymentForm({
     );
   }
 
+  const errorMessage = localError ?? state?.error ?? gwState?.error;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {(state?.error || localError) && (
-        <FormError message={localError ?? state?.error} />
+      {errorMessage && <FormError message={errorMessage} />}
+
+      {gatewayEnabled && (
+        <Field label="Metode pembayaran" required>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(
+              [
+                ["GATEWAY", "Bayar otomatis", "QRIS / VA / e-wallet / kartu"],
+                ["MANUAL", "Transfer manual", "Transfer bank + unggah bukti"],
+              ] as const
+            ).map(([value, judul, sub]) => (
+              <label
+                key={value}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                  metodeBayar === value
+                    ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                    : "border-sand-200 hover:border-sand-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="metodeBayarRadio"
+                  value={value}
+                  checked={metodeBayar === value}
+                  onChange={() => setMetodeBayar(value)}
+                  className="mt-0.5 h-4 w-4 accent-brand-600"
+                />
+                <span>
+                  <span className="block font-medium text-sand-800">
+                    {judul}
+                  </span>
+                  <span className="block text-xs text-sand-500">{sub}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </Field>
       )}
 
       {isPelunasan && (
@@ -129,8 +187,8 @@ export function PortalPaymentForm({
           {linkCheckoutShopee ? (
             <>
               <p className="text-orange-800">
-                Lakukan checkout melalui Shopee, lalu unggah bukti transfernya di
-                bawah.
+                Lakukan checkout melalui Shopee, lalu{" "}
+                {gateway ? "selesaikan pembayaran di bawah" : "unggah bukti transfernya di bawah"}.
               </p>
               <a
                 href={linkCheckoutShopee}
@@ -144,19 +202,21 @@ export function PortalPaymentForm({
           ) : (
             <p className="text-orange-800">
               Silakan lakukan checkout via Shopee sesuai instruksi penjual di
-              atas, lalu unggah bukti transfernya di bawah.
+              atas, lalu {gateway ? "selesaikan pembayaran" : "unggah bukti transfernya"} di bawah.
             </p>
           )}
         </div>
       )}
 
       <Field
-        label="Jumlah yang ditransfer"
+        label="Jumlah yang dibayar"
         required
         hint={
           jumlah
             ? `= ${formatRupiah(Number(jumlah))}`
-            : "Nominal sesuai bukti transfer."
+            : gateway
+              ? "Nominal yang akan ditagih."
+              : "Nominal sesuai bukti transfer."
         }
       >
         <CurrencyInput
@@ -168,22 +228,36 @@ export function PortalPaymentForm({
         />
       </Field>
 
-      <FileUploadField
-        name="bukti"
-        label="Bukti transfer"
-        hint="JPG, PNG, WEBP, atau PDF (maks 5MB)."
-        required
-      />
+      {gateway ? (
+        <p className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+          Anda akan diarahkan ke halaman pembayaran (QRIS / Virtual Account /
+          e-wallet / kartu). Pembayaran terverifikasi otomatis — tanpa unggah
+          bukti.
+        </p>
+      ) : (
+        <FileUploadField
+          name="bukti"
+          label="Bukti transfer"
+          hint="JPG, PNG, WEBP, atau PDF (maks 5MB)."
+          required
+        />
+      )}
 
       <Button type="submit" className="w-full" disabled={pending}>
         {pending
-          ? "Mengirim…"
-          : isPelunasan
-            ? "Kirim pelunasan"
-            : "Kirim pembayaran"}
+          ? gateway
+            ? "Mengarahkan…"
+            : "Mengirim…"
+          : gateway
+            ? "Bayar Sekarang"
+            : isPelunasan
+              ? "Kirim pelunasan"
+              : "Kirim pembayaran"}
       </Button>
       <p className="text-center text-xs text-sand-400">
-        Pembayaran akan diverifikasi Admin terlebih dahulu.
+        {gateway
+          ? "Pembayaran diproses oleh penyedia pembayaran tepercaya."
+          : "Pembayaran akan diverifikasi Admin terlebih dahulu."}
       </p>
     </form>
   );

@@ -37,6 +37,13 @@ type PortalOrder = {
     }[];
   };
   billing: Billing;
+  // v2.1 — pembayaran otomatis (payment gateway)
+  gatewayEnabled?: boolean;
+  pendingGateway?: {
+    paymentUrl: string | null;
+    vaNumber: string | null;
+    expiresAt: string | null;
+  } | null;
 };
 
 export const dynamic = "force-dynamic";
@@ -68,11 +75,18 @@ export default async function PortalPage({
   const ditolak = order.status === "DITOLAK";
   const baruMasuk = order.status === "BARU_MASUK";
 
+  // v2.1 — link pembayaran gateway yang masih hidup (belum lunas/kedaluwarsa).
+  const lanjutGateway =
+    !dibatalkan && !ditolak && order.pendingGateway?.paymentUrl
+      ? order.pendingGateway
+      : null;
+
   // Pembeli boleh mengirim pembayaran sendiri bila masih ada sisa tagihan dan
   // tidak ada pembayaran yang sedang menunggu verifikasi.
   const bisaBayar =
     !dibatalkan &&
     !ditolak &&
+    !lanjutGateway &&
     billing.sisa > 0 &&
     billing.menungguVerifikasi === 0;
   const isPelunasan =
@@ -245,6 +259,43 @@ export default async function PortalPage({
           )}
         </div>
 
+        {/* v2.1 — pembayaran gateway masih berjalan: tawarkan lanjutkan */}
+        {lanjutGateway && (
+          <div className="rounded-xl border border-brand-200 bg-white shadow-sm">
+            <div className="border-b border-sand-100 px-5 py-3">
+              <h2 className="text-sm font-semibold text-sand-900">
+                Selesaikan pembayaran
+              </h2>
+              <p className="text-xs text-sand-500">
+                Anda punya pembayaran otomatis yang belum selesai. Lanjutkan atau
+                tunggu konfirmasi.
+              </p>
+            </div>
+            <div className="space-y-3 px-5 py-4">
+              {lanjutGateway.vaNumber && (
+                <p className="rounded-lg bg-sand-50 px-4 py-2 text-sm ring-1 ring-inset ring-sand-200">
+                  Nomor Virtual Account:{" "}
+                  <span className="font-bold text-sand-900">
+                    {lanjutGateway.vaNumber}
+                  </span>
+                </p>
+              )}
+              {lanjutGateway.paymentUrl && (
+                <a
+                  href={lanjutGateway.paymentUrl}
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-700"
+                >
+                  Lanjutkan pembayaran
+                </a>
+              )}
+              <p className="text-center text-xs text-sand-400">
+                Halaman ini akan otomatis terbarui setelah pembayaran
+                terkonfirmasi.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Pembayaran mandiri pembeli (pelunasan) */}
         {bisaBayar && (
           <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
@@ -253,8 +304,7 @@ export default async function PortalPage({
                 {isPelunasan ? "Lakukan pelunasan" : "Kirim pembayaran"}
               </h2>
               <p className="text-xs text-sand-500">
-                Sisa tagihan {formatRupiah(billing.sisa)}. Unggah bukti transfer
-                untuk diverifikasi Admin.
+                Sisa tagihan {formatRupiah(billing.sisa)}.
               </p>
             </div>
             <div className="px-5 py-4">
@@ -270,6 +320,7 @@ export default async function PortalPage({
                 token={token}
                 sisa={billing.sisa}
                 isPelunasan={isPelunasan}
+                gatewayEnabled={Boolean(order.gatewayEnabled)}
                 linkCheckoutShopee={campaign.linkCheckoutShopee}
               />
             </div>

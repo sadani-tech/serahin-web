@@ -39,6 +39,7 @@ import type {
 } from "@/lib/types";
 import type { EvalInput } from "@/lib/vendor";
 import { StatusControl } from "./StatusControl";
+import { DuplicateCampaignButton } from "./DuplicateCampaignButton";
 import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
@@ -214,6 +215,7 @@ export default async function CampaignDetailPage({
             >
               Edit
             </LinkButton>
+            <DuplicateCampaignButton campaignId={id} />
             <LinkButton
               href={`/import/kampanye/${id}`}
               variant="secondary"
@@ -296,7 +298,7 @@ export default async function CampaignDetailPage({
                 title="Varian & kuota"
                 subtitle={`Total terisi ${kuotaTerisi} dari ${kuotaTotal} kuota`}
               />
-              <ScrollList className="divide-y divide-sand-100">
+              <ScrollList className="divide-y divide-sand-100" maxRows={15}>
                 {campaign.variants.map((v) => {
                   const terisi = terisiPerVarian.get(v.id) ?? 0;
                   const persen = v.kuotaMaks
@@ -367,7 +369,11 @@ export default async function CampaignDetailPage({
                 Vendor
               </h3>
               {campaign.vendors.length > 0 ? (
-                <div className="space-y-5">
+                <ScrollList
+                  className="space-y-5 pr-1"
+                  maxRows={2}
+                  rowHeight={30}
+                >
                   {campaign.vendors.map((vendor) => {
                     const evaluation = campaign.evaluations.find(
                       (item) => item.vendorId === vendor.id,
@@ -423,7 +429,7 @@ export default async function CampaignDetailPage({
                       </section>
                     );
                   })}
-                </div>
+                </ScrollList>
               ) : (
                 <p className="text-sm text-sand-500">
                   Belum ada vendor.{" "}

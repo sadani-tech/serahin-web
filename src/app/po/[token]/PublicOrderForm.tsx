@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useMemo, useState } from "react";
+import Link from "next/link";
 import { Button, Field, FormError, Input } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
@@ -8,7 +9,8 @@ import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
-import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "../constants";
+import type { PublicOrderState } from "../constants";
+import { publicSite } from "@/lib/public-site";
 
 export type PublicVariantOption = {
   id: string;
@@ -36,13 +38,19 @@ function getCategory(value?: string | null) {
 export function PublicOrderForm({
   formToken,
   variants,
+  gatewayEnabled = false,
   orderingDisabled = false,
   unavailableMessage,
+  checkoutSource = "CAMPAIGN_LINK",
+  idPrefix = formToken,
 }: {
   formToken: string;
   variants: PublicVariantOption[];
+  gatewayEnabled?: boolean;
   orderingDisabled?: boolean;
   unavailableMessage?: string;
+  checkoutSource?: "CAMPAIGN_LINK" | "HOME_CATALOG";
+  idPrefix?: string;
 }) {
   const action = createPublicOrder.bind(null, formToken);
   const [state, formAction, pending] = useActionState<PublicOrderState, FormData>(
@@ -53,6 +61,11 @@ export function PublicOrderForm({
   const [wa, setWa] = useState("");
   const [email, setEmail] = useState("");
   const [jumlahBayar, setJumlahBayar] = useState("");
+  // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
+  const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
+    gatewayEnabled ? "GATEWAY" : "MANUAL",
+  );
+  const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
   const [qty, setQty] = useState<Record<string, number>>({});
   const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
@@ -71,6 +84,7 @@ export function PublicOrderForm({
   const items = selectedVariants.map((v) => ({
     variantId: v.id,
     jumlah: qty[v.id] ?? 0,
+    expectedHarga: v.harga,
     warna: warnaSel[v.id] || undefined,
   }));
   const total = variants.reduce((sum, v) => sum + v.harga * (qty[v.id] ?? 0), 0);
@@ -147,11 +161,13 @@ export function PublicOrderForm({
     const fd = new FormData(e.currentTarget);
     fd.set("cart", JSON.stringify(items));
     fd.set("jumlahBayar", jumlahBayar);
+    fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
+    fd.set("checkoutSource", checkoutSource);
     startTransition(() => formAction(fd));
   }
 
   function scrollToCheckout() {
-    document.getElementById("checkout")?.scrollIntoView({
+    document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
@@ -159,6 +175,13 @@ export function PublicOrderForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <input type="hidden" name="checkoutSource" value={checkoutSource} />
+      <input type="hidden" name="policyVersion" value={publicSite.policyVersion} />
+      <input
+        type="hidden"
+        name="whatsappConsentVersion"
+        value={publicSite.whatsappConsentVersion}
+      />
       <p className="sr-only" aria-live="polite">
         Keranjang berisi {jumlahItem} item dengan total {formatRupiah(total)}.
       </p>
@@ -242,7 +265,7 @@ export function PublicOrderForm({
             return (
               <article
                 key={v.id}
-                className={`animate-rise overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
+                className={`animate-rise flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
                   habis ? "border-sand-200 opacity-75" : "border-sand-200"
                 }`}
                 style={{ animationDelay: `${Math.min(index * 35, 210)}ms` }}
@@ -298,7 +321,7 @@ export function PublicOrderForm({
                   )}
                 </div>
 
-                <div className="space-y-2.5 p-3 sm:space-y-3 sm:p-4">
+                <div className="flex flex-1 flex-col space-y-2.5 p-3 sm:space-y-3 sm:p-4">
                   <div>
                     <h3 className="line-clamp-2 text-sm font-extrabold leading-snug text-sand-900 sm:text-base">{v.namaVarian}</h3>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -359,15 +382,15 @@ export function PublicOrderForm({
                     </fieldset>
                   ) : null}
 
-                  <div className="border-t border-sand-100 pt-2.5">
+                  <div className="mt-auto border-t border-sand-100 pt-2.5">
                     <span className="mb-1.5 block text-[0.7rem] font-bold text-sand-600 sm:text-xs">Jumlah</span>
                     <div className="grid grid-cols-3 gap-1.5">
                       <button type="button" onClick={() => setQ(v.id, jumlah - 1)} disabled={disabled || jumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian}`} className="flex h-11 items-center justify-center rounded-xl bg-sand-100 text-xl font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
                       <output className="flex h-11 items-center justify-center rounded-xl bg-sand-50 px-1 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian}`}>{jumlah}</output>
                       <button
                         type="button"
-                        onClick={() => setQ(v.id, Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION, jumlah + 1))}
-                        disabled={disabled || jumlah >= Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION)}
+                        onClick={() => setQ(v.id, Math.min(v.sisa, jumlah + 1))}
+                        disabled={disabled || jumlah >= v.sisa}
                         aria-label={`Tambah jumlah ${v.namaVarian}`}
                         className="flex h-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                       >
@@ -454,12 +477,12 @@ export function PublicOrderForm({
         </div>
       </section>
 
-      <section id="checkout" className="scroll-mt-24 rounded-2xl border border-sand-200 bg-white shadow-lg" aria-labelledby="checkout-heading">
+      <section id={`${idPrefix}-checkout`} className="scroll-mt-24 rounded-2xl border border-sand-200 bg-white shadow-lg" aria-labelledby={`${idPrefix}-checkout-heading`}>
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl space-y-5 p-5 sm:p-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Tahap akhir</p>
-            <h2 id="checkout-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Lengkapi pesanan Anda</h2>
+            <h2 id={`${idPrefix}-checkout-heading`} className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Lengkapi pesanan Anda</h2>
             <p className="mt-1 text-sm text-sand-500">Data ini dipakai Admin untuk memverifikasi pesanan dan pembayaran Anda.</p>
           </div>
 
@@ -474,21 +497,119 @@ export function PublicOrderForm({
           <Field label="Email" required>
             <Input name="email" type="email" required disabled={orderingDisabled} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
           </Field>
-          <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
-          <Field label="Jumlah yang dibayarkan" required hint={bayarLebihDariTotal ? undefined : jumlahBayar ? `= ${formatRupiah(Number(jumlahBayar))}` : "Nominal transfer sesuai bukti pembayaran."}>
-            <CurrencyInput name="jumlahBayar" required disabled={orderingDisabled} value={jumlahBayar} onValueChange={setJumlahBayar} placeholder="150.000" />
-            {bayarLebihDariTotal && <span className="mt-1 block text-xs font-medium text-rose-700">Jumlah yang dibayarkan tidak boleh lebih dari total harga.</span>}
-          </Field>
+          {gatewayEnabled && (
+            <Field label="Metode pembayaran" required>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["GATEWAY", "Bayar otomatis", "QRIS / VA / e-wallet / kartu — verifikasi instan"],
+                    ["MANUAL", "Transfer manual", "Transfer bank lalu unggah bukti — diverifikasi Admin"],
+                  ] as const
+                ).map(([value, judul, sub]) => (
+                  <label
+                    key={value}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${
+                      metodeBayar === value
+                        ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                        : "border-sand-200 hover:border-sand-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="metodeBayarRadio"
+                      value={value}
+                      checked={metodeBayar === value}
+                      onChange={() => setMetodeBayar(value)}
+                      disabled={orderingDisabled}
+                      className="mt-0.5 h-4 w-4 accent-brand-600"
+                    />
+                    <span>
+                      <span className="block font-bold text-sand-800">{judul}</span>
+                      <span className="block text-xs text-sand-500">{sub}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+          )}
+
+          {gateway ? (
+            <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+              Setelah menekan tombol di bawah, Anda akan diarahkan ke halaman
+              pembayaran. Pesanan otomatis terverifikasi begitu pembayaran
+              berhasil — tidak perlu unggah bukti.
+            </div>
+          ) : (
+            <>
+              <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
+              <Field label="Jumlah yang dibayarkan" required hint={bayarLebihDariTotal ? undefined : jumlahBayar ? `= ${formatRupiah(Number(jumlahBayar))}` : "Nominal transfer sesuai bukti pembayaran."}>
+                <CurrencyInput name="jumlahBayar" required disabled={orderingDisabled} value={jumlahBayar} onValueChange={setJumlahBayar} placeholder="150.000" />
+                {bayarLebihDariTotal && <span className="mt-1 block text-xs font-medium text-rose-700">Jumlah yang dibayarkan tidak boleh lebih dari total harga.</span>}
+              </Field>
+            </>
+          )}
           <div className="rounded-xl bg-cream-soft px-4 py-3">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm font-bold text-sand-600">Total pesanan</span>
               <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
             </div>
-            <p className="mt-1 text-xs text-sand-500">Maksimal {MAX_UNIT_PER_SUBMISSION} unit per varian.</p>
+          </div>
+          <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                name="acceptPolicies"
+                value="1"
+                required
+                disabled={orderingDisabled}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>
+                Saya menyetujui{" "}
+                <Link href="/terms" target="_blank" className="font-bold text-brand-700 underline">
+                  Syarat & Ketentuan
+                </Link>
+                ,{" "}
+                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Privasi
+                </Link>
+                , dan{" "}
+                <Link href="/refund-policy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Refund
+                </Link>
+                .
+              </span>
+            </label>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                name="whatsappConsent"
+                value="1"
+                disabled={orderingDisabled}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>
+                Saya bersedia menerima update transaksional pesanan dari Serahin
+                melalui nomor WhatsApp yang saya isi. Persetujuan ini dapat ditarik
+                melalui halaman{" "}
+                <Link href="/data-deletion#communication-preferences" target="_blank" className="font-bold text-brand-700 underline">
+                  preferensi komunikasi
+                </Link>{" "}
+                dan tunduk pada{" "}
+                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Privasi
+                </Link>
+                .
+              </span>
+            </label>
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
           <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}>
-            {state?.needsConfirm || state?.needsCartConfirm ? "Ya, lanjutkan" : "Kirim Pesanan"}
+            {state?.needsConfirm || state?.needsCartConfirm
+              ? "Ya, lanjutkan"
+              : gateway
+                ? "Bayar Sekarang"
+                : "Kirim Pesanan"}
           </Button>
         </div>
       </section>

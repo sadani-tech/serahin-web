@@ -2,6 +2,7 @@ import {
   CampaignStatus,
   MetodePengiriman,
   OrderStatus,
+  PaymentChannel,
   PaymentType,
   PaymentVerification,
   PaymentScheme,
@@ -107,12 +108,20 @@ export const PAYMENT_VERIFICATION_LABEL: Record<PaymentVerification, string> = {
   MENUNGGU_VERIFIKASI: "Menunggu Verifikasi",
   TERVERIFIKASI: "Terverifikasi",
   DITOLAK: "Ditolak",
+  KEDALUWARSA: "Kedaluwarsa",
 };
 
 export const PAYMENT_VERIFICATION_BADGE: Record<PaymentVerification, string> = {
   MENUNGGU_VERIFIKASI: "bg-sun-100 text-sun-800 ring-sun-600/25",
   TERVERIFIKASI: "bg-brand-100 text-brand-800 ring-brand-600/25",
   DITOLAK: "bg-rose-100 text-rose-800 ring-rose-600/25",
+  KEDALUWARSA: "bg-sand-200 text-sand-600 ring-sand-500/25",
+};
+
+// v2.1 — kanal pembayaran.
+export const PAYMENT_CHANNEL_LABEL: Record<PaymentChannel, string> = {
+  MANUAL_TRANSFER: "Transfer Manual",
+  GATEWAY: "Pembayaran Otomatis",
 };
 
 export const PAYMENT_SCHEME_LABEL: Record<PaymentScheme, string> = {
