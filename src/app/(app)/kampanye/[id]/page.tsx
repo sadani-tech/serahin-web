@@ -39,6 +39,7 @@ import type {
 } from "@/lib/types";
 import type { EvalInput } from "@/lib/vendor";
 import { StatusControl } from "./StatusControl";
+import { DuplicateCampaignButton } from "./DuplicateCampaignButton";
 import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
@@ -214,6 +215,7 @@ export default async function CampaignDetailPage({
             >
               Edit
             </LinkButton>
+            <DuplicateCampaignButton campaignId={id} />
             <LinkButton
               href={`/import/kampanye/${id}`}
               variant="secondary"
