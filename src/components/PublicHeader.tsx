@@ -39,7 +39,7 @@ export function PublicHeader({ loggedIn = false }: { loggedIn?: boolean }) {
             href={loggedIn ? "/dashboard" : "/login"}
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700"
           >
-            {loggedIn ? "Buka Dashboard" : "Login Seller/Admin"}
+            {loggedIn ? "Buka Dashboard" : "Login Seller"}
           </Link>
         </nav>
       </div>
