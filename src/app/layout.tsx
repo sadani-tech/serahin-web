@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
+import { publicSite } from "@/lib/public-site";
 
 // Nunito — sans-serif membulat yang senada dengan lambang Serahin (v1.9).
 // Di-host sendiri saat build oleh next/font, jadi tidak ada request ke
@@ -14,9 +15,12 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(publicSite.url),
   title: "Serahin — Sistem Manajemen Pre-Order",
   description:
     "Kelola kampanye Pre-Order, pesanan, pembayaran, dan timeline produksi dalam satu tempat.",
+  applicationName: "Serahin",
+  authors: [{ name: publicSite.legalName }],
 };
 
 export const viewport: Viewport = {
