@@ -14,13 +14,33 @@ const nunito = Nunito({
   display: "swap",
 });
 
+const description =
+  "Kelola kampanye Pre-Order, pesanan, pembayaran, dan timeline produksi dalam satu tempat.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(publicSite.url),
-  title: "Serahin — Sistem Manajemen Pre-Order",
-  description:
-    "Kelola kampanye Pre-Order, pesanan, pembayaran, dan timeline produksi dalam satu tempat.",
+  title: {
+    default: "Serahin — Sistem Manajemen Pre-Order",
+    template: "%s — Serahin",
+  },
+  description,
   applicationName: "Serahin",
   authors: [{ name: publicSite.legalName }],
+  // Default preview link (di-override per halaman bila perlu). Gambar OG/twitter
+  // diambil otomatis dari `src/app/opengraph-image.tsx` & `twitter-image.tsx`.
+  openGraph: {
+    type: "website",
+    siteName: "Serahin",
+    locale: "id_ID",
+    url: publicSite.url,
+    title: "Serahin — Sistem Manajemen Pre-Order",
+    description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Serahin — Sistem Manajemen Pre-Order",
+    description,
+  },
 };
 
 export const viewport: Viewport = {

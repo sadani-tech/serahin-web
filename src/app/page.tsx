@@ -19,6 +19,8 @@ export const metadata: Metadata = {
     "Jelajahi kampanye pre-order aktif, pilih produk, buat pesanan, dan bayar secara aman melalui Serahin.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
+  // Gambar preview diambil otomatis dari `src/app/opengraph-image.tsx` &
+  // `twitter-image.tsx` (kartu 1200x630). Jangan set `images` di sini.
   openGraph: {
     type: "website",
     url: "/",
@@ -26,13 +28,11 @@ export const metadata: Metadata = {
     title: "Serahin — Katalog Produk Pre-Order",
     description:
       "Temukan produk pre-order aktif dan selesaikan pesanan dari satu tempat.",
-    images: [{ url: "/icon.png", alt: "Logo Serahin" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Serahin — Katalog Produk Pre-Order",
     description: "Temukan produk pre-order aktif dan pesan dari satu tempat.",
-    images: ["/icon.png"],
   },
 };
 
