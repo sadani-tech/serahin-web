@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui";
-import { uploadVariantImage } from "@/app/(app)/kampanye/actions";
+import { uploadVariantImage } from "@/app/(app)/pre-orders/actions";
 
 // Galeri gambar varian (multi-image). Nilai berupa array URL. Bisa tambah lewat
 // tempel tautan atau unggah berkas; gambar pertama dipakai sebagai "Utama".

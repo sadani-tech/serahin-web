@@ -15,7 +15,7 @@ const nunito = Nunito({
 });
 
 const description =
-  "Kelola kampanye Pre-Order, pesanan, pembayaran, dan timeline produksi dalam satu tempat.";
+  "Kelola Batch PO, pesanan, pembayaran, dan timeline produksi dalam satu tempat.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicSite.url),

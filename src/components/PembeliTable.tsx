@@ -130,7 +130,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
 
           <div className="w-full md:w-56">
             <label className="mb-1 block text-xs font-medium text-sand-500">
-              Kampanye diikuti
+              Batch PO diikuti
             </label>
             <Select
               value={filters.campaignId}
@@ -138,7 +138,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
                 updateQuery({ campaignId: e.target.value || undefined })
               }
             >
-              <option value="">— semua kampanye —</option>
+              <option value="">— semua Batch PO —</option>
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.namaProduk}
@@ -196,7 +196,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
                 <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                   <SortHeader label="Pembeli" k="namaPembeli" />
                   <th className="px-5 py-3 font-medium">Kontak</th>
-                  <th className="px-5 py-3 font-medium">Kampanye</th>
+                  <th className="px-5 py-3 font-medium">Batch PO</th>
                   <SortHeader label="Status" k="status" />
                   <th className="px-5 py-3 font-medium">Unit</th>
                   <SortHeader label="Tanggal" k="createdAt" />
@@ -216,7 +216,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
                     <td className="px-5 py-3 text-sand-600">{o.kontak}</td>
                     <td className="px-5 py-3 text-sand-700">
                       <Link
-                        href={`/kampanye/${o.campaign.id}`}
+                        href={`/pre-orders/${o.campaign.id}`}
                         className="hover:underline"
                       >
                         {o.campaign.namaProduk}

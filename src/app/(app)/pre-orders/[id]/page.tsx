@@ -39,7 +39,7 @@ import type {
 } from "@/lib/types";
 import type { EvalInput } from "@/lib/vendor";
 import { StatusControl } from "./StatusControl";
-import { DuplicateCampaignButton } from "./DuplicateCampaignButton";
+import { DuplicatePreorderButton } from "./DuplicatePreorderButton";
 import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
@@ -120,7 +120,7 @@ export default async function CampaignDetailPage({
 
   let campaign: CampaignDetail;
   try {
-    campaign = await api.get<CampaignDetail>(`/kampanye/${id}`);
+    campaign = await api.get<CampaignDetail>(`/pre-orders/${id}`);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
@@ -182,17 +182,17 @@ export default async function CampaignDetailPage({
     !!campaign.deadlinePelunasan &&
     new Date(campaign.deadlinePelunasan).getTime() < Date.now();
 
-  const tabHref = (t: Tab) => `/kampanye/${id}?tab=${t}`;
+  const tabHref = (t: Tab) => `/pre-orders/${id}?tab=${t}`;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <Link
-          href="/kampanye"
+          href="/pre-orders"
           className="text-sm text-sand-500 hover:text-sand-700"
         >
-          ← Daftar kampanye
+          ← Daftar Batch PO
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -210,19 +210,19 @@ export default async function CampaignDetailPage({
           </div>
           <div className="flex gap-2">
             <LinkButton
-              href={`/kampanye/${id}/edit`}
+              href={`/pre-orders/${id}/edit`}
               variant="secondary"
             >
               Edit
             </LinkButton>
-            <DuplicateCampaignButton campaignId={id} />
+            <DuplicatePreorderButton campaignId={id} />
             <LinkButton
-              href={`/import/kampanye/${id}`}
+              href={`/import/pre-orders/${id}`}
               variant="secondary"
             >
               Impor Pesanan
             </LinkButton>
-            <LinkButton href={`/kampanye/${id}/pesanan/baru`}>
+            <LinkButton href={`/pre-orders/${id}/pesanan/baru`}>
               + Tambah Pesanan
             </LinkButton>
           </div>
@@ -256,7 +256,7 @@ export default async function CampaignDetailPage({
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <Card>
-              <CardHeader title="Detail kampanye" />
+              <CardHeader title="Detail Batch PO" />
               <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-5 py-4 text-sm">
                 <Info label="Harga / unit" value={formatRupiah(campaign.harga)} />
                 <Info label="Skema pembayaran"
@@ -411,7 +411,7 @@ export default async function CampaignDetailPage({
                           </p>
                           {campaign.status !== "SELESAI" && !evaluation && (
                             <p className="mb-2 text-xs text-sand-500">
-                              Biasanya diisi setelah kampanye berstatus Selesai.
+                              Biasanya diisi setelah Batch PO berstatus Selesai.
                             </p>
                           )}
                           <EvaluationForm
@@ -434,12 +434,12 @@ export default async function CampaignDetailPage({
                 <p className="text-sm text-sand-500">
                   Belum ada vendor.{" "}
                   <Link
-                    href={`/kampanye/${id}/edit`}
+                    href={`/pre-orders/${id}/edit`}
                     className="text-sand-700 underline"
                   >
                     Pilih vendor
                   </Link>{" "}
-                  lewat edit kampanye.
+                  lewat edit Batch PO.
                 </p>
               )}
             </Card>
@@ -453,7 +453,7 @@ export default async function CampaignDetailPage({
             title="Pesanan"
             subtitle={`${orders.length} pesanan ditampilkan`}
             action={
-              <LinkButton href={`/kampanye/${id}/pesanan/baru`}>
+              <LinkButton href={`/pre-orders/${id}/pesanan/baru`}>
                 + Tambah Pesanan
               </LinkButton>
             }

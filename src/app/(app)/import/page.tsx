@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ImportPage() {
   const campaigns = await api.list<{ id: string; namaProduk: string }>(
-    "/kampanye",
+    "/pre-orders",
   );
 
   return (
@@ -18,7 +18,7 @@ export default async function ImportPage() {
             Import Data Historis
           </h1>
           <p className="mt-1 text-sm text-sand-500">
-            Masukkan riwayat kampanye & pesanan lama secara massal via Excel/CSV.
+            Masukkan riwayat Batch PO dan pesanan lama secara massal via Excel/CSV.
           </p>
         </div>
         <Link
@@ -32,8 +32,8 @@ export default async function ImportPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader
-            title="Mode A — Kampanye Penuh"
-            subtitle="Buat kampanye lama lengkap (info + varian + pesanan + pembayaran)."
+            title="Mode A — Batch PO Penuh"
+            subtitle="Buat Batch PO lama lengkap (info + varian + pesanan + pembayaran)."
           />
           <div className="px-5 py-4">
             <ImportUploadForm mode="KAMPANYE_PENUH" />
@@ -42,8 +42,8 @@ export default async function ImportPage() {
 
         <Card>
           <CardHeader
-            title="Mode B — Pesanan ke Kampanye Ada"
-            subtitle="Tambah pesanan+pembayaran historis ke kampanye yang sudah dibuat."
+            title="Mode B — Pesanan ke Batch PO"
+            subtitle="Tambah pesanan dan pembayaran historis ke Batch PO yang sudah dibuat."
           />
           <div className="px-5 py-4">
             <ImportUploadForm mode="PESANAN" campaigns={campaigns} />

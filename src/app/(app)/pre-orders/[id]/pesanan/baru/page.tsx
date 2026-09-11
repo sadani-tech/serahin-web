@@ -35,7 +35,7 @@ export default async function TambahPesananPage({
 
   let campaign: CampaignDetail;
   try {
-    campaign = await api.get<CampaignDetail>(`/kampanye/${id}`);
+    campaign = await api.get<CampaignDetail>(`/pre-orders/${id}`);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
@@ -60,10 +60,10 @@ export default async function TambahPesananPage({
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
         <Link
-          href={`/kampanye/${id}?tab=pesanan`}
+          href={`/pre-orders/${id}?tab=pesanan`}
           className="text-sm text-sand-500 hover:text-sand-700"
         >
-          ← Kembali ke kampanye
+          ← Kembali ke Batch PO
         </Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
           Tambah Pesanan
@@ -75,7 +75,7 @@ export default async function TambahPesananPage({
 
       <Card className="mb-6 p-4">
         <p className="text-sm text-sand-700">
-          Kampanye tutup:{" "}
+          Batch PO tutup:{" "}
           <span className="font-medium text-sand-900">
             {formatTanggal(campaign.tanggalTutup)}
           </span>
@@ -84,7 +84,7 @@ export default async function TambahPesananPage({
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between gap-2">
               <span className="text-xs font-medium uppercase tracking-wide text-sand-500">
-                Deskripsi kampanye
+                Deskripsi Batch PO
               </span>
               <CopyButton text={deskripsiPlain} label="Salin deskripsi" />
             </div>
@@ -98,7 +98,7 @@ export default async function TambahPesananPage({
       {!bisaPesan ? (
         <Card className="p-6">
           <p className="text-sm text-rose-700">
-            Kampanye ini berstatus bukan <b>Open</b>, sehingga tidak dapat
+            Batch PO ini berstatus bukan <b>Open</b>, sehingga tidak dapat
             menerima pesanan baru (FR-1.6).
           </p>
         </Card>

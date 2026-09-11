@@ -70,7 +70,7 @@ export default async function PublicFormPage({
         ? formatRupiah(hargaTerendah)
         : `${formatRupiah(hargaTerendah)} – ${formatRupiah(hargaTertinggi)}`;
   const alasanTidakBisaPesan = !data.bukaPesanan
-    ? "Maaf, formulir pesanan untuk kampanye ini sedang tidak aktif."
+    ? "Maaf, formulir pesanan untuk Batch PO ini sedang tidak aktif."
     : !adaSisa
       ? "Semua varian sudah habis kuotanya."
       : undefined;

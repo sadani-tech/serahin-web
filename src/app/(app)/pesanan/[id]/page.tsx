@@ -114,7 +114,7 @@ export default async function OrderDetailPage({
       {/* Header */}
       <div>
         <Link
-          href={`/kampanye/${order.campaignId}?tab=pesanan`}
+          href={`/pre-orders/${order.campaignId}?tab=pesanan`}
           className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← {order.campaign.namaProduk}

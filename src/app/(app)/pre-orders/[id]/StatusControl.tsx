@@ -7,7 +7,7 @@ import {
   CAMPAIGN_STATUS_ORDER,
 } from "@/lib/domain";
 import { CampaignStatus } from "@/lib/types";
-import { changeCampaignStatus } from "../actions";
+import { changePreorderStatus } from "../actions";
 
 export function StatusControl({
   campaignId,
@@ -18,7 +18,7 @@ export function StatusControl({
 }) {
   const [target, setTarget] = useState<CampaignStatus>(current);
   const changed = target !== current;
-  const action = changeCampaignStatus.bind(null, campaignId);
+  const action = changePreorderStatus.bind(null, campaignId);
 
   return (
     <form
@@ -30,7 +30,7 @@ export function StatusControl({
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-48 flex-1">
           <label className="mb-1 block text-sm font-medium text-sand-700">
-            Ubah status kampanye
+            Ubah status Batch PO
           </label>
           <Select
             name="status"
@@ -56,7 +56,7 @@ export function StatusControl({
         />
       )}
       <p className="text-xs text-sand-500">
-        Perubahan status otomatis tercatat di timeline kampanye.
+        Perubahan status otomatis tercatat di timeline Batch PO.
       </p>
     </form>
   );

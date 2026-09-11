@@ -44,7 +44,7 @@ export function renderOgImage(): ImageResponse {
             Sistem Manajemen Pre-Order
           </div>
           <div style={{ fontSize: 30, color: "#C9DEB9" }}>
-            Kelola kampanye, pesanan, pembayaran, dan timeline produksi dalam satu tempat.
+            Kelola Batch PO, pesanan, pembayaran, dan timeline produksi dalam satu tempat.
           </div>
         </div>
 

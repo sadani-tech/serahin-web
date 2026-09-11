@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui";
-import { uploadVariantImage } from "@/app/(app)/kampanye/actions";
+import { uploadVariantImage } from "@/app/(app)/pre-orders/actions";
 
 // Input gambar varian dengan dua mode: tempel tautan (URL) atau unggah berkas.
 // Nilai yang disimpan tetap berupa URL string (gambarUrl) — hasil upload

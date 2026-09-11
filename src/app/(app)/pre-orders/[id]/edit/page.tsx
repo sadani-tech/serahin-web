@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { CampaignForm, type VendorOption } from "../../CampaignForm";
-import { updateCampaign } from "../../actions";
+import { PreorderForm, type VendorOption } from "../../PreorderForm";
+import { updatePreorder } from "../../actions";
 import { toDateInput, toNumber } from "@/lib/format";
 import { computeVendorStats, type EvalInput } from "@/lib/vendor";
 import type { CampaignStatus, DpTipe, PaymentScheme } from "@/lib/types";
@@ -61,7 +61,7 @@ export default async function EditCampaignPage({
 
   let campaign: CampaignDetail;
   try {
-    campaign = await api.get<CampaignDetail>(`/kampanye/${id}`);
+    campaign = await api.get<CampaignDetail>(`/pre-orders/${id}`);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
@@ -79,23 +79,23 @@ export default async function EditCampaignPage({
     };
   });
 
-  const action = updateCampaign.bind(null, id);
+  const action = updatePreorder.bind(null, id);
 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
         <Link
-          href={`/kampanye/${id}`}
+          href={`/pre-orders/${id}`}
           className="text-sm text-sand-500 hover:text-sand-700"
         >
-          ← Kembali ke kampanye
+          ← Kembali ke Batch PO
         </Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
-          Edit Kampanye
+          Edit Batch PO
         </h1>
       </div>
 
-      <CampaignForm
+      <PreorderForm
         action={action}
         submitLabel="Simpan Perubahan"
         vendors={vendorOptions}

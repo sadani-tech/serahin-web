@@ -28,7 +28,7 @@ export default async function VendorListPage() {
             Vendor
           </h1>
           <p className="mt-1 text-sm text-sand-500">
-            Riwayat performa vendor untuk keputusan kampanye berikutnya.
+            Riwayat performa vendor untuk keputusan Batch PO berikutnya.
           </p>
         </div>
         <LinkButton href="/vendor/baru">+ Vendor Baru</LinkButton>

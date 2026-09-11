@@ -73,8 +73,8 @@ export async function createOrder(
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal membuat pesanan" };
   }
-  revalidatePath(`/kampanye/${campaignId}`);
-  redirect(`/kampanye/${campaignId}?tab=pesanan`);
+  revalidatePath(`/pre-orders/${campaignId}`);
+  redirect(`/pre-orders/${campaignId}?tab=pesanan`);
 }
 
 export async function updateOrder(
@@ -116,7 +116,7 @@ export async function bulkUpdateOrderStatus(
       ids,
       status,
     });
-    revalidatePath(`/kampanye/${campaignId}`);
+    revalidatePath(`/pre-orders/${campaignId}`);
     return { updated: res.updated };
   } catch (e) {
     return {

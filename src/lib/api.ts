@@ -66,9 +66,16 @@ function withQuery(path: string, query?: Query): string {
   return qs ? `${path}?${qs}` : path;
 }
 
+/** Map the admin route name to the canonical Architecture v2 API resource. */
+function apiPath(path: string): string {
+  return path === "/pre-orders" || path.startsWith("/pre-orders/")
+    ? path.replace("/pre-orders", "/preorder-campaigns")
+    : path;
+}
+
 export const api = {
   async get<T>(path: string, query?: Query): Promise<T> {
-    const res = await fetch(`${API_URL}${withQuery(path, query)}`, {
+    const res = await fetch(`${API_URL}${withQuery(apiPath(path), query)}`, {
       headers: { ...(await authHeader()) },
       cache: "no-store",
       signal: requestSignal(),
@@ -87,7 +94,7 @@ export const api = {
   },
 
   async post<T>(path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}${apiPath(path)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeader()) },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -98,7 +105,7 @@ export const api = {
   },
 
   async patch<T>(path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}${apiPath(path)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...(await authHeader()) },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -109,7 +116,7 @@ export const api = {
   },
 
   async del<T>(path: string): Promise<T> {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}${apiPath(path)}`, {
       method: "DELETE",
       headers: { ...(await authHeader()) },
       cache: "no-store",
@@ -117,13 +124,13 @@ export const api = {
     return parse(res) as Promise<T>;
   },
 
-  async deleteCampaign(id: string) {
-    return api.del(`/kampanye/${id}`);
+  async deletePreorder(id: string) {
+    return api.del(`/pre-orders/${id}`);
   },
 
   /** POST multipart (upload file). `form` sudah berisi field + file. */
   async postForm<T>(path: string, form: FormData): Promise<T> {
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}${apiPath(path)}`, {
       method: "POST",
       headers: { ...(await authHeader()) },
       body: form,
@@ -134,7 +141,7 @@ export const api = {
 
   /** Proxy unduhan file dari backend (bawa token server-side) → Response. */
   async download(path: string, query?: Query): Promise<Response> {
-    return fetch(`${API_URL}${withQuery(path, query)}`, {
+    return fetch(`${API_URL}${withQuery(apiPath(path), query)}`, {
       headers: { ...(await authHeader()) },
       cache: "no-store",
     });

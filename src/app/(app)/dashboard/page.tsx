@@ -28,7 +28,7 @@ export default async function DashboardPage({
       dateTo: sp.dateTo,
       campaignId: sp.campaignId,
     }),
-    api.list<{ id: string; namaProduk: string }>("/kampanye"),
+    api.list<{ id: string; namaProduk: string }>("/pre-orders"),
   ]);
 
   const adaFilter = !!(status || sp.dateFrom || sp.dateTo || sp.campaignId);
@@ -41,10 +41,10 @@ export default async function DashboardPage({
             <span className="underline-sun">Dashboard</span>
           </h1>
           <p className="mt-1 text-sm text-sand-500">
-            Ringkasan lintas-kampanye untuk keputusan cepat.
+            Ringkasan seluruh Batch PO untuk keputusan cepat.
           </p>
         </div>
-        <LinkButton href="/kampanye/baru">+ Kampanye Baru</LinkButton>
+        <LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton>
       </div>
 
       {/* Filter (FR-6.6) */}
@@ -52,7 +52,7 @@ export default async function DashboardPage({
         <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <div>
             <label className="mb-1 block text-xs font-medium text-sand-500">
-              Status kampanye
+              Status Batch PO
             </label>
             <select
               name="status"
@@ -69,7 +69,7 @@ export default async function DashboardPage({
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-sand-500">
-              Kampanye
+              Batch PO
             </label>
             <select
               name="campaignId"
@@ -126,7 +126,7 @@ export default async function DashboardPage({
       {/* Kartu ringkasan */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatCard
-          label="Kampanye aktif"
+          label="Batch PO aktif"
           value={data.jumlahKampanyeAktif}
           note="sedang berjalan"
           tone="brand"
@@ -204,15 +204,15 @@ export default async function DashboardPage({
         </DashboardSection>
         <DashboardSection
           title="Belum diupdate"
-          subtitle={`Kampanye aktif tanpa update timeline ≥ ${STALE_TIMELINE_DAYS} hari`}
+          subtitle={`Batch PO aktif tanpa update timeline ≥ ${STALE_TIMELINE_DAYS} hari`}
           itemCount={data.staleCampaigns.length}
-          emptyMessage="Semua kampanye ter-update"
-          emptyDescription="Tidak ada kampanye yang lama tak disentuh."
+          emptyMessage="Semua Batch PO ter-update"
+          emptyDescription="Tidak ada Batch PO yang lama tidak diperbarui."
         >
           {data.staleCampaigns.map((item) => (
             <Link
               key={item.id}
-              href={`/kampanye/${item.id}?tab=timeline`}
+              href={`/pre-orders/${item.id}?tab=timeline`}
               className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-sand-50"
             >
               <div className="min-w-0">

@@ -18,7 +18,7 @@ import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import { formatRupiah } from "@/lib/format";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import type { DpTipe } from "@/lib/types";
-import type { CampaignFormState } from "./actions";
+import type { PreorderFormState } from "./actions";
 
 type VariantRow = {
   id?: string;
@@ -47,7 +47,7 @@ export type VendorOption = {
   jumlahKampanye: number;
 };
 
-export type CampaignFormValues = {
+export type PreorderFormValues = {
   namaProduk?: string;
   deskripsi?: string;
   deskripsiPelunasan?: string;
@@ -65,17 +65,17 @@ export type CampaignFormValues = {
   variants?: VariantRow[];
 };
 
-export function CampaignForm({
+export function PreorderForm({
   action,
   initial,
   submitLabel,
   vendors = [],
 }: {
   action: (
-    prev: CampaignFormState,
+    prev: PreorderFormState,
     formData: FormData,
-  ) => Promise<CampaignFormState>;
-  initial?: CampaignFormValues;
+  ) => Promise<PreorderFormState>;
+  initial?: PreorderFormValues;
   submitLabel: string;
   vendors?: VendorOption[];
 }) {
@@ -175,7 +175,7 @@ export function CampaignForm({
         </div>
         <p className="mt-3 text-xs text-sand-500">
           Sejak v1.5, harga ditetapkan per varian (lihat bagian Varian & Kuota),
-          bukan satu harga untuk seluruh kampanye.
+          bukan satu harga untuk seluruh Batch PO.
         </p>
       </Card>
 
@@ -336,7 +336,7 @@ export function CampaignForm({
                 <span className="min-w-0 text-sm">
                   <span className="block font-semibold text-sand-900">{vendor.nama}</span>
                   <span className="mt-0.5 block text-xs text-sand-500">
-                    Rating {vendor.avgRating ?? "—"} · {vendor.jumlahKampanye} kampanye · {vendor.jumlahTelat}× telat
+                    Rating {vendor.avgRating ?? "—"} · {vendor.jumlahKampanye} Batch PO · {vendor.jumlahTelat}× telat
                   </span>
                 </span>
               </label>

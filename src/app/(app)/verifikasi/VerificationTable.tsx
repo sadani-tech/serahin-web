@@ -69,7 +69,7 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
         <table className="w-full text-sm">
           <thead><tr className="border-b text-left text-xs uppercase text-sand-500">
             <th className="px-4 py-3"><input ref={headRef} type="checkbox" checked={allChecked} onChange={() => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)))} /></th>
-            <th className="px-4 py-3">Pembeli</th><th className="px-4 py-3">Kampanye</th><th className="px-4 py-3">Item</th><th className="px-4 py-3">Indikator</th>
+            <th className="px-4 py-3">Pembeli</th><th className="px-4 py-3">Batch PO</th><th className="px-4 py-3">Item</th><th className="px-4 py-3">Indikator</th>
           </tr></thead>
           <tbody className="divide-y divide-sand-100">
             {rows.map((row) => <tr key={row.id} className={row.flagDuplikat ? "bg-amber-50" : "hover:bg-sand-50"}>

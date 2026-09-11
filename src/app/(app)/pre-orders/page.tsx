@@ -1,11 +1,7 @@
-import Link from "next/link";
 import { api } from "@/lib/api";
-import { CampaignBadge } from "@/components/badges";
-import { Card, EmptyState, LinkButton } from "@/components/ui";
-import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
-import { deleteCampaign } from "./actions";
+import { LinkButton } from "@/components/ui";
 import type { CampaignStatus } from "@/lib/types";
-import CampaignTable from "@/components/CampaignTable";
+import PreorderTable from "@/components/PreorderTable";
 
 export const dynamic = "force-dynamic";
 
@@ -20,24 +16,24 @@ type CampaignRow = {
   _count: { orders: number };
 };
 
-export default async function KampanyeListPage() {
-  const campaigns = await api.list<CampaignRow>("/kampanye");
+export default async function PreorderListPage() {
+  const campaigns = await api.list<CampaignRow>("/pre-orders");
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight text-sand-900 sm:text-2xl">
-            Kampanye PO
+            Pre-Order
           </h1>
           <p className="mt-1 text-sm text-sand-500">
             Semua batch Pre-Order dalam satu tempat.
           </p>
         </div>
-        <LinkButton href="/kampanye/baru">+ Baru</LinkButton>
+        <LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton>
       </div>
 
-      <CampaignTable campaigns={campaigns} />
+      <PreorderTable campaigns={campaigns} />
     </div>
   );
 }

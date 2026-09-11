@@ -21,6 +21,7 @@ export default function robots(): MetadataRoute.Robots {
           "/export",
           "/import",
           "/kampanye",
+          "/pre-orders",
           "/konten",
           "/login",
           "/pembeli",

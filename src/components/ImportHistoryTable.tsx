@@ -49,7 +49,7 @@ export default function ImportHistoryTable({ logs }: Props) {
                 <th className="px-5 py-3 font-medium">Waktu</th>
                 <th className="px-5 py-3 font-medium">Mode</th>
                 <th className="px-5 py-3 font-medium">File</th>
-                <th className="px-5 py-3 font-medium">Kampanye</th>
+                <th className="px-5 py-3 font-medium">Batch PO</th>
                 <th className="px-5 py-3 font-medium">Sukses / Lewat</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium"></th>
@@ -65,7 +65,7 @@ export default function ImportHistoryTable({ logs }: Props) {
                     <td className="px-5 py-3 text-sand-700">{l.namaFile}</td>
                     <td className="px-5 py-3">
                       {kampanye ? (
-                        <Link href={`/kampanye/${kampanye.id}`} className="text-sand-900 hover:underline">
+                        <Link href={`/pre-orders/${kampanye.id}`} className="text-sand-900 hover:underline">
                           {kampanye.namaProduk}
                         </Link>
                       ) : (

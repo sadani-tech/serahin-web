@@ -104,6 +104,6 @@ export async function saveEvaluation(
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
   }
-  revalidatePath(`/kampanye/${campaignId}`);
+  revalidatePath(`/pre-orders/${campaignId}`);
   return undefined;
 }

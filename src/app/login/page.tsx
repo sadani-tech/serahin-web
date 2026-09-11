@@ -31,7 +31,7 @@ export default async function LoginPage({
                 Masuk ke panel admin
               </h1>
               <p className="mt-1 mb-5 text-sm text-sand-500">
-                Kelola kampanye, pesanan, dan pembayaran Anda.
+                Kelola Batch PO, pesanan, dan pembayaran Anda.
               </p>
               <LoginForm callbackUrl={callbackUrl} />
             </div>

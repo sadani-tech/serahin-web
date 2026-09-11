@@ -41,7 +41,7 @@ export default function VendorTable({ vendors }: Props) {
     const ok = await confirm({
       title: `Hapus vendor "${nama}"?`,
       description:
-        "Vendor tidak bisa dihapus jika masih punya kampanye aktif.",
+        "Vendor tidak bisa dihapus jika masih punya Batch PO aktif.",
       confirmLabel: "Hapus vendor",
     });
     if (!ok) return;
@@ -78,7 +78,7 @@ export default function VendorTable({ vendors }: Props) {
               <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                 <th className="px-5 py-3 font-medium">Vendor</th>
                 <th className="px-5 py-3 font-medium">Spesialisasi</th>
-                <th className="px-5 py-3 font-medium">Kampanye</th>
+                <th className="px-5 py-3 font-medium">Batch PO</th>
                 <th className="px-5 py-3 font-medium">Rating</th>
                 <th className="px-5 py-3 font-medium">Telat</th>
                 <th className="px-5 py-3 font-medium"></th>

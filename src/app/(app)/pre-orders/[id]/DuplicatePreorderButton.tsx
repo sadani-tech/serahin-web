@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { duplicateCampaign } from "../actions";
+import { duplicatePreorder } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormError } from "@/components/ui";
 
-export function DuplicateCampaignButton({ campaignId }: { campaignId: string }) {
-  const action = duplicateCampaign.bind(null, campaignId);
+export function DuplicatePreorderButton({ campaignId }: { campaignId: string }) {
+  const action = duplicatePreorder.bind(null, campaignId);
   const [state, formAction] = useActionState(action, undefined);
 
   return (

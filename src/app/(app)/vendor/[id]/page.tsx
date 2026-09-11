@@ -92,7 +92,7 @@ export default async function VendorDetailPage({
       <Card>
         <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
           <div className="px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-sand-500">Kampanye</p>
+            <p className="text-xs uppercase tracking-wide text-sand-500">Batch PO</p>
             <p className="mt-1 text-2xl font-semibold text-sand-900">
               {vendor.campaigns.length}
             </p>
@@ -107,7 +107,7 @@ export default async function VendorDetailPage({
           </div>
           <div className="px-5 py-4">
             <p className="text-xs uppercase tracking-wide text-sand-500">
-              Kampanye telat
+              Batch PO telat
             </p>
             <p className="mt-1 text-2xl font-semibold text-rose-600">
               {stats.jumlahTelat}
@@ -148,15 +148,15 @@ export default async function VendorDetailPage({
 
       {/* Riwayat kampanye */}
       <Card>
-        <CardHeader title="Riwayat kampanye" />
+        <CardHeader title="Riwayat Batch PO" />
         {vendor.campaigns.length === 0 ? (
-          <EmptyState title="Belum pernah dikaitkan ke kampanye" />
+          <EmptyState title="Belum pernah dikaitkan ke Batch PO" />
         ) : (
           <div className="divide-y divide-sand-100">
             {vendor.campaigns.map((c) => (
               <Link
                 key={c.id}
-                href={`/kampanye/${c.id}`}
+                href={`/pre-orders/${c.id}`}
                 className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-sand-50"
               >
                 <div>
@@ -187,7 +187,7 @@ export default async function VendorDetailPage({
                   </p>
                 </div>
                 <Link
-                  href={`/kampanye/${variant.campaign.id}`}
+                  href={`/pre-orders/${variant.campaign.id}`}
                   className="text-sm font-medium text-brand-700 hover:underline"
                 >
                   {variant.campaign.namaProduk}
@@ -204,7 +204,7 @@ export default async function VendorDetailPage({
         {vendor.evaluations.length === 0 ? (
           <EmptyState
             title="Belum ada evaluasi"
-            description="Isi evaluasi dari halaman kampanye setelah kampanye selesai."
+            description="Isi evaluasi dari halaman Batch PO setelah prosesnya selesai."
           />
         ) : (
           <div className="divide-y divide-sand-100">
@@ -212,7 +212,7 @@ export default async function VendorDetailPage({
               <div key={e.id} className="px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
-                    href={`/kampanye/${e.campaign.id}`}
+                    href={`/pre-orders/${e.campaign.id}`}
                     className="font-medium text-sand-900 hover:underline"
                   >
                     {e.campaign.namaProduk}

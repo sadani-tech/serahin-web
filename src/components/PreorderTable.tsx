@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, DeleteIconButton, EmptyState, LinkButton } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
-import { deleteCampaign } from "@/app/(app)/kampanye/actions";
+import { deletePreorder } from "@/app/(app)/pre-orders/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useNavLoading } from "@/hooks/useNavLoading";
 
@@ -37,7 +37,7 @@ function rentangHarga(variants: { harga: string }[]): string {
   return min === max ? formatRupiah(min) : `${formatRupiah(min)} – ${formatRupiah(max)}`;
 }
 
-export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] }) {
+export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] }) {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { confirm, alert } = useConfirm();
@@ -49,19 +49,19 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
 
   async function handleDelete(id: string, namaProduk: string) {
     const ok = await confirm({
-      title: `Hapus kampanye "${namaProduk}"?`,
+      title: `Hapus Batch PO "${namaProduk}"?`,
       description:
         "Seluruh varian dan pesanan di dalamnya ikut terhapus. Tindakan ini tidak bisa dibatalkan.",
-      confirmLabel: "Hapus kampanye",
+      confirmLabel: "Hapus Batch PO",
     });
     if (!ok) return;
     setDeletingId(id);
     startLoading();
     try {
-      await deleteCampaign(id);
+      await deletePreorder(id);
     } catch {
       await alert({
-        title: "Gagal menghapus kampanye",
+        title: "Gagal menghapus Batch PO",
         description: "Terjadi kesalahan. Silakan coba lagi.",
       });
     } finally {
@@ -74,9 +74,9 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
     <Card>
       {campaigns.length === 0 ? (
         <EmptyState
-          title="Belum ada kampanye"
-          description="Mulai dengan membuat kampanye Pre-Order pertama Anda."
-          action={<LinkButton href="/kampanye/baru">+ Kampanye Baru</LinkButton>}
+          title="Belum ada Batch PO"
+          description="Mulai dengan membuat Batch PO pertama Anda."
+          action={<LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton>}
         />
       ) : (
         <>
@@ -90,7 +90,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
               return (
                 <li key={c.id}>
                   <Link
-                    href={`/kampanye/${c.id}`}
+                    href={`/pre-orders/${c.id}`}
                     className="block px-4 py-4 hover:bg-sand-50 active:bg-sand-100"
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -130,7 +130,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
                     <DeleteIconButton
                       onClick={() => handleDelete(c.id, c.namaProduk)}
                       loading={deletingId === c.id}
-                      title="Hapus kampanye"
+                      title="Hapus Batch PO"
                     />
                   </div>
                 </li>
@@ -179,7 +179,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
                   <tr key={c.id} className="hover:bg-sand-50">
                     <td className="px-5 py-3">
                       <Link
-                        href={`/kampanye/${c.id}`}
+                        href={`/pre-orders/${c.id}`}
                         className="font-medium text-sand-900 hover:underline"
                       >
                         {c.namaProduk}
@@ -204,7 +204,7 @@ export default function CampaignTable({ campaigns }: { campaigns: CampaignRow[] 
                       <DeleteIconButton
                         onClick={() => handleDelete(c.id, c.namaProduk)}
                         loading={deletingId === c.id}
-                        title="Hapus kampanye"
+                        title="Hapus Batch PO"
                       />
                     </td>
                   </tr>
