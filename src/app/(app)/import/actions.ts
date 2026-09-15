@@ -15,7 +15,7 @@ export async function uploadImport(
   }
   const targetCampaignId = String(formData.get("targetCampaignId") ?? "");
   if (mode === "PESANAN" && !targetCampaignId) {
-    return { error: "Kampanye tujuan wajib dipilih untuk Mode B." };
+    return { error: "Batch PO tujuan wajib dipilih untuk Mode B." };
   }
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -50,7 +50,7 @@ export async function confirmImport(
     };
   }
   revalidatePath("/import/riwayat");
-  revalidatePath("/kampanye");
+  revalidatePath("/pre-orders");
   redirect(`/import/riwayat?sukses=${res.logId}`);
 }
 
@@ -72,6 +72,6 @@ export async function rollbackImportAction(importLogId: string) {
     `/import/riwayat/${importLogId}/rollback`,
   );
   revalidatePath("/import/riwayat");
-  revalidatePath("/kampanye");
+  revalidatePath("/pre-orders");
   return res;
 }

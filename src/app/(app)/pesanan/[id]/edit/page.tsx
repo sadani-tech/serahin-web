@@ -41,7 +41,7 @@ export default async function EditOrderPage({
   }
 
   const campaign = await api.get<CampaignDetail>(
-    `/kampanye/${order.campaign.id}`,
+    `/pre-orders/${order.campaign.id}`,
   );
 
   // Sisa global + kembalikan jumlah milik pesanan ini (agar bisa dipertahankan).

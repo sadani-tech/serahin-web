@@ -55,8 +55,8 @@ const HAS_LINE_STRUCTURE = /<(?:p|div|br|h[1-3]|ul|ol|li|blockquote)\b/i;
  */
 function normalizeSpaces(html: string): string {
   return html
-    .replace(/[\u00A0\u202F]|&nbsp;|&#160;|&#xa0;/gi, " ")
-    .replace(/[\u2060\uFEFF]/g, "");
+    .replace(/[  ]|&nbsp;|&#160;|&#xa0;/gi, " ")
+    .replace(/[⁠﻿]/g, "");
 }
 
 export function sanitizeRichText(html: string): string {
@@ -79,7 +79,27 @@ export function isRichTextEmpty(html: string): boolean {
 
 /** Ubah rich-text HTML jadi teks polos (mis. untuk tombol salin ke clipboard). */
 export function richTextToPlain(html: string): string {
-  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
+  // Ubah batas blok/baris HTML jadi newline SEBELUM tag dilepas, supaya
+  // struktur paragraf & daftar tidak melebur jadi satu baris panjang yang
+  // sulit dibaca.
+  const withBreaks = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n• ")
+    .replace(/<\/(p|div|h[1-3]|li|blockquote)>/gi, "\n");
+  const stripped = sanitizeHtml(withBreaks, {
+    allowedTags: [],
+    allowedAttributes: {},
+  })
     .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;/g, "'")
+    .replace(/&amp;/g, "&");
+  return stripped
+    .split("\n")
+    .map((line) => line.trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

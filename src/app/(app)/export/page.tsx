@@ -16,7 +16,7 @@ type AuditRow = {
 
 export default async function ExportPage() {
   const [campaigns, audits] = await Promise.all([
-    api.list<{ id: string; namaProduk: string }>("/kampanye"),
+    api.list<{ id: string; namaProduk: string }>("/pre-orders"),
     api.get<AuditRow[]>("/export/audits"),
   ]);
 

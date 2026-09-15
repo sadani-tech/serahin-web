@@ -16,13 +16,13 @@ export const metadata: Metadata = {
 type SuccessOrder = {
   namaPembeli: string;
   tokenAkses: string;
+  namaProduk: string;
   items: {
-    id: string;
+    variantId: string;
     jumlah: number;
-    hargaSaatPesan: string;
-    variant: { namaVarian: string };
+    harga: number;
+    namaVarian: string;
   }[];
-  campaign: { namaProduk: string };
 };
 
 export default async function PublicOrderSuccessPage({
@@ -41,7 +41,7 @@ export default async function PublicOrderSuccessPage({
   }
 
   const total = order.items.reduce(
-    (s, it) => s + Number(it.hargaSaatPesan) * it.jumlah,
+    (s, it) => s + it.harga * it.jumlah,
     0,
   );
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
@@ -73,12 +73,12 @@ export default async function PublicOrderSuccessPage({
             </h2>
           </div>
           <dl className="divide-y divide-sand-100 text-sm">
-            <Row label="Produk" value={order.campaign.namaProduk} />
-            {order.items.map((it) => (
+            <Row label="Produk" value={order.namaProduk} />
+            {order.items.map((it, i) => (
               <Row
-                key={it.id}
-                label={it.variant.namaVarian}
-                value={`${it.jumlah} × ${formatRupiah(it.hargaSaatPesan)}`}
+                key={`${it.variantId}-${i}`}
+                label={it.namaVarian}
+                value={`${it.jumlah} × ${formatRupiah(it.harga)}`}
               />
             ))}
             <Row label="Total unit" value={`${totalQty} unit`} />

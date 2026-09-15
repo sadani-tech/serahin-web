@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import { formatTanggal } from "@/lib/format";
 import { SubmitButton } from "@/components/SubmitButton";
+import { Select } from "@/components/ui";
 import { updateDeletionRequest } from "./actions";
 
 type DeletionStatus =
@@ -83,11 +84,11 @@ export default async function DataPrivacyAdminPage() {
                 <input type="hidden" name="id" value={request.id} />
                 <label className="text-xs font-bold text-sand-600">
                   Status
-                  <select name="status" defaultValue={request.status} className="mt-1 block min-h-10 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm">
+                  <Select name="status" defaultValue={request.status} className="mt-1 block w-full">
                     {(Object.keys(labels) as DeletionStatus[]).map((status) => (
                       <option key={status} value={status}>{labels[status]}</option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
                 <label className="text-xs font-bold text-sand-600">
                   Catatan internal

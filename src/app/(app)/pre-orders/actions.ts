@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 
-export type CampaignFormState = { error?: string } | undefined;
+export type PreorderFormState = { error?: string } | undefined;
 
 /**
  * Unggah gambar varian ke backend (multipart) dan kembalikan URL publik.
@@ -21,7 +21,7 @@ export async function uploadVariantImage(
   fd.set("file", file);
   try {
     const res = await api.postForm<{ url: string }>(
-      "/kampanye/upload-gambar",
+      "/pre-orders/upload-gambar",
       fd,
     );
     return { url: res.url };
@@ -60,7 +60,7 @@ type VariantPayload = {
   vendorId?: string;
 };
 
-/** Parse field `variantsJson` (dikirim CampaignForm) menjadi payload varian. */
+/** Parse field `variantsJson` (dikirim PreorderForm) menjadi payload varian. */
 function parseVariants(formData: FormData): VariantPayload[] {
   const raw = getFormDataValue(formData, "variantsJson");
   if (!raw) return [];
@@ -103,14 +103,14 @@ function parseVariants(formData: FormData): VariantPayload[] {
   return out;
 }
 
-export async function createCampaign(
-  _prev: CampaignFormState,
+export async function createPreorder(
+  _prev: PreorderFormState,
   formData: FormData,
-): Promise<CampaignFormState> {
+): Promise<PreorderFormState> {
   const variants = parseVariants(formData);
 
   try {
-    await api.post("/kampanye", {
+    await api.post("/pre-orders", {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
@@ -126,22 +126,22 @@ export async function createCampaign(
       variants,
     });
   } catch (e) {
-    return { error: e instanceof ApiError ? e.message : "Gagal membuat kampanye" };
+    return { error: e instanceof ApiError ? e.message : "Gagal membuat Batch PO" };
   }
 
-  revalidatePath("/kampanye");
-  redirect("/kampanye");
+  revalidatePath("/pre-orders");
+  redirect("/pre-orders");
 }
 
-export async function updateCampaign(
+export async function updatePreorder(
   id: string,
-  _prev: CampaignFormState,
+  _prev: PreorderFormState,
   formData: FormData,
-): Promise<CampaignFormState> {
+): Promise<PreorderFormState> {
   const variants = parseVariants(formData);
 
   try {
-    await api.patch(`/kampanye/${id}`, {
+    await api.patch(`/pre-orders/${id}`, {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
@@ -160,45 +160,45 @@ export async function updateCampaign(
     return { error: e instanceof ApiError ? e.message : "Gagal menyimpan" };
   }
 
-  revalidatePath(`/kampanye/${id}`);
-  redirect(`/kampanye/${id}`);
+  revalidatePath(`/pre-orders/${id}`);
+  redirect(`/pre-orders/${id}`);
 }
 
-export async function duplicateCampaign(
+export async function duplicatePreorder(
   id: string,
-  _prev: CampaignFormState,
-): Promise<CampaignFormState> {
+  _prev: PreorderFormState,
+): Promise<PreorderFormState> {
   let duplicated: { id: string };
   try {
-    duplicated = await api.post<{ id: string }>(`/kampanye/${id}/duplicate`);
+    duplicated = await api.post<{ id: string }>(`/pre-orders/${id}/duplicate`);
   } catch (e) {
     return {
-      error: e instanceof ApiError ? e.message : "Gagal menduplikasi kampanye",
+      error: e instanceof ApiError ? e.message : "Gagal menduplikasi Batch PO",
     };
   }
-  revalidatePath("/kampanye");
-  redirect(`/kampanye/${duplicated.id}/edit`);
+  revalidatePath("/pre-orders");
+  redirect(`/pre-orders/${duplicated.id}/edit`);
 }
 
-export async function changeCampaignStatus(campaignId: string, formData: FormData) {
+export async function changePreorderStatus(campaignId: string, formData: FormData) {
   const status = String(formData.get("status") ?? "");
   const catatan = String(formData.get("catatan") ?? "");
   
   try {
-    await api.post(`/kampanye/${campaignId}/status`, { status, catatan });
+    await api.post(`/pre-orders/${campaignId}/status`, { status, catatan });
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal mengubah status" };
   }
-  revalidatePath(`/kampanye/${campaignId}`);
+  revalidatePath(`/pre-orders/${campaignId}`);
 }
 
 export async function toggleFormAktif(campaignId: string, aktif: boolean) {
   try {
-    await api.post(`/kampanye/${campaignId}/form`, { aktif });
+    await api.post(`/pre-orders/${campaignId}/form`, { aktif });
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal mengubah status form" };
   }
-  revalidatePath(`/kampanye/${campaignId}`);
+  revalidatePath(`/pre-orders/${campaignId}`);
 }
 
 export async function addTimelineEntry(campaignId: string, formData: FormData) {
@@ -210,17 +210,17 @@ export async function addTimelineEntry(campaignId: string, formData: FormData) {
   }
 
   try {
-    await api.post(`/kampanye/${campaignId}/timeline`, {
+    await api.post(`/pre-orders/${campaignId}/timeline`, {
       judulUpdate,
       catatan,
     });
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal menambahkan update" };
   }
-  revalidatePath(`/kampanye/${campaignId}`);
+  revalidatePath(`/pre-orders/${campaignId}`);
 }
 
-export async function deleteCampaign(id: string) {
-  await api.deleteCampaign(id);
-  revalidatePath("/kampanye");
+export async function deletePreorder(id: string) {
+  await api.deletePreorder(id);
+  revalidatePath("/pre-orders");
 }

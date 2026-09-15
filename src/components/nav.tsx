@@ -28,8 +28,8 @@ const links: NavLink[] = [
     ),
   },
   {
-    href: "/kampanye",
-    label: "Kampanye",
+    href: "/pre-orders",
+    label: "Pre-Order",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
@@ -94,7 +94,7 @@ const utilityLinks: NavLink[] = [
     label: "Import",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
       </svg>
     ),
   },
@@ -103,7 +103,7 @@ const utilityLinks: NavLink[] = [
     label: "Export",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
       </svg>
     ),
   },
@@ -125,14 +125,14 @@ export function NavLinks() {
   const isActive = useActiveLink();
 
   return (
-    <nav className="hidden items-center gap-0.5 md:flex">
+    <nav className="hidden items-center gap-0.5 lg:flex">
       {links.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
           <Link
             key={link.href}
             href={link.href}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"
@@ -151,7 +151,7 @@ export function NavIconActions() {
   const isActive = useActiveLink();
 
   return (
-    <div className="hidden items-center gap-1 md:flex">
+    <div className="hidden items-center gap-1 lg:flex">
       {utilityLinks.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
@@ -184,7 +184,7 @@ export function MobileMenuButton({
   return (
     <button
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-xl text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 md:hidden"
+      className="flex h-9 w-9 items-center justify-center rounded-xl text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 lg:hidden"
       aria-label={open ? "Tutup menu" : "Buka menu"}
     >
       {open ? (
@@ -224,14 +224,14 @@ export function MobileDrawer({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-sand-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+        className={`fixed inset-0 z-40 bg-sand-900/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
 
       {/* Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -319,7 +319,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="safe-bottom fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur md:hidden">
+      <nav className="safe-bottom fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur lg:hidden">
         <div className="flex items-stretch">
           {bottomNavLinks.map((link) => {
             const active = isActive(link.href, link.exact);
@@ -366,7 +366,7 @@ export function BottomNav() {
 
       {/* More panel */}
       <div
-        className={`fixed inset-x-0 bottom-[57px] z-20 border-t border-sand-200 bg-white shadow-lg transition-all duration-200 md:hidden ${
+        className={`fixed inset-x-0 bottom-[57px] z-20 border-t border-sand-200 bg-white shadow-lg transition-all duration-200 lg:hidden ${
           menuOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
         }`}
       >
@@ -400,7 +400,7 @@ export function BottomNav() {
 
       {menuOpen && (
         <div
-          className="fixed inset-0 z-10 md:hidden"
+          className="fixed inset-0 z-10 lg:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}
