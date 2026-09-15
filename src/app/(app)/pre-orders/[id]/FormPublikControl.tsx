@@ -55,7 +55,7 @@ export function FormPublikControl({
 
       {!bisaAktif && (
         <p className="text-xs text-sand-500">
-          Form otomatis nonaktif karena kampanye tidak lagi berstatus Open.
+          Form otomatis nonaktif karena Batch PO tidak lagi berstatus Open.
         </p>
       )}
 

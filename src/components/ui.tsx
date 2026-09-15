@@ -99,7 +99,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
 };
 
 const buttonBase =
-  "inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-y-0";
+  "inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-bold transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-y-0";
 
 function Spinner() {
   return (
@@ -248,9 +248,18 @@ export function Field({
 const inputBase =
   "block w-full rounded-xl border border-sand-300 bg-white px-3.5 py-2.5 text-sm text-sand-900 transition placeholder:text-sand-400 hover:border-sand-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25";
 
+// Tema ulang indikator kalender bawaan browser (abu-abu default) agar
+// senada dengan brand — hanya berlaku di Chromium/WebKit (::-webkit-*);
+// browser lain tetap fallback ke ikon native.
+const dateInputTheme =
+  "[&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:rounded-md [&::-webkit-calendar-picker-indicator]:p-1 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:transition [&::-webkit-calendar-picker-indicator]:hover:bg-brand-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-100";
+
 export function Input(props: ComponentProps<"input">) {
   const { className = "", ...rest } = props;
-  return <input className={`${inputBase} ${className}`} {...rest} />;
+  const dateExtra = rest.type === "date" || rest.type === "time" || rest.type === "datetime-local"
+    ? dateInputTheme
+    : "";
+  return <input className={`${inputBase} ${dateExtra} ${className}`} {...rest} />;
 }
 
 export function Textarea(props: ComponentProps<"textarea">) {
@@ -258,9 +267,16 @@ export function Textarea(props: ComponentProps<"textarea">) {
   return <textarea className={`${inputBase} ${className}`} {...rest} />;
 }
 
+// Chevron kustom via SVG data-URI (warna sand-500) menggantikan panah OS
+// bawaan yang tidak konsisten lintas browser/platform.
+const selectChevron =
+  "bg-[right_0.75rem_center] bg-no-repeat bg-[length:1rem] appearance-none pr-9 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2378716c%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E')]";
+
 export function Select(props: ComponentProps<"select">) {
   const { className = "", ...rest } = props;
-  return <select className={`${inputBase} ${className}`} {...rest} />;
+  return (
+    <select className={`${inputBase} ${selectChevron} ${className}`} {...rest} />
+  );
 }
 
 // Membungkus list panjang agar hanya menampilkan ~10 baris lalu bisa di-scroll.

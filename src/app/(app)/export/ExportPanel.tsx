@@ -44,9 +44,9 @@ function CampaignDateFilters({
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
-      <Field label="Kampanye (boleh pilih beberapa)">
+      <Field label="Batch PO (boleh pilih beberapa)">
         <div className="max-h-36 space-y-1 overflow-y-auto rounded-lg border border-sand-300 p-2">
-          <p className="px-1 text-xs text-sand-500">Tanpa pilihan = semua kampanye</p>
+          <p className="px-1 text-xs text-sand-500">Tanpa pilihan = semua Batch PO</p>
           {campaigns.map((campaign) => (
             <label key={campaign.id} className="flex items-center gap-2 rounded px-1 py-1 text-sm hover:bg-sand-50">
               <input type="checkbox" checked={state.campaigns.includes(campaign.id)} onChange={() => toggleCampaign(campaign.id)} />
@@ -241,7 +241,7 @@ export function ExportPanel({ campaigns }: { campaigns: CampaignOption[] }) {
           <Field label="Kolom tambahan (opsional)">
             <div className="flex flex-wrap gap-3 pt-1">
               {[
-                ["kampanye", "Kampanye"],
+                ["kampanye", "Batch PO"],
                 ["status", "Status"],
                 ["tanggal", "Tanggal"],
               ].map(([val, label]) => (

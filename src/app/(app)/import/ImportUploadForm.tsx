@@ -35,14 +35,14 @@ export function ImportUploadForm({
       <input type="hidden" name="mode" value={mode} />
 
       {mode === "PESANAN" && !fixedCampaignId && (
-        <Field label="Kampanye tujuan" required>
+        <Field label="Batch PO tujuan" required>
           <Select
             name="targetCampaignId"
             value={campaignId}
             onChange={(e) => setCampaignId(e.target.value)}
             required
           >
-            <option value="">— pilih kampanye —</option>
+            <option value="">— pilih Batch PO —</option>
             {campaigns?.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.namaProduk}
@@ -69,7 +69,7 @@ export function ImportUploadForm({
         </a>
         {mode === "PESANAN" && !campaignId && !fixedCampaignId && (
           <p className="mt-1 text-xs text-sand-400">
-            Pilih kampanye dulu untuk mengunduh template.
+            Pilih Batch PO dulu untuk mengunduh template.
           </p>
         )}
       </div>

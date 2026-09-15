@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { CampaignForm, type VendorOption } from "../CampaignForm";
-import { createCampaign } from "../actions";
+import { PreorderForm, type VendorOption } from "../PreorderForm";
+import { createPreorder } from "../actions";
 import { computeVendorStats, type EvalInput } from "@/lib/vendor";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ type VendorRow = {
   evaluations: EvalInput[];
 };
 
-export default async function KampanyeBaruPage() {
+export default async function NewPreorderPage() {
   const vendors = await api.list<VendorRow>("/vendor");
 
   const vendorOptions: VendorOption[] = vendors.map((v) => {
@@ -31,22 +31,22 @@ export default async function KampanyeBaruPage() {
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
         <Link
-          href="/kampanye"
+          href="/pre-orders"
           className="text-sm text-sand-500 hover:text-sand-700"
         >
-          ← Kembali ke daftar kampanye
+          ← Kembali ke daftar Batch PO
         </Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
-          Kampanye PO Baru
+          Batch PO Baru
         </h1>
         <p className="mt-1 text-sm text-sand-500">
           Buat batch Pre-Order baru beserta varian dan kuotanya.
         </p>
       </div>
 
-      <CampaignForm
-        action={createCampaign}
-        submitLabel="Buat Kampanye"
+      <PreorderForm
+        action={createPreorder}
+        submitLabel="Buat Batch PO"
         vendors={vendorOptions}
       />
     </div>

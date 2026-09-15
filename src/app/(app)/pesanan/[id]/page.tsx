@@ -53,7 +53,7 @@ type OrderDetail = {
     buktiFile: string | null;
     statusVerifikasi: PaymentVerification;
   }[];
-  statusLogs: {
+  statusLogs?: {
     id: string;
     statusLama: OrderStatus | null;
     statusBaru: OrderStatus;
@@ -114,7 +114,7 @@ export default async function OrderDetailPage({
       {/* Header */}
       <div>
         <Link
-          href={`/kampanye/${order.campaignId}?tab=pesanan`}
+          href={`/pre-orders/${order.campaignId}?tab=pesanan`}
           className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← {order.campaign.namaProduk}
@@ -327,11 +327,11 @@ export default async function OrderDetailPage({
           {/* Riwayat status pesanan (FR-4.5) */}
           <Card>
             <CardHeader title="Riwayat status pesanan" />
-            {order.statusLogs.length === 0 ? (
+            {(order.statusLogs ?? []).length === 0 ? (
               <EmptyState title="Belum ada riwayat" />
             ) : (
               <ol className="space-y-4 px-6 py-5">
-                {order.statusLogs.map((log) => (
+                {(order.statusLogs ?? []).map((log) => (
                   <li key={log.id} className="relative pl-6">
                     <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
                     <p className="text-sm text-sand-800">

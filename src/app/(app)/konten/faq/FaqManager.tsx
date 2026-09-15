@@ -34,7 +34,7 @@ export function FaqManager({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const campaignName = (id: string | null) =>
-    id ? (campaigns.find((c) => c.id === id)?.namaProduk ?? "Kampanye") : null;
+    id ? (campaigns.find((c) => c.id === id)?.namaProduk ?? "Batch PO") : null;
 
   return (
     <div className="space-y-8">
@@ -171,7 +171,7 @@ function FaqFields({
             name="campaignId"
             defaultValue={initial?.campaignId ?? ""}
           >
-            <option value="">Global (semua kampanye)</option>
+            <option value="">Global (semua Batch PO)</option>
             {campaigns.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.namaProduk}

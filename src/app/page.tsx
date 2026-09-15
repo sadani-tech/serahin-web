@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Serahin — Katalog Produk Pre-Order",
   description:
-    "Jelajahi kampanye pre-order aktif, pilih produk, buat pesanan, dan bayar secara aman melalui Serahin.",
+    "Jelajahi Batch PO aktif, pilih produk, buat pesanan, dan bayar secara aman melalui Serahin.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   // Gambar preview diambil otomatis dari `src/app/opengraph-image.tsx` &
@@ -104,7 +104,7 @@ export default async function HomePage({
               Temukan produk pilihan, pesan dalam satu alur yang jelas.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-sand-600 sm:text-lg">
-              Jelajahi seluruh kampanye pre-order yang sedang dibuka, pilih
+              Jelajahi seluruh Batch PO yang sedang dibuka, pilih
               produk, lakukan pembayaran, lalu pantau progres pesanan Anda dari
               satu tautan pribadi.
             </p>
@@ -136,8 +136,8 @@ export default async function HomePage({
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {[
-              ["1", "Pilih kampanye", "Cari produk atau fokuskan katalog ke satu kampanye PO yang sedang aktif."],
-              ["2", "Pesan dan bayar", "Pilih varian dari satu kampanye, isi data dengan benar, lalu gunakan kanal pembayaran yang tersedia."],
+              ["1", "Pilih Batch PO", "Cari produk atau fokuskan katalog ke satu Batch PO yang sedang aktif."],
+              ["2", "Pesan dan bayar", "Pilih varian dari satu Batch PO, isi data dengan benar, lalu gunakan kanal pembayaran yang tersedia."],
               ["3", "Pantau progres", "Simpan tautan portal pesanan untuk melihat verifikasi pembayaran, produksi, dan pengiriman."],
             ].map(([number, title, copy]) => (
               <article key={number} className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm">
@@ -158,7 +158,7 @@ export default async function HomePage({
                 Sedang dibuka
               </p>
               <h2 className="mt-1 text-3xl font-extrabold text-sand-900">
-                Semua kampanye pre-order
+                Semua Batch PO
               </h2>
             </div>
             {catalog && (
@@ -174,13 +174,13 @@ export default async function HomePage({
             className="mt-7 grid gap-4 rounded-2xl border border-sand-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_1.3fr_auto] md:items-end"
           >
             <label className="block text-sm font-bold text-sand-700">
-              Kampanye
+              Batch PO
               <select
                 name="campaign"
                 defaultValue={params.campaign ?? ""}
                 className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium"
               >
-                <option value="">Semua Kampanye</option>
+                <option value="">Semua Batch PO</option>
                 {catalog?.filters.campaigns.map((campaign) => (
                   <option key={campaign.id} value={campaign.id}>
                     {campaign.label}
@@ -210,7 +210,7 @@ export default async function HomePage({
                 name="q"
                 defaultValue={params.q ?? ""}
                 maxLength={120}
-                placeholder="Nama kampanye atau produk"
+                placeholder="Nama Batch PO atau produk"
                 className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm"
               />
             </label>
@@ -237,7 +237,7 @@ export default async function HomePage({
             <div className="mt-8 rounded-3xl border border-dashed border-sand-300 bg-white px-6 py-14 text-center">
               <h3 className="text-xl font-extrabold text-sand-900">Belum ada produk yang cocok</h3>
               <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-sand-500">
-                Belum ada kampanye aktif untuk pilihan ini. Coba reset filter
+                Belum ada Batch PO aktif untuk pilihan ini. Coba reset filter
                 atau hubungi kami bila Anda membutuhkan bantuan.
               </p>
             </div>
@@ -292,7 +292,7 @@ export default async function HomePage({
                     variants={campaign.variants}
                     gatewayEnabled={campaign.gatewayEnabled}
                     orderingDisabled={soldOut}
-                    unavailableMessage={soldOut ? "Semua varian pada kampanye ini sudah habis." : undefined}
+                    unavailableMessage={soldOut ? "Semua varian pada Batch PO ini sudah habis." : undefined}
                     checkoutSource="HOME_CATALOG"
                     idPrefix={`home-${campaign.id}`}
                   />

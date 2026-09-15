@@ -21,7 +21,7 @@ export default async function PembeliPage({
   const sp = await searchParams;
 
   const [campaigns, res] = await Promise.all([
-    api.list<{ id: string; namaProduk: string }>("/kampanye"),
+    api.list<{ id: string; namaProduk: string }>("/pre-orders"),
     api.get<{ data: PembeliRow[]; meta: PembeliMeta }>("/pembeli", {
       search: sp.search,
       campaignId: sp.campaignId,
@@ -39,7 +39,7 @@ export default async function PembeliPage({
           Pembeli
         </h1>
         <p className="mt-1 text-sm text-sand-500">
-          Semua pembeli lintas kampanye — saring berdasarkan kampanye, status,
+          Semua pembeli dari seluruh Batch PO — saring berdasarkan Batch PO, status,
           atau cari nama/kontak.
         </p>
       </div>
