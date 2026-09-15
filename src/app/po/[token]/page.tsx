@@ -10,6 +10,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { SerahinLogo } from "@/components/brand";
 import { isRichTextEmpty } from "@/lib/sanitize";
 import { PublicOrderForm } from "./PublicOrderForm";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,7 @@ export default async function PublicFormPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const session = await getSession();
 
   let data: FormInfo;
   try {
@@ -128,6 +130,7 @@ export default async function PublicFormPage({
           gatewayEnabled={Boolean(data.gatewayEnabled)}
           orderingDisabled={Boolean(alasanTidakBisaPesan)}
           unavailableMessage={alasanTidakBisaPesan}
+          buyerAuthenticated={session?.role === "BUYER"}
         />
 
         <p className="mx-auto max-w-xl text-center text-xs text-sand-500">

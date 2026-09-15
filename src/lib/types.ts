@@ -1,7 +1,7 @@
 // Tipe enum domain (mirror Prisma) — frontend tidak lagi meng-generate Prisma;
 // backend NestJS adalah pemilik skema. Nilai harus sinkron dengan prisma/schema.
 
-export type UserRole = "ADMIN";
+export type UserRole = "ADMIN" | "BUYER";
 
 export type CampaignStatus =
   | "OPEN"
@@ -55,7 +55,7 @@ export type KesesuaianKualitas = "SESUAI" | "TIDAK_SESUAI";
 /** Pengguna terautentikasi (dari JWT). */
 export type SessionUser = {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
   role: UserRole;
 };

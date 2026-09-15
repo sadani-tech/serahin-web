@@ -28,7 +28,9 @@ export function renderOgImage(): ImageResponse {
           padding: "80px",
           background: "linear-gradient(135deg, #3D7940 0%, #2C5A30 100%)",
           color: "#F1F5DC",
-          fontFamily: "sans-serif",
+          // Samakan dengan tipografi aplikasi (Nunito). Satori akan memakai
+          // fallback sistem bila font tidak tersedia di runtime image.
+          fontFamily: '"Nunito", "Segoe UI", Arial, sans-serif',
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>

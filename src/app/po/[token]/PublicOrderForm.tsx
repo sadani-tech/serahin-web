@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button, Field, FormError, Input } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
@@ -29,6 +29,8 @@ export type PublicVariantOption = {
 };
 
 const CATALOG_PAGE_SIZE = 8;
+const draftExpiresAt = () => Date.now() + 24 * 60 * 60 * 1000;
+const draftIsExpired = (value?: number) => !value || value < Date.now();
 
 function getCategory(value?: string | null) {
   const category = value?.trim();
@@ -43,6 +45,7 @@ export function PublicOrderForm({
   unavailableMessage,
   checkoutSource = "CAMPAIGN_LINK",
   idPrefix = formToken,
+  buyerAuthenticated = false,
 }: {
   formToken: string;
   variants: PublicVariantOption[];
@@ -51,15 +54,13 @@ export function PublicOrderForm({
   unavailableMessage?: string;
   checkoutSource?: "CAMPAIGN_LINK" | "HOME_CATALOG";
   idPrefix?: string;
+  buyerAuthenticated?: boolean;
 }) {
   const action = createPublicOrder.bind(null, formToken);
   const [state, formAction, pending] = useActionState<PublicOrderState, FormData>(
     action,
     undefined,
   );
-  const [namaPembeli, setNamaPembeli] = useState("");
-  const [wa, setWa] = useState("");
-  const [email, setEmail] = useState("");
   const [jumlahBayar, setJumlahBayar] = useState("");
   // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
   const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
@@ -77,6 +78,23 @@ export function PublicOrderForm({
     title: string;
     start: number;
   } | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(`serahin:checkout:${formToken}`);
+        if (!raw) return;
+        const draft = JSON.parse(raw) as { expiresAt?: number; qty?: Record<string, number>; colors?: Record<string, string> };
+        if (draftIsExpired(draft.expiresAt)) {
+          localStorage.removeItem(`serahin:checkout:${formToken}`);
+          return;
+        }
+        if (draft.qty) setQty(draft.qty);
+        if (draft.colors) setWarnaSel(draft.colors);
+      } catch { localStorage.removeItem(`serahin:checkout:${formToken}`); }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [formToken]);
 
   const setQ = (id: string, value: number) =>
     setQty((current) => ({ ...current, [id]: Math.max(0, value) }));
@@ -163,10 +181,20 @@ export function PublicOrderForm({
     fd.set("jumlahBayar", jumlahBayar);
     fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
     fd.set("checkoutSource", checkoutSource);
+    persistDraft();
     startTransition(() => formAction(fd));
   }
 
+  function persistDraft() {
+    localStorage.setItem(`serahin:checkout:${formToken}`, JSON.stringify({ qty, colors: warnaSel, expiresAt: draftExpiresAt() }));
+  }
+
   function scrollToCheckout() {
+    if (!buyerAuthenticated) {
+      persistDraft();
+      window.location.assign(`/account/login?callbackUrl=${encodeURIComponent(`/po/${formToken}`)}`);
+      return;
+    }
     document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -474,6 +502,7 @@ export function PublicOrderForm({
           <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem || warnaBelumLengkap}>
             Lanjutkan ke Tahap Akhir
           </Button>
+          {adaItem && <button type="button" onClick={() => { setQty({}); setWarnaSel({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
         </div>
       </section>
 
@@ -486,17 +515,10 @@ export function PublicOrderForm({
             <p className="mt-1 text-sm text-sand-500">Data ini dipakai Admin untuk memverifikasi pesanan dan pembayaran Anda.</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nama" required>
-              <Input name="namaPembeli" required disabled={orderingDisabled} value={namaPembeli} onChange={(e) => setNamaPembeli(e.target.value)} placeholder="Nama lengkap Anda" />
-            </Field>
-            <Field label="WhatsApp" required>
-              <Input name="wa" required disabled={orderingDisabled} value={wa} onChange={(e) => setWa(e.target.value)} placeholder="081234567890" />
-            </Field>
+          <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+            Nama, email, dan WhatsApp diambil dari akun Buyer. Jika belum masuk,
+            pilihan produk disimpan selama 24 jam dan Anda akan diarahkan ke halaman login.
           </div>
-          <Field label="Email" required>
-            <Input name="email" type="email" required disabled={orderingDisabled} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
-          </Field>
           {gatewayEnabled && (
             <Field label="Metode pembayaran" required>
               <div className="grid gap-2 sm:grid-cols-2">
