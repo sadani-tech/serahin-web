@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { redirect } from "next/navigation";
+import { api, ApiError } from "@/lib/api";
 import { Card, CardHeader, EmptyState, LinkButton, Select, Input } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
@@ -21,15 +22,19 @@ export default async function DashboardPage({
       ? (sp.status as CampaignStatus)
       : undefined;
 
-  const [data, campaignList] = await Promise.all([
-    getDashboardData({
-      status,
-      dateFrom: sp.dateFrom,
-      dateTo: sp.dateTo,
-      campaignId: sp.campaignId,
-    }),
-    api.list<{ id: string; namaProduk: string }>("/pre-orders"),
-  ]);
+  let data: Awaited<ReturnType<typeof getDashboardData>>;
+  let campaignList: { id: string; namaProduk: string }[];
+  try {
+    [data, campaignList] = await Promise.all([
+      getDashboardData({ status, dateFrom: sp.dateFrom, dateTo: sp.dateTo, campaignId: sp.campaignId }),
+      api.list<{ id: string; namaProduk: string }>("/pre-orders"),
+    ]);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      redirect("/login?callbackUrl=%2Fdashboard");
+    }
+    throw error;
+  }
 
   const adaFilter = !!(status || sp.dateFrom || sp.dateTo || sp.campaignId);
 

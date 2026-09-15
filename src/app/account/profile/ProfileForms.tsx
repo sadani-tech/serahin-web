@@ -1,0 +1,11 @@
+"use client";
+import { useActionState } from "react";
+import { changeBuyerPasswordAction, updateBuyerProfileAction } from "@/lib/buyer-auth-actions";
+
+function Notice({ state }: { state: { error?: string; message?: string } | undefined }) { return state?.error ? <p className="text-sm font-bold text-rose-700">{state.error}</p> : state?.message ? <p className="text-sm font-bold text-brand-700">{state.message}</p> : null; }
+export function ProfileForms({ profile }: { profile: { name: string; email: string | null; phone: string | null } }) {
+  const [profileState, profileAction, profilePending] = useActionState(updateBuyerProfileAction, undefined);
+  const [passwordState, passwordAction, passwordPending] = useActionState(changeBuyerPasswordAction, undefined);
+  const input = "mt-1 min-h-11 w-full rounded-xl border border-sand-300 px-3";
+  return <div className="grid gap-5 md:grid-cols-2"><form action={profileAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-6"><h2 className="font-extrabold">Data profil</h2><Notice state={profileState}/><label className="block text-sm font-bold">Nama<input name="name" defaultValue={profile.name} required className={input}/></label><label className="block text-sm font-bold">Email<input value={profile.email ?? ""} disabled className={input}/></label><label className="block text-sm font-bold">Nomor WhatsApp<input name="phone" defaultValue={profile.phone ?? ""} required className={input}/></label><button disabled={profilePending} className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">Simpan profil</button></form><form action={passwordAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-6"><h2 className="font-extrabold">Ganti kata sandi</h2><Notice state={passwordState}/>{[["currentPassword","Kata sandi saat ini"],["newPassword","Kata sandi baru"],["confirmPassword","Ulangi kata sandi baru"]].map(([name,label]) => <label key={name} className="block text-sm font-bold">{label}<input name={name} type="password" required minLength={8} className={input}/></label>)}<button disabled={passwordPending} className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">Ganti kata sandi</button></form></div>;
+}

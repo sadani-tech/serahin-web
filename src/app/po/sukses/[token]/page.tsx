@@ -5,6 +5,7 @@ import { formatRupiah } from "@/lib/format";
 import { PublicFooter } from "@/components/PublicFooter";
 import { SerahinLogo } from "@/components/brand";
 import { PortalLinkBox } from "./PortalLinkBox";
+import { ClearDraft } from "./ClearDraft";
 
 export const dynamic = "force-dynamic";
 
@@ -18,19 +19,22 @@ type SuccessOrder = {
   tokenAkses: string;
   namaProduk: string;
   items: {
-    variantId: string;
+    id: string;
     jumlah: number;
-    harga: number;
-    namaVarian: string;
+    hargaSaatPesan: string;
+    variant: { namaVarian: string };
   }[];
 };
 
 export default async function PublicOrderSuccessPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ campaign?: string }>;
 }) {
   const { token } = await params;
+  const { campaign } = await searchParams;
 
   let order: SuccessOrder;
   try {
@@ -41,13 +45,14 @@ export default async function PublicOrderSuccessPage({
   }
 
   const total = order.items.reduce(
-    (s, it) => s + it.harga * it.jumlah,
+    (s, it) => s + Number(it.hargaSaatPesan) * it.jumlah,
     0,
   );
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
 
   return (
     <div className="bg-serahin-dots relative min-h-full py-10">
+      <ClearDraft campaign={campaign} />
       <div
         aria-hidden="true"
         className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
@@ -76,9 +81,9 @@ export default async function PublicOrderSuccessPage({
             <Row label="Produk" value={order.namaProduk} />
             {order.items.map((it, i) => (
               <Row
-                key={`${it.variantId}-${i}`}
-                label={it.namaVarian}
-                value={`${it.jumlah} × ${formatRupiah(it.harga)}`}
+                key={`${it.id}-${i}`}
+                label={it.variant.namaVarian}
+                value={`${it.jumlah} × ${formatRupiah(Number(it.hargaSaatPesan))}`}
               />
             ))}
             <Row label="Total unit" value={`${totalQty} unit`} />

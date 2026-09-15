@@ -3,13 +3,13 @@ import { jwtVerify } from "jose";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret");
 
-async function isValid(token: string | undefined): Promise<boolean> {
-  if (!token) return false;
+async function sessionRole(token: string | undefined): Promise<"ADMIN" | "BUYER" | null> {
+  if (!token) return null;
   try {
-    await jwtVerify(token, secret);
-    return true;
+    const { payload } = await jwtVerify(token, secret);
+    return payload.role === "BUYER" ? "BUYER" : "ADMIN";
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -17,11 +17,18 @@ async function isValid(token: string | undefined): Promise<boolean> {
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isLoginPage = pathname === "/login";
+  const isBuyerAuthPage =
+    pathname === "/account/login" ||
+    pathname === "/account/register" ||
+    pathname === "/account/activate" ||
+    pathname === "/account/forgot-password" ||
+    pathname === "/account/reset-password";
 
   // Portal (v1.1), formulir PO publik (v1.2) & halaman statis CMS (v1.6) publik.
   const isPublic =
     pathname === "/" ||
     isLoginPage ||
+    isBuyerAuthPage ||
     pathname.startsWith("/portal") ||
     pathname.startsWith("/po/") ||
     pathname.startsWith("/halaman/") ||
@@ -35,16 +42,19 @@ export default async function proxy(req: NextRequest) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml";
 
-  const loggedIn = await isValid(req.cookies.get("token")?.value);
+  const role = await sessionRole(req.cookies.get("token")?.value);
+  const loggedIn = role !== null;
 
   if (!loggedIn && !isPublic) {
-    const url = new URL("/login", req.nextUrl.origin);
+    const url = new URL(pathname.startsWith("/account") ? "/account/login" : "/login", req.nextUrl.origin);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
-  if (loggedIn && isLoginPage) {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
+  if (loggedIn && (isLoginPage || isBuyerAuthPage)) {
+    return NextResponse.redirect(new URL(role === "BUYER" ? "/account" : "/dashboard", req.nextUrl.origin));
   }
+  if (role === "BUYER" && !isPublic && !pathname.startsWith("/account")) return NextResponse.redirect(new URL("/account", req.nextUrl.origin));
+  if (role === "ADMIN" && pathname.startsWith("/account") && !isBuyerAuthPage) return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   return NextResponse.next();
 }
 

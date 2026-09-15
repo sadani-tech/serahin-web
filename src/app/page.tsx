@@ -3,8 +3,7 @@ import Link from "next/link";
 import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicFaq } from "@/components/PublicFaq";
-import { PublicOrderForm } from "@/app/po/[token]/PublicOrderForm";
-import { RichText } from "@/components/RichText";
+import { ProductImage } from "@/components/ProductImage";
 import { getPublicCatalog } from "@/lib/public-catalog";
 import { getSession } from "@/lib/session";
 import { formatRupiah, formatTanggal } from "@/lib/format";
@@ -67,7 +66,7 @@ export default async function HomePage({
       category: params.category,
       q: params.q,
       page: requestedPage,
-      limit: 24,
+      limit: 8,
     }).then(
       (data) => ({ data, error: null }),
       () => ({ data: null, error: "Katalog belum dapat dimuat. Silakan coba lagi." }),
@@ -88,7 +87,7 @@ export default async function HomePage({
 
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -116,38 +115,12 @@ export default async function HomePage({
                 Jelajahi Katalog
               </Link>
               <Link
-                href="#cara-kerja"
+                href="#faq"
                 className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-6 text-sm font-extrabold text-sand-700 ring-1 ring-sand-300 hover:bg-cream-soft"
               >
-                Cara Pemesanan
+                Pertanyaan Umum
               </Link>
             </div>
-          </div>
-        </section>
-
-        <section id="cara-kerja" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-12 sm:px-6">
-          <div className="text-center">
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-700">
-              Cara kerja
-            </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-sand-900">
-              Dari katalog sampai pesanan dipantau
-            </h2>
-          </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {[
-              ["1", "Pilih Batch PO", "Cari produk atau fokuskan katalog ke satu Batch PO yang sedang aktif."],
-              ["2", "Pesan dan bayar", "Pilih varian dari satu Batch PO, isi data dengan benar, lalu gunakan kanal pembayaran yang tersedia."],
-              ["3", "Pantau progres", "Simpan tautan portal pesanan untuk melihat verifikasi pembayaran, produksi, dan pengiriman."],
-            ].map(([number, title, copy]) => (
-              <article key={number} className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sun-300 text-sm font-extrabold text-sand-900">
-                  {number}
-                </span>
-                <h3 className="mt-4 text-lg font-extrabold text-sand-900">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-sand-600">{copy}</p>
-              </article>
-            ))}
           </div>
         </section>
 
@@ -243,62 +216,37 @@ export default async function HomePage({
             </div>
           )}
 
-          <div className="mt-8 space-y-12">
-            {catalog?.campaigns.map((campaign) => {
-              const prices = campaign.variants.map((variant) => variant.harga);
-              const min = Math.min(...prices);
-              const max = Math.max(...prices);
-              const priceLabel =
-                min === max
-                  ? formatRupiah(min)
-                  : `${formatRupiah(min)} – ${formatRupiah(max)}`;
-              const soldOut = campaign.variants.every((variant) => variant.sisa <= 0);
-
-              return (
-                <article key={campaign.id} id={`campaign-${campaign.id}`} className="scroll-mt-24">
-                  <div className="mb-5 rounded-3xl border border-brand-200 bg-cream-soft p-5 shadow-sm sm:p-7">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="max-w-3xl">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-brand-600 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-white">
-                            Pre-Order
-                          </span>
-                          {soldOut && (
-                            <span className="rounded-full bg-sand-200 px-3 py-1 text-xs font-extrabold text-sand-700">
-                              Stok Habis
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="mt-3 text-2xl font-extrabold text-sand-900 sm:text-3xl">
-                          {campaign.namaProduk}
-                        </h3>
-                        <p className="mt-2 text-sm font-bold text-brand-700">
-                          {priceLabel} · {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · Tutup {formatTanggal(campaign.tanggalTutup)}
-                        </p>
-                        {campaign.deskripsi && (
-                          <RichText html={campaign.deskripsi} className="mt-4 line-clamp-4" />
-                        )}
-                      </div>
-                      <Link
-                        href={`/po/${campaign.formToken}`}
-                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-brand-300 bg-white px-4 text-sm font-extrabold text-brand-700 hover:bg-brand-50"
-                      >
-                        Buka katalog khusus
-                      </Link>
-                    </div>
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+            {catalog?.campaigns.flatMap((campaign) =>
+              campaign.variants.map((variant) => (
+                <article key={`${campaign.id}-${variant.id}`} className="flex flex-col overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm">
+                  <div className="aspect-square bg-sand-100">
+                    <ProductImage src={variant.gambarUrl} alt={variant.namaVarian} className="h-full w-full object-cover" />
                   </div>
-                  <PublicOrderForm
-                    formToken={campaign.formToken}
-                    variants={campaign.variants}
-                    gatewayEnabled={campaign.gatewayEnabled}
-                    orderingDisabled={soldOut}
-                    unavailableMessage={soldOut ? "Semua varian pada Batch PO ini sudah habis." : undefined}
-                    checkoutSource="HOME_CATALOG"
-                    idPrefix={`home-${campaign.id}`}
-                  />
+                  <div className="flex min-w-0 flex-1 flex-col p-5">
+                    <div className="flex flex-wrap gap-2 text-xs font-bold">
+                      <span className="rounded-full bg-brand-100 px-2.5 py-1 text-brand-800">{variant.kategori}</span>
+                      <span className={`rounded-full px-2.5 py-1 ${variant.sisa > 0 ? "bg-sun-100 text-sun-800" : "bg-sand-200 text-sand-600"}`}>
+                        {variant.sisa > 0 ? `Kuota ${variant.sisa}` : "Kuota habis"}
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-lg font-extrabold text-sand-900">{variant.namaVarian}</h3>
+                    <p className="mt-1 text-lg font-extrabold text-brand-700">{formatRupiah(variant.harga)}</p>
+                    <p className="mt-2 text-xs font-bold text-sand-500">
+                      {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · tutup {formatTanggal(campaign.tanggalTutup)}
+                    </p>
+                    <Link
+                      href={`/po/${campaign.formToken}`}
+                      aria-disabled={variant.sisa <= 0}
+                      aria-label={`Lihat dan pesan dari ${campaign.namaProduk}`}
+                      className={`mt-5 inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-3 text-center text-xs font-extrabold sm:text-sm ${variant.sisa > 0 ? "bg-brand-600 text-white hover:bg-brand-700" : "pointer-events-none bg-sand-200 text-sand-500"}`}
+                    >
+                      {variant.sisa > 0 ? "Lihat & Pesan" : "Kuota habis"}
+                    </Link>
+                  </div>
                 </article>
-              );
-            })}
+              )),
+            )}
           </div>
 
           {catalog && catalog.meta.totalPages > 1 && (
