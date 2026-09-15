@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SerahinLogo } from "@/components/brand";
 
-export function PublicHeader({ loggedIn = false }: { loggedIn?: boolean }) {
+export function PublicHeader({ loggedIn = false, role }: { loggedIn?: boolean; role?: "ADMIN" | "BUYER" }) {
   return (
     <header className="sticky top-0 z-40 border-b border-sand-200 bg-white/95 backdrop-blur-md">
       <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
@@ -18,12 +18,6 @@ export function PublicHeader({ loggedIn = false }: { loggedIn?: boolean }) {
             Katalog
           </Link>
           <Link
-            href="/#cara-kerja"
-            className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 md:inline-flex"
-          >
-            Cara Kerja
-          </Link>
-          <Link
             href="/#faq"
             className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
           >
@@ -36,10 +30,10 @@ export function PublicHeader({ loggedIn = false }: { loggedIn?: boolean }) {
             Kontak
           </Link>
           <Link
-            href={loggedIn ? "/dashboard" : "/login"}
+            href={loggedIn ? (role === "BUYER" ? "/account" : "/dashboard") : "/account/login"}
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700"
           >
-            {loggedIn ? "Buka Dashboard" : "Login Seller"}
+            {loggedIn ? "Buka Dashboard" : "Masuk Buyer"}
           </Link>
         </nav>
       </div>

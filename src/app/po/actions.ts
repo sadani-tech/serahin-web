@@ -59,17 +59,6 @@ export async function createPublicOrder(
   _prev: PublicOrderState,
   formData: FormData,
 ): Promise<PublicOrderState> {
-  const namaPembeli = String(formData.get("namaPembeli") ?? "").trim();
-  const wa = String(formData.get("wa") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  if (!namaPembeli) return { error: "Nama wajib diisi" };
-  if (!wa) return { error: "WhatsApp wajib diisi" };
-  if (!email) return { error: "Email wajib diisi" };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { error: "Format email tidak valid" };
-  }
-  const kontak = wa + (email ? `, ${email}` : "");
-
   const items = parseCart(formData);
   if (items.length === 0) return { error: "Pilih minimal satu varian." };
 
@@ -114,8 +103,6 @@ export async function createPublicOrder(
       result = await api.post<OrderResult>(
         `/public/form/${formToken}/order/gateway`,
         {
-          namaPembeli,
-          kontak,
           items,
           ...(jumlahBayar > 0 ? { jumlahBayar } : {}),
           confirmDuplikat,
@@ -127,6 +114,7 @@ export async function createPublicOrder(
         },
       );
     } catch (e) {
+      if (e instanceof ApiError && e.status === 401) redirect(`/account/login?callbackUrl=${encodeURIComponent(`/po/${formToken}`)}`);
       return {
         error: e instanceof ApiError ? e.message : "Gagal memulai pembayaran.",
       };
@@ -136,8 +124,6 @@ export async function createPublicOrder(
 
     // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran.
     const fd = new FormData();
-    fd.set("namaPembeli", namaPembeli);
-    fd.set("kontak", kontak);
     fd.set("items", JSON.stringify(items));
     fd.set("jumlahBayar", String(jumlahBayar));
     fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
@@ -158,6 +144,7 @@ export async function createPublicOrder(
         fd,
       );
     } catch (e) {
+      if (e instanceof ApiError && e.status === 401) redirect(`/account/login?callbackUrl=${encodeURIComponent(`/po/${formToken}`)}`);
       return {
         error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan.",
       };
@@ -174,6 +161,6 @@ export async function createPublicOrder(
   redirect(
     gateway && result.paymentUrl
       ? result.paymentUrl
-      : `/po/sukses/${result.tokenAkses}`,
+      : `/po/sukses/${result.tokenAkses}?campaign=${encodeURIComponent(formToken)}`,
   );
 }

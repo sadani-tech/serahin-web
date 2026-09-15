@@ -1,0 +1,3 @@
+import { api } from "@/lib/api";
+import { ProfileForms } from "./ProfileForms";
+export default async function ProfilePage() { const profile = await api.get<{ name: string; email: string | null; phone: string | null }>("/auth/buyer/profile"); return <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6"><h1 className="mb-6 text-3xl font-extrabold text-sand-900">Profil Buyer</h1><ProfileForms profile={profile}/></main>; }
