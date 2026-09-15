@@ -208,7 +208,7 @@ export default async function CampaignDetailPage({
               {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <LinkButton
               href={`/pre-orders/${id}/edit`}
               variant="secondary"

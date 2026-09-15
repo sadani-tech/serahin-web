@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
+import { Card, CardHeader, EmptyState, LinkButton, Select, Input } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { CAMPAIGN_STATUS_LABEL } from "@/lib/domain";
@@ -49,15 +49,15 @@ export default async function DashboardPage({
 
       {/* Filter (FR-6.6) */}
       <Card className="p-4">
-        <form className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-          <div>
+        <form className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="col-span-2 sm:col-auto">
             <label className="mb-1 block text-xs font-medium text-sand-500">
               Status Batch PO
             </label>
-            <select
+            <Select
               name="status"
               defaultValue={status ?? ""}
-              className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
+              className="w-full py-1.5 sm:w-auto"
             >
               <option value="">Semua</option>
               {Object.entries(CAMPAIGN_STATUS_LABEL).map(([v, l]) => (
@@ -65,16 +65,16 @@ export default async function DashboardPage({
                   {l}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
-          <div>
+          <div className="col-span-2 sm:col-auto">
             <label className="mb-1 block text-xs font-medium text-sand-500">
               Batch PO
             </label>
-            <select
+            <Select
               name="campaignId"
               defaultValue={sp.campaignId ?? ""}
-              className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
+              className="w-full py-1.5 sm:w-auto"
             >
               <option value="">Semua</option>
               {campaignList.map((c) => (
@@ -82,44 +82,46 @@ export default async function DashboardPage({
                   {c.namaProduk}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-sand-500">
               Buka PO dari
             </label>
-            <input
+            <Input
               type="date"
               name="dateFrom"
               defaultValue={sp.dateFrom ?? ""}
-              className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
+              className="w-full py-1.5 sm:w-auto"
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-sand-500">
               sampai
             </label>
-            <input
+            <Input
               type="date"
               name="dateTo"
               defaultValue={sp.dateTo ?? ""}
-              className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
+              className="w-full py-1.5 sm:w-auto"
             />
           </div>
-          <button
-            type="submit"
-            className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
-          >
-            Terapkan
-          </button>
-          {adaFilter && (
-            <Link
-              href="/"
-              className="px-2 py-1.5 text-sm text-sand-500 hover:text-sand-700"
+          <div className="col-span-2 flex items-center gap-3 sm:col-auto">
+            <button
+              type="submit"
+              className="flex-1 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all hover:bg-brand-700 active:translate-y-px sm:flex-none"
             >
-              Reset
-            </Link>
-          )}
+              Terapkan
+            </button>
+            {adaFilter && (
+              <Link
+                href="/"
+                className="px-2 py-1.5 text-sm text-sand-500 hover:text-sand-700"
+              >
+                Reset
+              </Link>
+            )}
+          </div>
         </form>
       </Card>
 

@@ -41,7 +41,7 @@ export function AppShell({
               <SerahinLogo href="/dashboard" size="sm" />
               <span
                 aria-hidden
-                className="hidden h-6 w-px bg-sand-200 md:inline-block"
+                className="hidden h-6 w-px bg-sand-200 lg:inline-block"
               />
               <NavLinks />
             </div>
@@ -49,17 +49,17 @@ export function AppShell({
               <NavIconActions />
               <span
                 aria-hidden
-                className="hidden h-6 w-px bg-sand-200 md:inline-block"
+                className="hidden h-6 w-px bg-sand-200 lg:inline-block"
               />
               <div className="hidden items-center gap-2 sm:flex">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-extrabold text-brand-700 ring-1 ring-brand-200">
                   {initial}
                 </span>
-                <span className="hidden text-sm font-semibold text-sand-700 lg:inline">
+                <span className="hidden text-sm font-semibold text-sand-700 xl:inline">
                   {user?.name ?? user?.email}
                 </span>
               </div>
-              <form action={logoutAction} className="hidden md:block">
+              <form action={logoutAction} className="hidden lg:block">
                 <SubmitButton variant="ghost" loadingText="Keluar…">
                   Keluar
                 </SubmitButton>
@@ -75,11 +75,11 @@ export function AppShell({
           logoutAction={logoutAction}
         />
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 md:py-8 md:pb-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 lg:py-8 lg:pb-8">
           {children}
         </main>
 
-        <footer className="hidden border-t border-sand-200 bg-cream-soft py-4 md:block">
+        <footer className="hidden border-t border-sand-200 bg-cream-soft py-4 lg:block">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4">
             <p className="text-xs text-sand-500">
               Serahin · Sistem Manajemen Pre-Order

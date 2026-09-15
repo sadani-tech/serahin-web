@@ -548,8 +548,11 @@ export function PreorderForm({
         )}
       </Card>
 
-      <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={pending}>
+      {/* Spacer supaya konten terakhir tidak tertutup tombol floating di mobile. */}
+      <div className="h-20 lg:hidden" />
+
+      <div className="safe-bottom fixed inset-x-0 bottom-[57px] z-30 border-t border-sand-200 bg-white/95 px-4 py-3 backdrop-blur lg:static lg:inset-auto lg:z-auto lg:flex lg:justify-end lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
+        <Button type="submit" disabled={pending} className="w-full lg:w-auto">
           {pending ? "Menyimpan…" : submitLabel}
         </Button>
       </div>
