@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import type { BuyerActionState } from "@/lib/buyer-auth-actions";
 
 type Action = (state: BuyerActionState, form: FormData) => Promise<BuyerActionState>;
-type Field = { name: string; label: string; type?: string; autoComplete?: string };
+type Field = { name: string; label: string; type?: string; autoComplete?: string; required?: boolean };
 
 export function AuthForm({ action, fields, hidden, submit, footer, success }: { action: Action; fields: Field[]; hidden?: Record<string, string>; submit: string; footer?: { href: string; label: string }; success?: { title: string; copy: string } }) {
   const [state, formAction, pending] = useActionState(action, undefined);
@@ -14,9 +14,11 @@ export function AuthForm({ action, fields, hidden, submit, footer, success }: { 
     {hidden && Object.entries(hidden).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
     {state?.error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm font-bold text-rose-700">{state.error}</p>}
     {state?.message && <p role="status" className="rounded-xl bg-brand-50 p-3 text-sm font-bold text-brand-800">{state.message}</p>}
-    {fields.map((field) => <label key={field.name} className="block text-sm font-bold text-sand-700">{field.label}
-      <input name={field.name} type={field.type ?? "text"} autoComplete={field.autoComplete} required className="mt-1.5 min-h-11 w-full rounded-xl border border-sand-300 px-3 font-medium" />
-    </label>)}
+    {fields.map((field) => field.type === "checkbox"
+      ? <label key={field.name} className="flex gap-3 text-sm font-bold leading-5 text-sand-700"><input name={field.name} type="checkbox" required={field.required ?? false} className="mt-1 h-4 w-4" /><span>{field.label}</span></label>
+      : <label key={field.name} className="block text-sm font-bold text-sand-700">{field.label}
+        <input name={field.name} type={field.type ?? "text"} autoComplete={field.autoComplete} required={field.required ?? true} className="mt-1.5 min-h-11 w-full rounded-xl border border-sand-300 px-3 font-medium" />
+      </label>)}
     <button disabled={pending} className="min-h-11 w-full rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white disabled:opacity-60">{pending ? "Memproses…" : submit}</button>
     {footer && <p className="text-center text-sm text-sand-600"><Link className="font-bold text-brand-700 hover:underline" href={footer.href}>{footer.label}</Link></p>}
   </form>;

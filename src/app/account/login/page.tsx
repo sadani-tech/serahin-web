@@ -9,6 +9,7 @@ export default async function BuyerLoginPage({ searchParams }: { searchParams: P
     <AuthForm action={buyerLoginAction} hidden={{ callbackUrl }} submit="Masuk" fields={[
       { name: "email", label: "Email", type: "email", autoComplete: "email" },
       { name: "password", label: "Kata sandi", type: "password", autoComplete: "current-password" },
+      { name: "rememberMe", label: "Ingat saya selama 30 hari", type: "checkbox", required: false },
     ]} footer={{ href: `/account/register?callbackUrl=${encodeURIComponent(callbackUrl)}`, label: "Belum punya akun? Daftar" }} />
     <p className="mt-3 text-center text-sm"><Link className="font-bold text-brand-700 hover:underline" href="/account/forgot-password">Lupa kata sandi?</Link></p>
   </AuthShell>;

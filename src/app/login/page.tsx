@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SerahinLogo } from "@/components/brand";
 import { PublicFooter } from "@/components/PublicFooter";
 import { LoginForm } from "./LoginForm";
@@ -31,7 +32,8 @@ export default async function LoginPage({
                 Masuk ke panel admin
               </h1>
               <p className="mt-1 mb-5 text-sm text-sand-500">
-                Kelola Batch PO, pesanan, dan pembayaran Anda.
+                Login untuk Admin atau Seller Utama guna mengelola Batch PO,
+                pesanan, dan pembayaran.
               </p>
               <LoginForm callbackUrl={callbackUrl} />
             </div>
@@ -40,6 +42,12 @@ export default async function LoginPage({
           <p className="mt-6 text-center text-xs font-medium text-sand-500">
             Akses khusus Admin/Penjual.
           </p>
+          <Link
+            href="/"
+            className="mt-2 block text-center text-xs font-bold text-brand-700 hover:underline"
+          >
+            ← Kembali ke beranda
+          </Link>
         </div>
       </main>
       <PublicFooter />

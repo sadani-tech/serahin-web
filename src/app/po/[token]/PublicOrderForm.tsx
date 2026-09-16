@@ -14,6 +14,7 @@ import { publicSite } from "@/lib/public-site";
 
 export type PublicVariantOption = {
   id: string;
+  productSlug?: string | null;
   namaVarian: string;
   sisa: number;
   harga: number;
