@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
 import type { Billing } from "@/lib/billing";
@@ -359,6 +360,21 @@ export default async function PortalPage({
               ))}
             </ol>
           )}
+        </div>
+
+        <div className="rounded-xl border border-brand-200 bg-brand-50 p-5 text-center">
+          <p className="text-sm font-semibold text-brand-900">
+            Ingin melihat semua pesanan dan profil Anda?
+          </p>
+          <p className="mt-1 text-xs text-brand-700">
+            Kembali ke dashboard Buyer untuk mengelola pesanan Anda.
+          </p>
+          <Link
+            href="/account"
+            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-700"
+          >
+            Kembali ke Dashboard Buyer
+          </Link>
         </div>
 
         <p className="text-center text-xs text-sand-400">

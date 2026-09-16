@@ -101,6 +101,26 @@ export function SerahinMark({
   );
 }
 
+/** Ikon keranjang navigasi: berbeda dari lambang utama agar fungsi mudah dikenali. */
+export function CartIcon({ className = "h-6 w-6" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+    >
+      <path d="M3.5 4.5h2l1.6 9.1a1.7 1.7 0 0 0 1.7 1.4h8.8a1.7 1.7 0 0 0 1.6-1.2l1.3-5.2H6.2" />
+      <path d="M9.2 18.7h.1M17.4 18.7h.1" strokeWidth="2.5" />
+      <path d="M8.1 11.2h9.7" className="text-accent-500" />
+    </svg>
+  );
+}
+
 /**
  * Lambang + kata "Serahin" (opsional dengan tagline).
  * `href` membuat seluruh logo bisa diklik menuju beranda.

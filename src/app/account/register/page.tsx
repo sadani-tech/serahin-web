@@ -11,6 +11,7 @@ export default async function BuyerRegisterPage({ searchParams }: { searchParams
       { name: "phone", label: "Nomor WhatsApp", type: "tel", autoComplete: "tel" },
       { name: "password", label: "Kata sandi (min. 8 karakter)", type: "password", autoComplete: "new-password" },
       { name: "confirmPassword", label: "Ulangi kata sandi", type: "password", autoComplete: "new-password" },
+      { name: "acceptPolicies", label: "Saya menyetujui Syarat & Ketentuan, Kebijakan Privasi, dan Kebijakan Refund Serahin.", type: "checkbox", required: true },
     ]} footer={{ href: `/account/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, label: "Sudah punya akun? Masuk" }} success={{ title: "Pendaftaran berhasil", copy: "Kami sudah mengirim email aktivasi ke alamat yang Anda daftarkan. Buka email tersebut dan tekan tombol Aktifkan akun untuk menyelesaikan pendaftaran." }} />
   </AuthShell>;
 }

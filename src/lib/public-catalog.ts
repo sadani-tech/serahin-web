@@ -10,6 +10,9 @@ export type PublicCatalogCampaign = {
   paymentScheme: PaymentScheme;
   tanggalTutup: string;
   gatewayEnabled: boolean;
+  status: string;
+  bukaPesanan: boolean;
+  seller: { slug: string; businessName: string };
   variants: PublicVariantOption[];
 };
 
@@ -17,6 +20,7 @@ export type PublicCatalogResponse = {
   campaigns: PublicCatalogCampaign[];
   filters: {
     campaigns: Array<{ id: string; label: string }>;
+    sellers: Array<{ slug: string; label: string }>;
     categories: string[];
   };
   meta: {
@@ -29,10 +33,25 @@ export type PublicCatalogResponse = {
 
 export function getPublicCatalog(query: {
   campaign?: string;
+  seller?: string;
   category?: string;
   q?: string;
   page?: number;
   limit?: number;
+  archive?: boolean;
 }) {
   return api.get<PublicCatalogResponse>("/public/catalog", query);
+}
+
+export type PublicTestimonial = {
+  id: string;
+  customerName: string;
+  quote: string;
+  rating: number | null;
+  verified: boolean;
+  seller: { slug: string; businessName: string } | null;
+};
+
+export function getPublicTestimonials() {
+  return api.get<PublicTestimonial[]>("/public/testimonials");
 }

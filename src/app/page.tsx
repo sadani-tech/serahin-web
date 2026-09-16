@@ -4,11 +4,12 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { PublicFaq } from "@/components/PublicFaq";
 import { ProductImage } from "@/components/ProductImage";
-import { getPublicCatalog } from "@/lib/public-catalog";
+import { getPublicCatalog, getPublicTestimonials } from "@/lib/public-catalog";
 import { getSession } from "@/lib/session";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import { publicSite } from "@/lib/public-site";
+import { toPublicSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export const metadata: Metadata = {
 
 type HomeSearchParams = {
   campaign?: string;
+  seller?: string;
   category?: string;
   q?: string;
   page?: string;
@@ -45,6 +47,7 @@ type HomeSearchParams = {
 function pageHref(params: HomeSearchParams, page: number) {
   const query = new URLSearchParams();
   if (params.campaign) query.set("campaign", params.campaign);
+  if (params.seller) query.set("seller", params.seller);
   if (params.category) query.set("category", params.category);
   if (params.q) query.set("q", params.q);
   if (page > 1) query.set("page", String(page));
@@ -59,10 +62,11 @@ export default async function HomePage({
 }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number(params.page) || 1);
-  const [session, catalogResult] = await Promise.all([
+  const [session, catalogResult, testimonials] = await Promise.all([
     getSession(),
     getPublicCatalog({
       campaign: params.campaign,
+      seller: params.seller,
       category: params.category,
       q: params.q,
       page: requestedPage,
@@ -71,6 +75,7 @@ export default async function HomePage({
       (data) => ({ data, error: null }),
       () => ({ data: null, error: "Katalog belum dapat dimuat. Silakan coba lagi." }),
     ),
+    getPublicTestimonials().catch(() => []),
   ]);
   const catalog = catalogResult.data;
 
@@ -144,8 +149,15 @@ export default async function HomePage({
           <form
             action="/"
             method="get"
-            className="mt-7 grid gap-4 rounded-2xl border border-sand-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_1.3fr_auto] md:items-end"
+            className="mt-7 grid gap-4 rounded-2xl border border-sand-200 bg-white p-4 shadow-sm md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.3fr_auto] lg:items-end"
           >
+            <label className="block text-sm font-bold text-sand-700">
+              Seller
+              <select name="seller" defaultValue={params.seller ?? ""} className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium">
+                <option value="">Semua Seller</option>
+                {catalog?.filters.sellers.map((seller) => <option key={seller.slug} value={seller.slug}>{seller.label}</option>)}
+              </select>
+            </label>
             <label className="block text-sm font-bold text-sand-700">
               Batch PO
               <select
@@ -192,7 +204,7 @@ export default async function HomePage({
             </button>
           </form>
 
-          {(params.campaign || params.category || params.q) && (
+          {(params.campaign || params.seller || params.category || params.q) && (
             <div className="mt-3 text-right">
               <Link href="/#catalog" className="text-sm font-bold text-brand-700 hover:underline">
                 Reset semua filter
@@ -225,23 +237,24 @@ export default async function HomePage({
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col p-5">
                     <div className="flex flex-wrap gap-2 text-xs font-bold">
-                      <span className="rounded-full bg-brand-100 px-2.5 py-1 text-brand-800">{variant.kategori}</span>
+                      <Link href={`/katalog/${toPublicSlug(variant.kategori ?? "Others")}`} className="rounded-full bg-brand-100 px-2.5 py-1 text-brand-800 hover:bg-brand-200">{variant.kategori}</Link>
                       <span className={`rounded-full px-2.5 py-1 ${variant.sisa > 0 ? "bg-sun-100 text-sun-800" : "bg-sand-200 text-sand-600"}`}>
                         {variant.sisa > 0 ? `Kuota ${variant.sisa}` : "Kuota habis"}
                       </span>
                     </div>
                     <h3 className="mt-3 text-lg font-extrabold text-sand-900">{variant.namaVarian}</h3>
+                    <p className="mt-1 text-xs font-bold text-sand-500">{campaign.seller.businessName} · {campaign.namaProduk}</p>
                     <p className="mt-1 text-lg font-extrabold text-brand-700">{formatRupiah(variant.harga)}</p>
                     <p className="mt-2 text-xs font-bold text-sand-500">
                       {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · tutup {formatTanggal(campaign.tanggalTutup)}
                     </p>
                     <Link
-                      href={`/po/${campaign.formToken}`}
+                      href={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`}
                       aria-disabled={variant.sisa <= 0}
                       aria-label={`Lihat dan pesan dari ${campaign.namaProduk}`}
                       className={`mt-5 inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-3 text-center text-xs font-extrabold sm:text-sm ${variant.sisa > 0 ? "bg-brand-600 text-white hover:bg-brand-700" : "pointer-events-none bg-sand-200 text-sand-500"}`}
                     >
-                      {variant.sisa > 0 ? "Lihat & Pesan" : "Kuota habis"}
+                      {variant.sisa > 0 ? "Lihat Produk" : "Kuota habis"}
                     </Link>
                   </div>
                 </article>
@@ -279,6 +292,11 @@ export default async function HomePage({
             </nav>
           )}
         </section>
+
+        {testimonials.length > 0 && <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+          <div className="text-center"><p className="text-xs font-extrabold uppercase tracking-[.18em] text-brand-700">Cerita Buyer</p><h2 className="mt-2 text-3xl font-extrabold text-sand-900">Dipilih dari transaksi Serahin</h2></div>
+          <div className="mt-7 grid gap-4 md:grid-cols-3">{testimonials.slice(0, 6).map((item) => <figure key={item.id} className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm"><div className="text-sun-600" aria-label={item.rating ? `${item.rating} dari 5 bintang` : undefined}>{item.rating ? "★".repeat(item.rating) : ""}</div><blockquote className="mt-3 text-sm leading-6 text-sand-700">“{item.quote}”</blockquote><figcaption className="mt-4 text-sm font-extrabold text-sand-900">{item.customerName} {item.verified && <span className="ml-1 rounded-full bg-brand-100 px-2 py-1 text-xs text-brand-800">Pembelian terverifikasi</span>}</figcaption></figure>)}</div>
+        </section>}
 
         <section id="faq" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-10 sm:px-6">
           <div className="mb-5 text-center">
