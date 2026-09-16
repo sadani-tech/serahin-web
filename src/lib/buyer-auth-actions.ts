@@ -12,15 +12,15 @@ function safePath(value: string, fallback = "/account") {
 }
 
 async function body(res: Response) {
-  const data = (await res.json().catch(() => ({}))) as { message?: string | string[]; accessToken?: string; callbackPath?: string };
+  const data = (await res.json().catch(() => ({}))) as { message?: string | string[]; accessToken?: string; callbackPath?: string; maxAgeSeconds?: number };
   const message = Array.isArray(data.message) ? data.message.join(", ") : data.message;
   return { data, message };
 }
 
-async function setSession(token: string) {
+async function setSession(token: string, maxAgeSeconds = 60 * 60 * 24) {
   (await cookies()).set(TOKEN_COOKIE, token, {
     httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production",
-    path: "/", maxAge: 60 * 60 * 24 * 7,
+    path: "/", maxAge: maxAgeSeconds,
   });
 }
 
@@ -28,11 +28,11 @@ export async function buyerLoginAction(_prev: BuyerActionState, form: FormData):
   const callbackUrl = safePath(String(form.get("callbackUrl") ?? "/account"));
   const res = await fetch(`${PUBLIC_API_URL}/auth/buyer/login`, {
     method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
-    body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
+    body: JSON.stringify({ email: form.get("email"), password: form.get("password"), rememberMe: form.get("rememberMe") === "on" }),
   });
   const { data, message } = await body(res);
   if (!res.ok || !data.accessToken) return { error: message ?? "Email atau kata sandi salah, atau akun belum aktif." };
-  await setSession(data.accessToken);
+  await setSession(data.accessToken, data.maxAgeSeconds);
   redirect(callbackUrl);
 }
 
@@ -40,7 +40,7 @@ export async function buyerRegisterAction(_prev: BuyerActionState, form: FormDat
   const callbackPath = safePath(String(form.get("callbackUrl") ?? "/account"));
   const res = await fetch(`${PUBLIC_API_URL}/auth/buyer/register`, {
     method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
-    body: JSON.stringify({ name: form.get("name"), email: form.get("email"), phone: form.get("phone"), password: form.get("password"), confirmPassword: form.get("confirmPassword"), callbackPath }),
+    body: JSON.stringify({ name: form.get("name"), email: form.get("email"), phone: form.get("phone"), password: form.get("password"), confirmPassword: form.get("confirmPassword"), callbackPath, acceptPolicies: form.get("acceptPolicies") === "on" }),
   });
   const { message } = await body(res);
   return res.ok ? { message: message ?? "Periksa email untuk aktivasi akun." } : { error: message ?? "Pendaftaran gagal." };
@@ -53,7 +53,7 @@ export async function activateBuyerAction(_prev: BuyerActionState, form: FormDat
   });
   const { data, message } = await body(res);
   if (!res.ok || !data.accessToken) return { error: message ?? "Tautan aktivasi tidak valid." };
-  await setSession(data.accessToken);
+  await setSession(data.accessToken, data.maxAgeSeconds);
   redirect(safePath(data.callbackPath ?? String(form.get("callbackUrl") ?? "/account")));
 }
 

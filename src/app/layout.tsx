@@ -3,6 +3,8 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { publicSite } from "@/lib/public-site";
+import { getSession } from "@/lib/session";
+import { CartProvider } from "@/components/CartProvider";
 
 // Nunito — sans-serif membulat yang senada dengan lambang Serahin (v1.9).
 // Di-host sendiri saat build oleh next/font, jadi tidak ada request ke
@@ -51,11 +53,12 @@ export const viewport: Viewport = {
   themeColor: "#3D7940",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
   return (
     <html
       lang="id"
@@ -64,7 +67,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-sand-50 text-sand-900">
-        <ConfirmProvider>{children}</ConfirmProvider>
+        <CartProvider authenticated={session?.role === "BUYER"}>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </CartProvider>
       </body>
     </html>
   );
