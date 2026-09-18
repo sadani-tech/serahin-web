@@ -32,15 +32,14 @@ export default async function LoginPage({
                 Masuk ke panel admin
               </h1>
               <p className="mt-1 mb-5 text-sm text-sand-500">
-                Login untuk Admin atau Seller Utama guna mengelola Batch PO,
-                pesanan, dan pembayaran.
+                Akses internal untuk mengelola dan mengawasi operasional platform Serahin.
               </p>
               <LoginForm callbackUrl={callbackUrl} />
             </div>
           </div>
 
           <p className="mt-6 text-center text-xs font-medium text-sand-500">
-            Akses khusus Admin/Penjual.
+            Akses khusus Admin internal.
           </p>
           <Link
             href="/"

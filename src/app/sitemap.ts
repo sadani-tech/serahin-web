@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .map((variant) => `${publicSite.url}/s/${campaign.seller.slug}/produk/${variant.productSlug}`))
       .filter((url) => !seenProducts.has(url) && Boolean(seenProducts.add(url)))
       .map((url) => ({ url, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 }));
-    const categoryUrls = first.filters.categories.map((category) => ({ url: `${publicSite.url}/katalog/${toPublicSlug(category)}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 }));
+    const categoryUrls = first.filters.categories.map((category) => ({ url: `${publicSite.url}/catalog/${toPublicSlug(category)}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 }));
     return [...base, ...productUrls, ...categoryUrls];
   } catch {
     return base;

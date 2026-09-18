@@ -6,7 +6,7 @@ import { publicSite } from "@/lib/public-site";
 import { getSession } from "@/lib/session";
 import { CartProvider } from "@/components/CartProvider";
 
-// Nunito — sans-serif membulat yang senada dengan lambang Serahin (v1.9).
+// Nunito — sans-serif membulat yang senada dengan lambang Serahin.
 // Di-host sendiri saat build oleh next/font, jadi tidak ada request ke
 // Google saat runtime.
 const nunito = Nunito({
@@ -17,12 +17,12 @@ const nunito = Nunito({
 });
 
 const description =
-  "Kelola Batch PO, pesanan, pembayaran, dan timeline produksi dalam satu tempat.";
+  "Serahin membantu Seller mengelola Batch PO dan Buyer berbelanja, membayar, serta memantau pesanan dalam satu tempat.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicSite.url),
   title: {
-    default: "Serahin — Sistem Manajemen Pre-Order",
+    default: "Serahin — Pre-Order Lebih Rapi",
     template: "%s — Serahin",
   },
   description,
@@ -35,12 +35,12 @@ export const metadata: Metadata = {
     siteName: "Serahin",
     locale: "id_ID",
     url: publicSite.url,
-    title: "Serahin — Sistem Manajemen Pre-Order",
+    title: "Serahin — Pre-Order Lebih Rapi",
     description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Serahin — Sistem Manajemen Pre-Order",
+    title: "Serahin — Pre-Order Lebih Rapi",
     description,
   },
 };
