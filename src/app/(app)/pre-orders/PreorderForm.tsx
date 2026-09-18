@@ -359,7 +359,7 @@ export function PreorderForm({
           type="hidden"
           name="variantsJson"
           value={JSON.stringify(
-            variants.map(({ expanded: _expanded, ...row }) => row),
+            variants.map(({ expanded, ...row }) => (void expanded, row)),
           )}
         />
         <datalist id="kategori-umum">

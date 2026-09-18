@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardHeader, EmptyState, LinkButton, ScrollList } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
-import { formatRupiah, formatTanggal } from "@/lib/format";
-import { persenKuotaColor, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard-ui";
+import { persenKuotaColor } from "@/lib/dashboard-ui";
 import type { CampaignStatus } from "@/lib/types";
 
 export function DashboardSection({

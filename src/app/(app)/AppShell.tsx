@@ -1,96 +1,60 @@
 "use client";
 
 import { useState } from "react";
-import { logoutAction } from "@/lib/auth-actions";
 import {
-  NavLinks,
-  NavIconActions,
-  MobileMenuButton,
-  MobileDrawer,
   BottomNav,
+  DashboardSidebar,
+  MobileDrawer,
+  MobileMenuButton,
   type NavUser,
 } from "@/components/nav";
 import { SerahinLogo } from "@/components/brand";
-import { SubmitButton } from "@/components/SubmitButton";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { NavigationProgress } from "@/hooks/useNavigationLoading";
 import { NavLoadingProvider } from "@/hooks/useNavLoading";
 
-export function AppShell({
-  children,
-  user,
-}: {
-  children: React.ReactNode;
-  user: NavUser;
-}) {
+export function AppShell({ children, user }: { children: React.ReactNode; user: NavUser }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const initial = (user?.name ?? user?.email ?? "A").charAt(0).toUpperCase();
+  const dashboardRole = user?.role === "SELLER" ? "SELLER" : "ADMIN";
 
   return (
     <NavLoadingProvider>
       <NavigationProgress />
-      <div className="flex min-h-full flex-1 flex-col">
-        <header className="sticky top-0 z-40 border-b border-sand-200 bg-white/90 backdrop-blur-md">
-          {/* Pita brand tipis — penanda identitas di puncak setiap halaman. */}
-          <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
-            <div className="flex items-center gap-3">
-              <MobileMenuButton
-                open={drawerOpen}
-                onClick={() => setDrawerOpen((o) => !o)}
-              />
-              <SerahinLogo href="/dashboard" size="sm" />
-              <span
-                aria-hidden
-                className="hidden h-6 w-px bg-sand-200 lg:inline-block"
-              />
-              <NavLinks />
-            </div>
-            <div className="flex items-center gap-3">
-              <NavIconActions />
-              <span
-                aria-hidden
-                className="hidden h-6 w-px bg-sand-200 lg:inline-block"
-              />
-              <div className="hidden items-center gap-2 sm:flex">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-extrabold text-brand-700 ring-1 ring-brand-200">
-                  {initial}
-                </span>
-                <span className="hidden text-sm font-semibold text-sand-700 xl:inline">
-                  {user?.name ?? user?.email}
-                </span>
+      <div className="flex min-h-screen bg-cream-soft">
+        <DashboardSidebar role={dashboardRole} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-40 border-b border-sand-200 bg-white/90 backdrop-blur-md">
+            <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full lg:hidden" />
+            <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+              <div className="flex items-center gap-3 lg:hidden">
+                <MobileMenuButton open={drawerOpen} onClick={() => setDrawerOpen((open) => !open)} />
+                <SerahinLogo href={dashboardRole === "SELLER" ? "/seller/dashboard" : "/dashboard"} size="sm" />
               </div>
-              <form action={logoutAction} className="hidden lg:block">
-                <SubmitButton variant="ghost" loadingText="Keluar…">
-                  Keluar
-                </SubmitButton>
-              </form>
+              <div className="hidden lg:block">
+                <p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">
+                  {dashboardRole === "SELLER" ? "Seller workspace" : "Admin workspace"}
+                </p>
+                <p className="text-sm font-semibold text-sand-500">Kelola operasional Serahin dari satu tempat.</p>
+              </div>
+              {user && <ProfileMenu user={{ name: user.name, email: user.email, role: dashboardRole }} />}
             </div>
-          </div>
-        </header>
+          </header>
 
-        <MobileDrawer
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          user={user}
-          logoutAction={logoutAction}
-        />
+          <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={user} />
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 lg:py-8 lg:pb-8">
-          {children}
-        </main>
+          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-24 sm:px-6 lg:py-8 lg:pb-8">
+            {children}
+          </main>
 
-        <footer className="hidden border-t border-sand-200 bg-cream-soft py-4 lg:block">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4">
-            <p className="text-xs text-sand-500">
-              Serahin · Sistem Manajemen Pre-Order
-            </p>
-            <p className="text-xs font-semibold text-brand-600">
-              Pesan hari ini, terima dengan hati
-            </p>
-          </div>
-        </footer>
+          <footer className="hidden border-t border-sand-200 bg-white py-4 lg:block">
+            <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6">
+              <p className="text-xs text-sand-500">Serahin · Sistem Manajemen Pre-Order</p>
+              <p className="text-xs font-semibold text-brand-600">Pesan hari ini, terima dengan hati</p>
+            </div>
+          </footer>
 
-        <BottomNav />
+          <BottomNav role={dashboardRole} />
+        </div>
       </div>
     </NavLoadingProvider>
   );

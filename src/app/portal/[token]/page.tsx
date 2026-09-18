@@ -34,6 +34,7 @@ type PortalOrder = {
       id: string;
       judulUpdate: string;
       catatan: string | null;
+      milestoneCode: string | null;
       createdAt: string;
     }[];
   };
@@ -348,6 +349,7 @@ export default async function PortalPage({
                 <li key={e.id} className="relative pl-6">
                   <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
                   <p className="font-medium text-sand-900">{e.judulUpdate}</p>
+                  {e.milestoneCode && <span className="mt-1 inline-flex rounded bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-700">{e.milestoneCode.replaceAll("_", " ")}</span>}
                   {e.catatan && (
                     <p className="mt-0.5 whitespace-pre-wrap text-sm text-sand-600">
                       {e.catatan}

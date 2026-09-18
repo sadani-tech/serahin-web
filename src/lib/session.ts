@@ -19,6 +19,8 @@ export async function getSession(): Promise<SessionUser | null> {
       email: payload.email as string | null,
       name: payload.name as string,
       role: (payload.role as SessionUser["role"]) ?? "ADMIN",
+      actorType: (payload.actorType as SessionUser["role"]) ?? (payload.role as SessionUser["role"]),
+      sellerId: payload.sellerId as string | undefined,
     };
   } catch {
     return null;

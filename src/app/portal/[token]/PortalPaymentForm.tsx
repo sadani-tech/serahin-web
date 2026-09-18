@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
 import { Button, Field, FormError, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
@@ -54,6 +54,7 @@ export function PortalPaymentForm({
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
   const [alamat, setAlamat] = useState("");
   const [localError, setLocalError] = useState<string | undefined>();
+  const paymentAttemptKey = useRef<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -72,6 +73,10 @@ export function PortalPaymentForm({
     setLocalError(undefined);
     const fd = new FormData(e.currentTarget);
     fd.set("jumlahBayar", jumlah);
+    if (gateway) {
+      paymentAttemptKey.current ??= crypto.randomUUID();
+      fd.set("idempotencyKey", paymentAttemptKey.current);
+    }
     if (isPelunasan && metode) {
       fd.set("metodePengiriman", metode);
       fd.set("alamatPengiriman", metode === "EKSPEDISI" ? alamat.trim() : "");

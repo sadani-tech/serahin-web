@@ -42,6 +42,10 @@ interface Props {
   filters: PembeliFilters;
 }
 
+function SortHeader({ label, sortKey, active, order, onSort }: { label: string; sortKey: string; active: boolean; order: "asc" | "desc"; onSort: (key: string) => void }) {
+  return <th className="px-5 py-3 font-medium"><button type="button" onClick={() => onSort(sortKey)} className="inline-flex items-center gap-1 hover:text-sand-700">{label}<span className="text-sand-400">{active ? (order === "asc" ? "▲" : "▼") : "↕"}</span></button></th>;
+}
+
 export default function PembeliTable({ rows, meta, campaigns, filters }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -79,24 +83,6 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
 
   const start = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
   const end = Math.min(meta.page * meta.limit, meta.total);
-
-  const SortHeader = ({ label, k }: { label: string; k: string }) => {
-    const active = filters.sort === k;
-    return (
-      <th className="px-5 py-3 font-medium">
-        <button
-          type="button"
-          onClick={() => toggleSort(k)}
-          className="inline-flex items-center gap-1 hover:text-sand-700"
-        >
-          {label}
-          <span className="text-sand-400">
-            {active ? (filters.order === "asc" ? "▲" : "▼") : "↕"}
-          </span>
-        </button>
-      </th>
-    );
-  };
 
   return (
     <div className="space-y-4">
@@ -194,12 +180,12 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                  <SortHeader label="Pembeli" k="namaPembeli" />
+                  <SortHeader label="Pembeli" sortKey="namaPembeli" active={filters.sort === "namaPembeli"} order={filters.order} onSort={toggleSort} />
                   <th className="px-5 py-3 font-medium">Kontak</th>
                   <th className="px-5 py-3 font-medium">Batch PO</th>
-                  <SortHeader label="Status" k="status" />
+                  <SortHeader label="Status" sortKey="status" active={filters.sort === "status"} order={filters.order} onSort={toggleSort} />
                   <th className="px-5 py-3 font-medium">Unit</th>
-                  <SortHeader label="Tanggal" k="createdAt" />
+                  <SortHeader label="Tanggal" sortKey="createdAt" active={filters.sort === "createdAt"} order={filters.order} onSort={toggleSort} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-sand-100">

@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  try { return NextResponse.json(await api.post("/buyer/cart/sync", await request.json())); }
+  try { return NextResponse.json(await api.post("/buyer/cart/sync-draft", await request.json())); }
   catch (error) { return failure(error); }
 }
 

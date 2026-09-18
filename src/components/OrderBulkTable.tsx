@@ -56,7 +56,9 @@ export function OrderBulkTable({
 
   const allChecked = rows.length > 0 && selected.size === rows.length;
   const someChecked = selected.size > 0 && !allChecked;
-  if (headRef.current) headRef.current.indeterminate = someChecked;
+  useEffect(() => {
+    if (headRef.current) headRef.current.indeterminate = someChecked;
+  }, [someChecked]);
 
   const toggle = (id: string) =>
     setSelected((s) => {
