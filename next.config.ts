@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
 const nextConfig: NextConfig = {
+  // CI/verification dapat memakai direktori terpisah tanpa mengganggu proses
+  // `next dev` yang sedang menggunakan `.next`.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   // Teruskan berkas unggahan (/uploads/*) ke backend yang menyajikannya, agar
   // bukti pembayaran & gambar varian tampil dari origin web (mis. saat dev
   // web:3000 ↔ api:4000).
@@ -15,10 +17,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // Monorepo: tetapkan root ke akar workspace (dua level di atas apps/web) agar
-  // Turbopack tidak salah menebak root & warning "multiple lockfiles" hilang.
+  // Repo ini berdiri sendiri; cwd npm adalah root aplikasi dan tetap valid
+  // ketika next.config dikompilasi sebagai ESM (tanpa global `__dirname`).
   turbopack: {
-    root: path.resolve(__dirname, "..", ".."),
+    root: process.cwd(),
   },
   // pdfkit membaca berkas font (.afm) dari node_modules saat runtime; jangan
   // di-bundle agar berkas data tetap dapat ditemukan (v1.6 ekspor PDF).

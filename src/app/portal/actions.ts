@@ -76,9 +76,17 @@ export async function startPortalGatewayPayment(
 
   const body: {
     jumlahBayar: number;
+    idempotencyKey: string;
     metodePengiriman?: string;
     alamatPengiriman?: string;
-  } = { jumlahBayar: jumlah };
+  } = {
+    jumlahBayar: jumlah,
+    idempotencyKey: String(formData.get("idempotencyKey") ?? ""),
+  };
+
+  if (!body.idempotencyKey) {
+    return { error: "Kunci pembayaran tidak tersedia. Muat ulang halaman." };
+  }
 
   const metode = String(formData.get("metodePengiriman") ?? "").trim();
   if (metode === "SHOPEE" || metode === "EKSPEDISI") {

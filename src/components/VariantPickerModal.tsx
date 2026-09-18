@@ -30,7 +30,6 @@ export function VariantPickerModal({
 
   useEffect(() => {
     if (!open) return;
-    setQ("");
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

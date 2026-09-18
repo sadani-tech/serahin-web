@@ -168,6 +168,7 @@ export async function duplicatePreorder(
   id: string,
   _prev: PreorderFormState,
 ): Promise<PreorderFormState> {
+  void _prev;
   let duplicated: { id: string };
   try {
     duplicated = await api.post<{ id: string }>(`/pre-orders/${id}/duplicate`);
@@ -204,6 +205,7 @@ export async function toggleFormAktif(campaignId: string, aktif: boolean) {
 export async function addTimelineEntry(campaignId: string, formData: FormData) {
   const judulUpdate = String(formData.get("judulUpdate") ?? "");
   const catatan = String(formData.get("catatan") ?? "");
+  const milestoneCode = String(formData.get("milestoneCode") ?? "") || undefined;
 
   if (!judulUpdate.trim()) {
     return { error: "Judul update wajib diisi" };
@@ -213,6 +215,7 @@ export async function addTimelineEntry(campaignId: string, formData: FormData) {
     await api.post(`/pre-orders/${campaignId}/timeline`, {
       judulUpdate,
       catatan,
+      milestoneCode,
     });
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal menambahkan update" };

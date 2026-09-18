@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { Card, CardHeader, EmptyState, LinkButton, Select, Input } from "@/components/ui";
-import { CampaignBadge } from "@/components/badges";
+import { Card, LinkButton, Select, Input } from "@/components/ui";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { CAMPAIGN_STATUS_LABEL } from "@/lib/domain";
-import { getDashboardData, persenKuotaColor, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard";
+import { getDashboardData, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard";
 import { CampaignStatus } from "@/lib/types";
 import { DashboardSection, ActiveCampaignsCard } from "@/components/DashboardSection";
 

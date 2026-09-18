@@ -22,14 +22,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
   try {
-    const catalog = await getPublicCatalog({ page: 1, limit: 48 });
+    const first = await getPublicCatalog({ page: 1, limit: 48 });
+    const pages = await Promise.all(Array.from({ length: Math.max(0, first.meta.totalPages - 1) }, (_, index) => getPublicCatalog({ page: index + 2, limit: 48 })));
+    const catalogs = [first, ...pages];
     const seenProducts = new Set<string>();
-    const productUrls = catalog.campaigns.flatMap((campaign) => campaign.variants
+    const productUrls = catalogs.flatMap((catalog) => catalog.campaigns).flatMap((campaign) => campaign.variants
       .filter((variant) => variant.productSlug)
       .map((variant) => `${publicSite.url}/s/${campaign.seller.slug}/produk/${variant.productSlug}`))
       .filter((url) => !seenProducts.has(url) && Boolean(seenProducts.add(url)))
       .map((url) => ({ url, lastModified: now, changeFrequency: "daily" as const, priority: 0.8 }));
-    const categoryUrls = catalog.filters.categories.map((category) => ({ url: `${publicSite.url}/katalog/${toPublicSlug(category)}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 }));
+    const categoryUrls = first.filters.categories.map((category) => ({ url: `${publicSite.url}/katalog/${toPublicSlug(category)}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 }));
     return [...base, ...productUrls, ...categoryUrls];
   } catch {
     return base;

@@ -4,7 +4,7 @@ import { formatRupiah, formatTanggal } from "@/lib/format";
 
 type BuyerOrder = {
   id: string; status: string; publicToken: string; createdAt: string;
-  salesEvent: { title: string; timelineEntries: Array<{ id: string; title: string; notes: string | null; createdAt: string }> };
+  salesEvent: { title: string; timelineEntries: Array<{ id: string; title: string; notes: string | null; milestoneCode: string | null; createdAt: string }> };
   items: Array<{ id: string; variantNameSnapshot: string; selectedColor: string | null; quantity: number; unitPrice: string }>;
   payments: Array<{ id: string; type: string; amount: string; verificationStatus: string; occurredAt: string }>;
   shipment: { method: string; status: string; trackingNumber: string | null; courier: string | null; address: string | null } | null;
@@ -24,7 +24,7 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
       <h2 className="mt-6 font-extrabold">Pengiriman</h2>
       {order.shipment ? <div className="mt-2 rounded-xl bg-sand-50 p-3 text-sm text-sand-700"><p>{order.shipment.method} · {order.shipment.status}</p>{order.shipment.courier && <p>{order.shipment.courier}{order.shipment.trackingNumber ? ` · ${order.shipment.trackingNumber}` : ""}</p>}{order.shipment.address && <p>{order.shipment.address}</p>}</div> : <p className="mt-2 text-sm text-sand-500">Metode pengiriman belum dipilih.</p>}
       <h2 className="mt-6 font-extrabold">Timeline kampanye</h2>
-      <ol className="mt-2 space-y-3">{order.salesEvent.timelineEntries.length ? order.salesEvent.timelineEntries.map((entry) => <li key={entry.id} className="border-l-2 border-brand-300 pl-3 text-sm"><strong>{entry.title}</strong><p className="text-xs text-sand-500">{formatTanggal(entry.createdAt)}</p>{entry.notes && <p className="mt-1 text-sand-600">{entry.notes}</p>}</li>) : <li className="text-sm text-sand-500">Belum ada pembaruan.</li>}</ol>
+      <ol className="mt-2 space-y-3">{order.salesEvent.timelineEntries.length ? order.salesEvent.timelineEntries.map((entry) => <li key={entry.id} className="border-l-2 border-brand-300 pl-3 text-sm"><strong>{entry.title}</strong>{entry.milestoneCode && <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">{entry.milestoneCode.replaceAll("_", " ")}</span>}<p className="text-xs text-sand-500">{formatTanggal(entry.createdAt)}</p>{entry.notes && <p className="mt-1 text-sand-600">{entry.notes}</p>}</li>) : <li className="text-sm text-sand-500">Belum ada pembaruan.</li>}</ol>
       <div className="mt-6"><Link href={`/portal/${order.publicToken}`} className="inline-flex rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">Buka pembayaran & status</Link></div>
     </div>
   </main>;

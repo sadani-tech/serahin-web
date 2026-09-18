@@ -38,12 +38,15 @@ export function PaymentForm({
   // Reset form setelah sukses (state kembali undefined tanpa error).
   useEffect(() => {
     if (state === undefined) {
-      formRef.current?.reset();
-      setPreview(null);
-      setFileName("");
-      setJenis(defaultJenis);
-      setMetode("");
-      setAlamat("");
+      const timer = window.setTimeout(() => {
+        formRef.current?.reset();
+        setPreview(null);
+        setFileName("");
+        setJenis(defaultJenis);
+        setMetode("");
+        setAlamat("");
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
   }, [state, defaultJenis]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 export type CartItem = {
   variantId: string;
@@ -9,6 +9,9 @@ export type CartItem = {
   quantity: number;
   selectedColor?: string;
   image?: string | null;
+  colors?: string[];
+  eligible?: boolean;
+  invalidReason?: string | null;
 };
 
 export type CartDraft = {
@@ -28,9 +31,10 @@ type CartContextValue = {
   syncConflict: boolean;
   addItem: (event: Omit<CartDraft, "items">, item: CartItem) => Promise<boolean>;
   setQuantity: (variantId: string, selectedColor: string | undefined, quantity: number) => void;
+  setColor: (variantId: string, selectedColor: string | undefined, nextColor: string) => void;
   removeItem: (variantId: string, selectedColor?: string) => void;
   clear: () => void;
-  sync: (replaceEvent?: boolean) => Promise<void>;
+  sync: (choice?: "KEEP_REMOTE" | "REPLACE_WITH_LOCAL") => Promise<void>;
 };
 
 type RemoteCart = {
@@ -48,6 +52,9 @@ type RemoteCart = {
     quantity: number;
     selectedColor: string | null;
     image: string | null;
+    colors?: string[];
+    eligible?: boolean;
+    invalidReason?: string | null;
   }>;
 };
 
@@ -62,6 +69,21 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
   const [cart, setCart] = useState<CartDraft | null>(null);
   const [ready, setReady] = useState(false);
   const [syncConflict, setSyncConflict] = useState(false);
+  const syncResolved = useRef(false);
+
+  const applyRemote = useCallback((remote: RemoteCart) => {
+    setCart({
+      salesEventId: remote.salesEvent.id, eventTitle: remote.salesEvent.title,
+      formToken: remote.salesEvent.publicToken,
+      sellerName: remote.salesEvent.seller?.businessName ?? "Serahin",
+      endsAt: remote.salesEvent.endsAt,
+      items: remote.items.filter((item) => item.price !== null).map((item) => ({
+        variantId: item.variantId, name: item.name, price: item.price!, quantity: item.quantity,
+        selectedColor: item.selectedColor ?? undefined, image: item.image, colors: item.colors,
+        eligible: item.eligible, invalidReason: item.invalidReason,
+      })),
+    });
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -83,14 +105,14 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     else localStorage.removeItem(STORAGE_KEY);
   }, [cart, ready]);
 
-  const push = useCallback(async (draft: CartDraft, replaceEvent = false) => {
+  const push = useCallback(async (draft: CartDraft, choice?: "KEEP_REMOTE" | "REPLACE_WITH_LOCAL") => {
     if (!authenticated) return;
     const response = await fetch("/api/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         salesEventId: draft.salesEventId,
-        replaceEvent,
+        conflictResolution: choice ?? (syncResolved.current ? "REPLACE_WITH_LOCAL" : undefined),
         items: draft.items.map((item) => ({
           variantId: item.variantId,
           quantity: item.quantity,
@@ -98,16 +120,18 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
         })),
       }),
     });
-    if (response.status === 409) {
+    const data = await response.json().catch(() => ({})) as (RemoteCart & { conflict?: boolean; remote?: RemoteCart; message?: string });
+    if (data.conflict) {
       setSyncConflict(true);
       return;
     }
     if (!response.ok) {
-      const data = await response.json().catch(() => ({})) as { message?: string };
       throw new Error(data.message ?? "Keranjang belum dapat disinkronkan.");
     }
+    if (choice === "KEEP_REMOTE" && data.items) applyRemote(data);
+    syncResolved.current = true;
     setSyncConflict(false);
-  }, [authenticated]);
+  }, [applyRemote, authenticated]);
 
   useEffect(() => {
     if (!ready || !authenticated) return;
@@ -120,24 +144,11 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
       if (!response?.ok) return;
       const remote = await response.json() as RemoteCart | null;
       if (!remote?.items.length) return;
-      setCart({
-        salesEventId: remote.salesEvent.id,
-        eventTitle: remote.salesEvent.title,
-        formToken: remote.salesEvent.publicToken,
-        sellerName: remote.salesEvent.seller?.businessName ?? "Serahin",
-        endsAt: remote.salesEvent.endsAt,
-        items: remote.items.filter((item) => item.price !== null).map((item) => ({
-          variantId: item.variantId,
-          name: item.name,
-          price: item.price!,
-          quantity: item.quantity,
-          selectedColor: item.selectedColor ?? undefined,
-          image: item.image,
-        })),
-      });
+      applyRemote(remote);
+      syncResolved.current = true;
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [authenticated, cart, push, ready]);
+  }, [applyRemote, authenticated, cart, push, ready]);
 
   const addItem = useCallback(async (event: Omit<CartDraft, "items">, item: CartItem) => {
     let next: CartDraft;
@@ -155,7 +166,7 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     }
     setCart(next);
     try {
-      await push(next, Boolean(cart && cart.salesEventId !== event.salesEventId));
+      await push(next, cart && cart.salesEventId !== event.salesEventId ? "REPLACE_WITH_LOCAL" : undefined);
     } catch {
       // Draft lokal tetap menjadi sumber pemulihan bila jaringan terputus.
     }
@@ -185,14 +196,24 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     });
   }, [authenticated, push]);
 
+  const setColor = useCallback((variantId: string, selectedColor: string | undefined, nextColor: string) => {
+    setCart((current) => {
+      if (!current) return current;
+      const items = current.items.map((item) => sameItem(item, { variantId, selectedColor }) ? { ...item, selectedColor: nextColor } : item);
+      const next = { ...current, items };
+      void push(next).catch(() => undefined);
+      return next;
+    });
+  }, [push]);
+
   const clear = useCallback(() => {
     setCart(null);
     setSyncConflict(false);
     if (authenticated) void fetch("/api/cart", { method: "DELETE" });
   }, [authenticated]);
 
-  const sync = useCallback(async (replaceEvent = false) => {
-    if (cart) await push(cart, replaceEvent);
+  const sync = useCallback(async (choice?: "KEEP_REMOTE" | "REPLACE_WITH_LOCAL") => {
+    if (cart) await push(cart, choice);
   }, [cart, push]);
 
   const value = useMemo(() => ({
@@ -203,10 +224,11 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     syncConflict,
     addItem,
     setQuantity,
+    setColor,
     removeItem,
     clear,
     sync,
-  }), [addItem, authenticated, cart, clear, ready, removeItem, setQuantity, sync, syncConflict]);
+  }), [addItem, authenticated, cart, clear, ready, removeItem, setColor, setQuantity, sync, syncConflict]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

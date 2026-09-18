@@ -3,11 +3,11 @@ import { jwtVerify } from "jose";
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret");
 
-async function sessionRole(token: string | undefined): Promise<"ADMIN" | "BUYER" | null> {
+async function sessionRole(token: string | undefined): Promise<"ADMIN" | "BUYER" | "SELLER" | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret);
-    return payload.role === "BUYER" ? "BUYER" : "ADMIN";
+    return payload.role === "BUYER" ? "BUYER" : payload.role === "SELLER" ? "SELLER" : "ADMIN";
   } catch {
     return null;
   }
@@ -38,6 +38,8 @@ export default async function proxy(req: NextRequest) {
     pathname === "/arsip" ||
     pathname === "/cart" ||
     pathname === "/seller" ||
+    pathname === "/seller/login" ||
+    pathname === "/seller/activate" ||
     pathname === "/about" ||
     pathname === "/contact" ||
     pathname === "/terms" ||
@@ -56,12 +58,15 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
   if (loggedIn && isLoginPage) {
-    return NextResponse.redirect(new URL(role === "BUYER" ? "/account" : "/dashboard", req.nextUrl.origin));
+    return NextResponse.redirect(new URL(role === "BUYER" ? "/account" : role === "SELLER" ? "/seller/dashboard" : "/dashboard", req.nextUrl.origin));
   }
   if (role === "BUYER" && isBuyerAuthPage) {
     return NextResponse.redirect(new URL("/account", req.nextUrl.origin));
   }
   if (role === "BUYER" && !isPublic && !pathname.startsWith("/account")) return NextResponse.redirect(new URL("/account", req.nextUrl.origin));
+  if (role === "SELLER" && pathname.startsWith("/account")) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
+  if (role === "SELLER" && (pathname.startsWith("/data-privacy") || (pathname.startsWith("/konten") && !pathname.startsWith("/konten/faq")))) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
+  if (role === "SELLER" && pathname.startsWith("/seller-applications")) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
   if (role === "ADMIN" && pathname.startsWith("/account") && !isBuyerAuthPage) return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   return NextResponse.next();
 }

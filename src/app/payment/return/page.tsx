@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { api, ApiError } from "@/lib/api";
 import { SerahinLogo } from "@/components/brand";
 import { PublicFooter } from "@/components/PublicFooter";
+import { ConversionEvent } from "@/components/ConversionEvent";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,7 @@ export default async function PaymentReturnPage({
 
   return (
     <div className="bg-serahin-dots relative min-h-full py-10">
+      <ConversionEvent name={paid ? "payment_paid" : failed ? "payment_failed" : "payment_pending"} />
       <div
         aria-hidden="true"
         className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"

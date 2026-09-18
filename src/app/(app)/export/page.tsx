@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui";
 import { formatWaktu } from "@/lib/format";
 import { ExportPanel } from "./ExportPanel";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,12 @@ type AuditRow = {
 };
 
 export default async function ExportPage() {
+  const session = await getSession();
   const [campaigns, audits] = await Promise.all([
     api.list<{ id: string; namaProduk: string }>("/pre-orders"),
-    api.get<AuditRow[]>("/export/audits"),
+    session?.role === "ADMIN"
+      ? api.get<AuditRow[]>("/export/audits")
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -34,8 +38,8 @@ export default async function ExportPage() {
 
       <ExportPanel campaigns={campaigns} />
 
-      {/* Audit ekspor kontak (4.3) */}
-      <div>
+      {/* Audit lintas Seller hanya untuk Admin internal. */}
+      {session?.role === "ADMIN" && <div>
         <h2 className="mb-3 text-base font-semibold text-sand-900">
           Riwayat Ekspor Kontak
         </h2>
@@ -81,7 +85,7 @@ export default async function ExportPage() {
             </div>
           )}
         </Card>
-      </div>
+      </div>}
     </div>
   );
 }

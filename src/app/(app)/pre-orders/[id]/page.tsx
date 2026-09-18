@@ -80,6 +80,7 @@ type CampaignDetail = {
     otomatis: boolean;
     createdAt: string;
     dibuatOleh: { name: string } | null;
+    milestoneCode: string | null;
   }[];
   orders: {
     id: string;
@@ -180,6 +181,7 @@ export default async function CampaignDetailPage({
 
   const deadlineLewat =
     !!campaign.deadlinePelunasan &&
+    // eslint-disable-next-line react-hooks/purity -- server render needs a request-time deadline comparison
     new Date(campaign.deadlinePelunasan).getTime() < Date.now();
 
   const tabHref = (t: Tab) => `/pre-orders/${id}?tab=${t}`;
@@ -542,6 +544,11 @@ export default async function CampaignDetailPage({
                         {e.otomatis && (
                           <span className="rounded bg-sand-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-sand-500">
                             otomatis
+                          </span>
+                        )}
+                        {e.milestoneCode && (
+                          <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">
+                            {e.milestoneCode.replaceAll("_", " ")}
                           </span>
                         )}
                       </div>

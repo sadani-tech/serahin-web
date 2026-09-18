@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SerahinLogo } from "@/components/brand";
 
-export type NavUser = { name?: string; email?: string } | null;
+export type NavUser = { name?: string; email?: string; role?: "ADMIN" | "BUYER" | "SELLER" } | null;
 
 type NavLink = {
   href: string;
   label: string;
   exact?: boolean;
   icon: React.ReactNode;
+  roles?: Array<"ADMIN" | "SELLER">;
 };
 
 // Navigasi utama (tampil sebagai teks di header desktop).
@@ -20,10 +21,33 @@ const links: NavLink[] = [
     href: "/dashboard",
     label: "Dashboard",
     exact: true,
+    roles: ["ADMIN"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
         <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    href: "/seller/dashboard",
+    label: "Dashboard Seller",
+    exact: true,
+    roles: ["SELLER"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    href: "/seller-applications",
+    label: "Aplikasi Seller",
+    roles: ["ADMIN"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6M9 18h6" />
       </svg>
     ),
   },
@@ -38,8 +62,19 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/pesanan",
+    label: "Pesanan",
+    roles: ["ADMIN", "SELLER"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M6 2h12l2 5H4l2-5Z" /><path d="M5 7v15h14V7" /><path d="M9 11h6M9 15h6" />
+      </svg>
+    ),
+  },
+  {
     href: "/pembeli",
     label: "Pembeli",
+    roles: ["ADMIN", "SELLER"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -50,6 +85,7 @@ const links: NavLink[] = [
   {
     href: "/verifikasi",
     label: "Verifikasi",
+    roles: ["ADMIN", "SELLER"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
@@ -68,6 +104,7 @@ const links: NavLink[] = [
   {
     href: "/konten",
     label: "Konten",
+    roles: ["ADMIN"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
@@ -76,8 +113,19 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/konten/faq",
+    label: "FAQ",
+    roles: ["SELLER"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="10" /><path d="M9.5 9a2.5 2.5 0 015 0c0 2-2.5 2-2.5 4" /><path d="M12 17h.01" />
+      </svg>
+    ),
+  },
+  {
     href: "/data-privacy",
     label: "Privasi Data",
+    roles: ["ADMIN"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -87,11 +135,70 @@ const links: NavLink[] = [
   },
 ];
 
+function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
+  return items.filter((link) => !link.roles || (role !== undefined && link.roles.includes(role as "ADMIN" | "SELLER")));
+}
+
+export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
+  const isActive = useActiveLink();
+  const primary = visibleLinks(links, role);
+  const utilities = visibleLinks(utilityLinks, role);
+  return (
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sand-200 bg-white lg:flex">
+      <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
+      <div className="border-b border-sand-100 px-5 py-5">
+        <SerahinLogo href={role === "SELLER" ? "/seller/dashboard" : "/dashboard"} size="sm" />
+        <p className="mt-3 text-[10px] font-extrabold uppercase tracking-[.18em] text-brand-700">
+          {role === "SELLER" ? "Seller workspace" : "Admin internal"}
+        </p>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi dashboard">
+        <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sand-400">Workspace</p>
+        <ul className="space-y-1">
+          {primary.map((link) => {
+            const active = isActive(link.href, link.exact);
+            return (
+              <li key={link.href}>
+                <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
+                  <span className={active ? "text-sun-300" : "text-sand-400"}>{link.icon}</span>
+                  {link.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {utilities.length > 0 && (
+          <>
+            <p className="mb-2 mt-6 px-3 text-[10px] font-bold uppercase tracking-widest text-sand-400">Data</p>
+            <ul className="space-y-1">
+              {utilities.map((link) => {
+                const active = isActive(link.href, link.exact);
+                return (
+                  <li key={link.href}>
+                    <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
+                      <span className={active ? "text-sun-300" : "text-sand-400"}>{link.icon}</span>
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </nav>
+      <div className="border-t border-sand-100 px-5 py-4 text-xs leading-5 text-sand-400">
+        Serahin · Sistem Manajemen Pre-Order
+      </div>
+    </aside>
+  );
+}
+
 // Aksi utilitas — hanya ikon di header (kanan atas), tetap muncul di menu mobile.
 const utilityLinks: NavLink[] = [
   {
     href: "/import",
     label: "Import",
+    roles: ["ADMIN", "SELLER"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -101,6 +208,7 @@ const utilityLinks: NavLink[] = [
   {
     href: "/export",
     label: "Export",
+    roles: ["ADMIN", "SELLER"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
@@ -121,12 +229,13 @@ function useActiveLink() {
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 }
 
-export function NavLinks() {
+export function NavLinks({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
   const isActive = useActiveLink();
+  const roleLinks = visibleLinks(links, role);
 
   return (
     <nav className="hidden items-center gap-0.5 lg:flex">
-      {links.map((link) => {
+      {roleLinks.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
           <Link
@@ -147,12 +256,13 @@ export function NavLinks() {
 }
 
 // Ikon aksi utilitas (Import / Export) di kanan header — desktop.
-export function NavIconActions() {
+export function NavIconActions({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
   const isActive = useActiveLink();
+  const roleLinks = visibleLinks(utilityLinks, role);
 
   return (
     <div className="hidden items-center gap-1 lg:flex">
-      {utilityLinks.map((link) => {
+      {roleLinks.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
           <Link
@@ -204,14 +314,13 @@ export function MobileDrawer({
   open,
   onClose,
   user,
-  logoutAction,
 }: {
   open: boolean;
   onClose: () => void;
   user: NavUser;
-  logoutAction: () => Promise<void>;
 }) {
   const isActive = useActiveLink();
+  const roleLinks = visibleLinks(drawerLinks, user?.role);
 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
@@ -254,7 +363,7 @@ export function MobileDrawer({
             Menu
           </p>
           <ul className="space-y-0.5">
-            {drawerLinks.map((link) => {
+            {roleLinks.map((link) => {
               const active = isActive(link.href, link.exact);
               return (
                 <li key={link.href}>
@@ -278,7 +387,7 @@ export function MobileDrawer({
           </ul>
         </nav>
 
-        {/* User + logout */}
+        {/* Ringkasan actor; logout tersedia pada dropdown avatar di header. */}
         <div className="border-t border-sand-200 p-4">
           {user && (
             <div className="mb-3 flex items-center gap-3 rounded-xl bg-cream px-3 py-2.5">
@@ -293,35 +402,29 @@ export function MobileDrawer({
               </div>
             </div>
           )}
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Keluar
-            </button>
-          </form>
         </div>
       </aside>
     </>
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
   const isActive = useActiveLink();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const roleBottomLinks = visibleLinks(bottomNavLinks, role);
+  const roleMoreLinks = visibleLinks(moreLinks, role);
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMenuOpen(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
 
   return (
     <>
       <nav className="safe-bottom fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur lg:hidden">
         <div className="flex items-stretch">
-          {bottomNavLinks.map((link) => {
+          {roleBottomLinks.map((link) => {
             const active = isActive(link.href, link.exact);
             return (
               <Link
@@ -371,7 +474,7 @@ export function BottomNav() {
         }`}
       >
         <div className="grid grid-cols-3 gap-px bg-sand-100 p-px">
-          {moreLinks.map((link) => {
+          {roleMoreLinks.map((link) => {
             const active = isActive(link.href, link.exact);
             return (
               <Link

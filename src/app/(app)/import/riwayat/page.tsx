@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import ImportHistoryTable from "@/components/ImportHistoryTable";
 import type { ImportMode, ImportStatus } from "@/lib/types";
 import { Card, CardHeader } from "@/components/ui";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -34,10 +35,13 @@ export default async function RiwayatImportPage({
   searchParams: Promise<{ sukses?: string }>;
 }) {
   const sp = await searchParams;
+  const session = await getSession();
 
   const [logs, migrations] = await Promise.all([
     api.get<ImportLogRow[]>("/import/riwayat"),
-    api.get<MigrationLogRow[]>("/import/riwayat-migrasi"),
+    session?.role === "ADMIN"
+      ? api.get<MigrationLogRow[]>("/import/riwayat-migrasi")
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -58,14 +62,14 @@ export default async function RiwayatImportPage({
       )}
 
 <ImportHistoryTable logs={logs} />
-      <Card>
+      {session?.role === "ADMIN" && <Card>
         <CardHeader title="Riwayat Migrasi Skema" subtitle="Audit migrasi otomatis, termasuk jumlah data gagal yang perlu ditinjau." />
         {migrations.length === 0 ? (
           <p className="px-5 py-6 text-sm text-sand-500">Belum ada migrasi skema tercatat.</p>
         ) : (
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs uppercase text-sand-500"><th className="px-5 py-3">Migrasi</th><th className="px-5 py-3">Batch PO</th><th className="px-5 py-3">Pesanan</th><th className="px-5 py-3">Gagal</th><th className="px-5 py-3">Detail</th></tr></thead><tbody className="divide-y">{migrations.map((migration) => <tr key={migration.id}><td className="px-5 py-3 font-medium">{migration.nama}</td><td className="px-5 py-3">{migration.jumlahKampanye}</td><td className="px-5 py-3">{migration.jumlahPesanan}</td><td className={`px-5 py-3 ${migration.jumlahGagal ? "font-medium text-rose-600" : "text-emerald-600"}`}>{migration.jumlahGagal}</td><td className="max-w-md whitespace-pre-wrap px-5 py-3 text-xs text-sand-500">{migration.gagalDetail ?? "-"}</td></tr>)}</tbody></table></div>
         )}
-      </Card>
+      </Card>}
     </div>
   );
 }
