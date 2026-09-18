@@ -50,6 +50,9 @@ export type VendorOption = {
 export type PreorderFormValues = {
   namaProduk?: string;
   deskripsi?: string;
+  productSlug?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   deskripsiPelunasan?: string;
   linkCheckoutShopee?: string;
   tanggalBuka?: string;
@@ -158,6 +161,17 @@ export function PreorderForm({
                 placeholder="mis. Kaos Komunitas Batch 1"
                 required
               />
+            </Field>
+          </div>
+          <Field label="Slug produk" hint="Opsional. URL lama otomatis diarahkan saat slug diubah.">
+            <Input name="productSlug" defaultValue={initial?.productSlug ?? ""} placeholder="kaos-komunitas" pattern="[a-zA-Z0-9-]+" />
+          </Field>
+          <Field label="Judul SEO">
+            <Input name="seoTitle" defaultValue={initial?.seoTitle ?? ""} maxLength={120} placeholder="Judul untuk hasil pencarian" />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Deskripsi SEO">
+              <Textarea name="seoDescription" defaultValue={initial?.seoDescription ?? ""} rows={3} maxLength={300} placeholder="Ringkasan produk untuk mesin pencari dan share preview" />
             </Field>
           </div>
           <div className="sm:col-span-2">

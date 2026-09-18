@@ -69,6 +69,7 @@ export async function createPublicOrder(
   const jumlahBayar = jumlahBayarRaw ? Number(jumlahBayarRaw) : 0;
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
   const confirmPerubahanKuota = formData.get("confirmPerubahanKuota") === "1";
+  const checkoutKey = String(formData.get("checkoutKey") ?? "").trim();
   const checkoutSource =
     formData.get("checkoutSource") === "HOME_CATALOG"
       ? "HOME_CATALOG"
@@ -104,6 +105,7 @@ export async function createPublicOrder(
         `/public/form/${formToken}/order/gateway`,
         {
           items,
+          ...(checkoutKey ? { checkoutKey } : {}),
           ...(jumlahBayar > 0 ? { jumlahBayar } : {}),
           confirmDuplikat,
           confirmPerubahanKuota,
@@ -125,6 +127,7 @@ export async function createPublicOrder(
     // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran.
     const fd = new FormData();
     fd.set("items", JSON.stringify(items));
+    if (checkoutKey) fd.set("checkoutKey", checkoutKey);
     fd.set("jumlahBayar", String(jumlahBayar));
     fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
     fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");

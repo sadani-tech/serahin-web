@@ -10,6 +10,7 @@ import { formatRupiah, formatTanggal } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import { publicSite } from "@/lib/public-site";
 import { toPublicSlug } from "@/lib/slug";
+import { CatalogQuickAdd } from "@/components/CatalogQuickAdd";
 
 export const dynamic = "force-dynamic";
 
@@ -223,14 +224,10 @@ export default async function CatalogPage({
                     <p className="mt-2 text-xs font-bold text-sand-500">
                       {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · tutup {formatTanggal(campaign.tanggalTutup)}
                     </p>
-                    <Link
-                      href={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`}
-                      aria-disabled={variant.sisa <= 0}
-                      aria-label={`Lihat dan pesan dari ${campaign.namaProduk}`}
-                      className={`mt-5 inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-3 text-center text-xs font-extrabold sm:text-sm ${variant.sisa > 0 ? "bg-brand-600 text-white hover:bg-brand-700" : "pointer-events-none bg-sand-200 text-sand-500"}`}
-                    >
-                      {variant.sisa > 0 ? "Lihat Produk" : "Kuota habis"}
-                    </Link>
+                    <div className="mt-5 flex gap-2">
+                      <Link href={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-sand-300 px-3 text-xs font-extrabold text-sand-700 hover:border-brand-400 sm:text-sm">Detail</Link>
+                      <CatalogQuickAdd detailHref={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }} item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }} />
+                    </div>
                   </div>
                 </article>
               )),

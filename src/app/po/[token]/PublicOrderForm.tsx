@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button, Field, FormError, Input } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
@@ -63,6 +63,7 @@ export function PublicOrderForm({
     undefined,
   );
   const [jumlahBayar, setJumlahBayar] = useState("");
+  const checkoutKey = useRef("");
   // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
   const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
     gatewayEnabled ? "GATEWAY" : "MANUAL",
@@ -182,6 +183,8 @@ export function PublicOrderForm({
     fd.set("jumlahBayar", jumlahBayar);
     fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
     fd.set("checkoutSource", checkoutSource);
+    if (!checkoutKey.current) checkoutKey.current = window.crypto.randomUUID();
+    fd.set("checkoutKey", checkoutKey.current);
     persistDraft();
     startTransition(() => formAction(fd));
   }

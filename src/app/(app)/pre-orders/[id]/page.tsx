@@ -44,6 +44,9 @@ import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
 import { OrderBulkTable, type OrderRow } from "@/components/OrderBulkTable";
+import { DestructiveActionForm } from "@/components/DestructiveActionForm";
+import { getSession } from "@/lib/session";
+import { removeInvalidOrder } from "../../management-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -115,6 +118,7 @@ export default async function CampaignDetailPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
+  const session = await getSession();
   const tab: Tab = (["info", "pesanan", "timeline"].includes(sp.tab ?? "")
     ? sp.tab
     : "info") as Tab;
@@ -519,7 +523,23 @@ export default async function CampaignDetailPage({
               description="Belum ada pesanan yang cocok dengan filter."
             />
           ) : (
-            <OrderBulkTable campaignId={id} rows={orderRows} />
+            <>
+              <OrderBulkTable campaignId={id} rows={orderRows} />
+              {session?.role === "ADMIN" && (
+                <div className="border-t border-sand-200 bg-rose-50/40 p-4">
+                  <h3 className="font-extrabold text-sand-900">Pembersihan pesanan invalid</h3>
+                  <p className="mt-1 text-xs text-sand-500">Order tanpa payment/shipment dihapus permanen. Order dengan histori finansial hanya dibatalkan dan diarsipkan.</p>
+                  <div className="mt-3 space-y-3">
+                    {orders.map((order) => (
+                      <div key={order.id} className="rounded-xl border border-sand-200 bg-white p-3">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-bold text-sand-900">{order.namaPembeli}</p><p className="font-mono text-xs text-sand-500">{order.id}</p></div><span className="text-xs font-bold text-sand-500">{ORDER_STATUS_LABEL[order.status]}</span></div>
+                        <DestructiveActionForm action={removeInvalidOrder.bind(null, id, order.id)} target={order.id} label="Bersihkan pesanan" compact />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </Card>
       )}

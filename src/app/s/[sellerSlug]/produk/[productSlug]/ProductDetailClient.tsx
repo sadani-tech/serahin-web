@@ -20,6 +20,7 @@ export function ProductDetailClient({
   const [variantId, setVariantId] = useState(
     initialVariant?.id ?? available[0]?.id ?? product.variants[0]?.id ?? "",
   );
+  const [salesEventId, setSalesEventId] = useState("");
   const variant = useMemo(() => product.variants.find((item) => item.id === variantId) ?? product.variants[0], [product.variants, variantId]);
   const [color, setColor] = useState("");
   const [imageIndex, setImageIndex] = useState(0);
@@ -27,7 +28,8 @@ export function ProductDetailClient({
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
   const { addItem } = useCart();
-  const offering = variant?.offering;
+  const offerings = variant?.offerings?.length ? variant.offerings : variant?.offering ? [variant.offering] : [];
+  const offering = offerings.find((item) => item.salesEventId === salesEventId) ?? offerings[0];
   const image = variant?.images[imageIndex] ?? variant?.images[0] ?? null;
   const canOrder = Boolean(offering?.orderable && offering.quotaRemaining > 0 && (!variant.colors.length || color));
 
@@ -79,11 +81,18 @@ export function ProductDetailClient({
     <section className="order-3 rounded-3xl border border-sand-200 bg-white p-6 shadow-sm sm:p-8 lg:order-3">
       <div className="mt-6">
         <label className="text-sm font-extrabold text-sand-700">Pilihan produk
-          <select value={variantId} onChange={(event) => { setVariantId(event.target.value); setColor(""); setImageIndex(0); }} className="mt-2 min-h-12 w-full rounded-xl border border-sand-300 bg-white px-3">
+          <select value={variantId} onChange={(event) => { setVariantId(event.target.value); setSalesEventId(""); setColor(""); setImageIndex(0); }} className="mt-2 min-h-12 w-full rounded-xl border border-sand-300 bg-white px-3">
             {product.variants.map((item) => <option key={item.id} value={item.id}>{item.name}{item.offering ? ` — ${formatRupiah(item.offering.price)}` : " — arsip"}</option>)}
           </select>
         </label>
       </div>
+
+      {offerings.length > 1 && <label className="mt-5 block text-sm font-extrabold text-sand-700">Pilih Batch PO
+        <select value={offering?.salesEventId ?? ""} onChange={(event) => setSalesEventId(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-brand-300 bg-brand-50 px-3">
+          {offerings.map((item) => <option key={item.salesEventId} value={item.salesEventId}>{item.eventTitle} — {formatRupiah(item.price)} — tutup {formatTanggal(item.endsAt)}</option>)}
+        </select>
+        <span className="mt-1 block text-xs font-normal text-sand-500">Produk tersedia di beberapa Batch PO. Pilihan Anda menentukan harga, kuota, dan skema pembayaran.</span>
+      </label>}
 
       {variant && <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
         {variant.category && <p className="rounded-xl bg-sand-50 p-3"><span className="block text-xs font-bold text-sand-500">Kategori</span>{variant.category}</p>}

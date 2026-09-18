@@ -212,3 +212,9 @@ export async function deletePayment(paymentId: string) {
   const res = await api.del<{ id?: string }>(`/payments/${paymentId}`);
   if (res?.id) revalidatePath(`/pesanan/${res.id}`);
 }
+
+export async function reconcileGatewayPayment(orderId: string, gatewayOrderId: string) {
+  await api.post("/admin/payments/reconcile", { gatewayOrderIds: [gatewayOrderId] });
+  revalidatePath(`/pesanan/${orderId}`);
+  revalidatePath(`/payments/${gatewayOrderId}/audit`);
+}

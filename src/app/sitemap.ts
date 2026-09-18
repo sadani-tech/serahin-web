@@ -22,9 +22,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
   }));
   try {
-    const first = await getPublicCatalog({ page: 1, limit: 48 });
-    const pages = await Promise.all(Array.from({ length: Math.max(0, first.meta.totalPages - 1) }, (_, index) => getPublicCatalog({ page: index + 2, limit: 48 })));
-    const catalogs = [first, ...pages];
+    const [first, archiveFirst] = await Promise.all([getPublicCatalog({ page: 1, limit: 48 }), getPublicCatalog({ page: 1, limit: 48, archive: true })]);
+    const [pages, archivePages] = await Promise.all([
+      Promise.all(Array.from({ length: Math.max(0, first.meta.totalPages - 1) }, (_, index) => getPublicCatalog({ page: index + 2, limit: 48 }))),
+      Promise.all(Array.from({ length: Math.max(0, archiveFirst.meta.totalPages - 1) }, (_, index) => getPublicCatalog({ page: index + 2, limit: 48, archive: true }))),
+    ]);
+    const catalogs = [first, ...pages, archiveFirst, ...archivePages];
     const seenProducts = new Set<string>();
     const productUrls = catalogs.flatMap((catalog) => catalog.campaigns).flatMap((campaign) => campaign.variants
       .filter((variant) => variant.productSlug)
