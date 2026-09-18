@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { CartIcon, SerahinLogo } from "@/components/brand";
 import { useCart } from "@/components/CartProvider";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
-export function PublicHeader({ loggedIn = false, role }: { loggedIn?: boolean; role?: "ADMIN" | "BUYER" }) {
+export function PublicHeader({ loggedIn = false, role, name, email }: { loggedIn?: boolean; role?: "ADMIN" | "BUYER" | "SELLER"; name?: string | null; email?: string | null }) {
   const { count } = useCart();
   return (
     <header className="sticky top-0 z-40 border-b border-sand-200 bg-white/95 backdrop-blur-md">
@@ -43,12 +44,13 @@ export function PublicHeader({ loggedIn = false, role }: { loggedIn?: boolean; r
             <CartIcon className="h-6 w-6 text-brand-700" />
             {count > 0 && <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5 text-[11px] text-white">{count > 99 ? "99+" : count}</span>}
           </Link>
-          <Link
-            href={loggedIn ? (role === "BUYER" ? "/account" : "/dashboard") : "/account/login"}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700"
-          >
-            {loggedIn ? (role === "BUYER" ? "Pesanan Saya" : "Buka Dashboard") : "Masuk Buyer"}
-          </Link>
+          {loggedIn && role ? (
+            <ProfileMenu user={{ name, email, role }} />
+          ) : (
+            <Link href="/account/login" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700">
+              Masuk Buyer
+            </Link>
+          )}
         </nav>
       </div>
     </header>

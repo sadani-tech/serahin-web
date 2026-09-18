@@ -32,7 +32,7 @@ export default async function ArchivePage({
 
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">
           Close PO

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PublicPageShell } from "@/components/PublicPageShell";
 import { publicSite } from "@/lib/public-site";
 import { SellerPortalActions } from "./SellerPortalActions";
+import { SellerApplicationForm } from "./SellerApplicationForm";
 
 export const metadata: Metadata = {
   title: "Menjadi Seller Serahin",
@@ -11,11 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default function SellerPage() {
-  const registrationSubject = encodeURIComponent("Pengajuan menjadi Seller Serahin");
-  const registrationBody = encodeURIComponent(
-    "Halo tim Serahin, saya ingin mengajukan diri menjadi Seller.\n\nNama/brand:\nProduk yang dijual:\nNomor WhatsApp:\n",
-  );
-
   return (
     <PublicPageShell
       eyebrow="Untuk Seller"
@@ -30,9 +26,7 @@ export default function SellerPage() {
             Batch PO dapat dipublikasikan.
           </p>
         </div>
-        <SellerPortalActions
-          registrationHref={`mailto:${publicSite.email}?subject=${registrationSubject}&body=${registrationBody}`}
-        />
+        <SellerPortalActions />
       </div>
 
       <h2>Ketentuan menjadi Seller</h2>
@@ -73,12 +67,8 @@ export default function SellerPage() {
         <li>Setelah disetujui, Admin membantu menyiapkan profil dan Batch PO.</li>
         <li>Seller dapat mengelola katalog dan pesanan sesuai hak akses yang diberikan.</li>
       </ol>
-
-      <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
-        <strong>Catatan tahap awal:</strong> login yang tersedia saat ini adalah
-        akun Admin/Seller Utama. Registrasi seller mandiri dan dashboard seller
-        terpisah akan dibuka setelah modul akun Seller selesai disiapkan.
-      </div>
+      <h2 id="seller-application">Form pengajuan Seller</h2>
+      <SellerApplicationForm />
     </PublicPageShell>
   );
 }

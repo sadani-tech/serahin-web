@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { reviewOrders } from "./actions";
@@ -24,7 +24,9 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
   const headRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const allChecked = rows.length > 0 && selected.size === rows.length;
-  if (headRef.current) headRef.current.indeterminate = selected.size > 0 && !allChecked;
+  useEffect(() => {
+    if (headRef.current) headRef.current.indeterminate = selected.size > 0 && !allChecked;
+  }, [allChecked, selected.size]);
 
   const toggle = (id: string) => setSelected((current) => {
     const next = new Set(current);

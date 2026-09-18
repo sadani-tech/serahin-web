@@ -33,14 +33,14 @@ export async function loginAction(
     return { error: "Email atau kata sandi salah" };
   }
 
-  const data = (await res.json()) as { accessToken: string };
+  const data = (await res.json()) as { accessToken: string; maxAgeSeconds?: number };
   const store = await cookies();
   store.set(TOKEN_COOKIE, data.accessToken, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 hari (samakan dgn JWT_EXPIRES_IN)
+    maxAge: data.maxAgeSeconds ?? 60 * 60 * 24,
   });
 
   redirect(safeCallbackUrl(callbackUrl));

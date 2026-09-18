@@ -6,6 +6,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { SerahinLogo } from "@/components/brand";
 import { PortalLinkBox } from "./PortalLinkBox";
 import { ClearDraft } from "./ClearDraft";
+import { ConversionEvent } from "@/components/ConversionEvent";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ export default async function PublicOrderSuccessPage({
 
   return (
     <div className="bg-serahin-dots relative min-h-full py-10">
+      <ConversionEvent name="order_submitted" value={total} itemCount={totalQty} />
       <ClearDraft campaign={campaign} />
       <div
         aria-hidden="true"

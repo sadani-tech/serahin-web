@@ -46,6 +46,7 @@ export function ProductDetailClient({
       quantity,
       selectedColor: color || undefined,
       image,
+      colors: variant.colors,
     });
     if (ok) setMessage("Produk ditambahkan ke keranjang.");
   }

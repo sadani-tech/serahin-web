@@ -105,8 +105,10 @@ export default async function OrderDetailPage({
     deadline &&
     !billing.lunas &&
     !dibatalkan &&
+    // eslint-disable-next-line react-hooks/purity -- server render needs a request-time deadline comparison
     deadline.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
   const deadlineLewat =
+    // eslint-disable-next-line react-hooks/purity -- server render needs a request-time deadline comparison
     deadline && !billing.lunas && !dibatalkan && deadline.getTime() < Date.now();
 
   return (

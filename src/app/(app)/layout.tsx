@@ -8,7 +8,7 @@ export default async function AppLayout({
 }) {
   const session = await getSession();
   return (
-    <AppShell user={session ? { name: session.name, email: session.email ?? undefined } : null}>
+    <AppShell user={session ? { name: session.name, email: session.email ?? undefined, role: session.role } : null}>
       {children}
     </AppShell>
   );

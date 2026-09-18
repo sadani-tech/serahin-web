@@ -92,7 +92,7 @@ export default async function HomePage({
 
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
