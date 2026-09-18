@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           "/data-deletion",
           "/s/",
           "/katalog/",
+          "/catalog/",
           "/arsip",
         ],
         disallow: [

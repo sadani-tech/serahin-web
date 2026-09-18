@@ -17,7 +17,7 @@ export function PublicHeader({ loggedIn = false, role, name, email }: { loggedIn
           className="flex items-center gap-1 sm:gap-2"
         >
           <Link
-            href="/#catalog"
+            href="/catalog"
             className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
           >
             Katalog

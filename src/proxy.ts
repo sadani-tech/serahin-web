@@ -35,6 +35,9 @@ export default async function proxy(req: NextRequest) {
     pathname.startsWith("/payment/return") ||
     pathname.startsWith("/s/") ||
     pathname.startsWith("/katalog/") ||
+    pathname === "/katalog" ||
+    pathname === "/catalog" ||
+    pathname.startsWith("/catalog/") ||
     pathname === "/arsip" ||
     pathname === "/cart" ||
     pathname === "/seller" ||
@@ -73,10 +76,10 @@ export default async function proxy(req: NextRequest) {
 
 export const config = {
   // Jangan jalankan proxy untuk aset statis & file metadata (ikon, OG image,
-  // manifest, robots/sitemap). Kalau ikut dicegat, request `/icon.svg` dsb.
+  // manifest, robots/sitemap). Kalau ikut dicegat, request `/brand/*` dsb.
   // dari pengunjung anonim ke-redirect ke `/login` sehingga favicon dan
   // preview link sosial gagal dimuat.
   matcher: [
-    "/((?!api/auth|api/cart|_next/static|_next/image|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
+    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
   ],
 };
