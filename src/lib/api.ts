@@ -1,4 +1,5 @@
 import { cookies, headers as requestHeaders } from "next/headers";
+import { randomUUID } from "node:crypto";
 
 /**
  * Klien REST server-side untuk backend NestJS (menggantikan akses Prisma
@@ -27,9 +28,11 @@ async function authHeader(): Promise<Record<string, string>> {
     incoming.get("x-real-ip") ??
     incoming.get("cf-connecting-ip");
   const clientIp = forwarded?.split(",")[0]?.trim().slice(0, 64);
+  const requestId = incoming.get("x-request-id")?.trim() || randomUUID();
   return {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(clientIp ? { "X-Forwarded-For": clientIp } : {}),
+    "X-Request-Id": requestId.slice(0, 80),
   };
 }
 

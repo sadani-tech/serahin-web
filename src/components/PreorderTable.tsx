@@ -7,6 +7,7 @@ import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
 import { deletePreorder } from "@/app/(app)/pre-orders/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
 
 export type CampaignStatus =
@@ -40,7 +41,8 @@ function rentangHarga(variants: { harga: string }[]): string {
 export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] }) {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { confirm, alert } = useConfirm();
+  const { confirm } = useConfirm();
+  const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
   const totalPages = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
@@ -59,10 +61,10 @@ export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] 
     startLoading();
     try {
       await deletePreorder(id);
+      toast.success(`Batch PO "${namaProduk}" berhasil dihapus.`);
     } catch {
-      await alert({
+      toast.error("Terjadi kesalahan. Silakan coba lagi.", {
         title: "Gagal menghapus Batch PO",
-        description: "Terjadi kesalahan. Silakan coba lagi.",
       });
     } finally {
       setDeletingId(null);

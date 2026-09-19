@@ -24,6 +24,10 @@ export type DashboardData = {
   totalNilaiPesanan: number;
   jumlahKampanyeAktif: number;
   menungguVerifikasi: number;
+  pesananBaru: number;
+  pembayaranMenunggu: number;
+  pelunasanJatuhTempo: number;
+  operationalFailures: { email: number; broadcast: number };
   activeCampaigns: {
     id: string;
     namaProduk: string;

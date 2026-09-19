@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
-import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { PAYMENT_TYPE_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import { PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { addPayment, type PaymentFormState } from "../actions";
@@ -33,7 +33,7 @@ export function PaymentForm({
   const [jenis, setJenis] = useState<string>(defaultJenis);
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
   const [alamat, setAlamat] = useState("");
-  const { alert } = useConfirm();
+  const toast = useToast();
 
   // Reset form setelah sukses (state kembali undefined tanpa error).
   useEffect(() => {
@@ -54,9 +54,8 @@ export function PaymentForm({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        void alert({
+        toast.warning("Ukuran file melebihi batas maksimal 5MB.", {
           title: "File terlalu besar",
-          description: "Ukuran file melebihi batas maksimal 5MB.",
         });
         e.target.value = "";
         setPreview(null);

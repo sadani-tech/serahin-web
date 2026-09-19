@@ -6,6 +6,7 @@ import { Card, DeleteIconButton, EmptyState, LinkButton } from "@/components/ui"
 import { computeVendorStats, ratingStars } from "@/lib/vendor";
 import { deleteVendor } from "@/app/(app)/vendor/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
 
 type VendorRow = {
@@ -29,7 +30,8 @@ export default function VendorTable({ vendors }: Props) {
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { confirm, alert } = useConfirm();
+  const { confirm } = useConfirm();
+  const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
 
   const totalPages = Math.ceil(vendors.length / PAGE_SIZE);
@@ -50,12 +52,13 @@ export default function VendorTable({ vendors }: Props) {
     try {
       const res = await deleteVendor(id);
       if (res?.error) {
-        await alert({ title: "Tidak bisa menghapus vendor", description: res.error });
+        toast.error(res.error, { title: "Tidak bisa menghapus vendor" });
+      } else {
+        toast.success(`Vendor "${nama}" berhasil dihapus.`);
       }
     } catch {
-      await alert({
+      toast.error("Terjadi kesalahan. Silakan coba lagi.", {
         title: "Gagal menghapus vendor",
-        description: "Terjadi kesalahan. Silakan coba lagi.",
       });
     } finally {
       setDeletingId(null);

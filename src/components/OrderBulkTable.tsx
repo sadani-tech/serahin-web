@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Select } from "@/components/ui";
 import { OrderBadge } from "@/components/badges";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatTanggal } from "@/lib/format";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
 import { bulkUpdateOrderStatus } from "@/app/(app)/pesanan/actions";
 import type { OrderStatus } from "@/lib/types";
@@ -21,6 +22,17 @@ export type OrderRow = {
   status: OrderStatus;
   sisa: number;
   aktif: boolean;
+  paymentStatus: string;
+  createdAt: string;
+  shipment: { method: "SHOPEE" | "COURIER"; label: string; courier: string | null; trackingNumber: string | null } | null;
+};
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  MENUNGGU_VERIFIKASI: "Menunggu Verifikasi",
+  LUNAS: "Lunas",
+  DP_DITERIMA: "DP Diterima",
+  DITOLAK: "Ditolak",
+  BELUM_BAYAR: "Belum Bayar",
 };
 
 export function OrderBulkTable({
@@ -33,7 +45,8 @@ export function OrderBulkTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
-  const { confirm, alert } = useConfirm();
+  const { confirm } = useConfirm();
+  const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
   const router = useRouter();
   const headRef = useRef<HTMLInputElement>(null);
@@ -95,15 +108,14 @@ export function OrderBulkTable({
     }
 
     if (res.error) {
-      await alert({ title: "Gagal", description: res.error });
+      toast.error(res.error);
       return;
     }
     setSelected(new Set());
     setTarget("");
     router.refresh();
-    await alert({
+    toast.success(`${res.updated ?? 0} pesanan diubah menjadi "${label}".`, {
       title: "Status diperbarui",
-      description: `${res.updated ?? 0} pesanan diubah menjadi "${label}".`,
     });
   }
 
@@ -167,6 +179,8 @@ export function OrderBulkTable({
               <th className="px-5 py-3 font-medium">Varian</th>
               <th className="px-5 py-3 font-medium">Qty</th>
               <th className="px-5 py-3 font-medium">Status</th>
+              <th className="px-5 py-3 font-medium">Pembayaran</th>
+              <th className="px-5 py-3 font-medium">Jenis Pengiriman</th>
               <th className="px-5 py-3 font-medium">Sisa tagihan</th>
             </tr>
           </thead>
@@ -195,11 +209,18 @@ export function OrderBulkTable({
                       {o.namaPembeli}
                     </Link>
                     <div className="text-xs text-sand-500">{o.kontak}</div>
+                    <div className="mt-1 text-[11px] text-sand-400">{o.id.slice(0, 8).toUpperCase()} · {formatTanggal(o.createdAt)}</div>
                   </td>
                   <td className="px-5 py-3 text-sand-700">{o.varianLabel}</td>
                   <td className="px-5 py-3 text-sand-700">{o.totalQty}</td>
                   <td className="px-5 py-3">
                     <OrderBadge status={o.status} />
+                  </td>
+                  <td className="px-5 py-3 text-xs font-semibold text-sand-700">
+                    {PAYMENT_STATUS_LABEL[o.paymentStatus] ?? o.paymentStatus}
+                  </td>
+                  <td className="px-5 py-3">
+                    {o.shipment ? <div><p className="font-semibold text-sand-800">{o.shipment.label}</p>{(o.shipment.courier || o.shipment.trackingNumber) && <p className="text-xs text-sand-500">{[o.shipment.courier, o.shipment.trackingNumber].filter(Boolean).join(" · ")}</p>}</div> : <span className="text-sand-400">Belum dipilih</span>}
                   </td>
                   <td className="px-5 py-3">
                     {!o.aktif ? (

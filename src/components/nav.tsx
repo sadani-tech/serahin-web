@@ -42,16 +42,6 @@ const links: NavLink[] = [
     ),
   },
   {
-    href: "/seller-applications",
-    label: "Aplikasi Seller",
-    roles: ["ADMIN"],
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6M9 18h6" />
-      </svg>
-    ),
-  },
-  {
     href: "/pre-orders",
     label: "Pre-Order",
     icon: (
@@ -64,10 +54,20 @@ const links: NavLink[] = [
   {
     href: "/pesanan",
     label: "Pesanan",
-    roles: ["ADMIN", "SELLER"],
+    roles: ["SELLER"],
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M6 2h12l2 5H4l2-5Z" /><path d="M5 7v15h14V7" /><path d="M9 11h6M9 15h6" />
+      </svg>
+    ),
+  },  
+  {
+    href: "/penjual",
+    label: "Penjual",
+    roles: ["ADMIN"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6M9 18h6" />
       </svg>
     ),
   },
@@ -89,6 +89,26 @@ const links: NavLink[] = [
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+      </svg>
+    ),
+  },
+  {
+    href: "/rekening",
+    label: "Rekening",
+    roles: ["SELLER"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18M12 3 3 7v3h18V7l-9-4Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/broadcast",
+    label: "Broadcast",
+    roles: ["ADMIN", "SELLER"],
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M4 4h16v16H4z" /><path d="m4 6 8 6 8-6" /><path d="M8 16h8" />
       </svg>
     ),
   },

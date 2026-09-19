@@ -4,7 +4,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
 import type { Billing } from "@/lib/billing";
-import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
+import { formatRupiah } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
@@ -29,16 +29,14 @@ type PortalOrder = {
     paymentScheme: PaymentScheme;
     deskripsiPelunasan: string | null;
     linkCheckoutShopee: string | null;
-    estimasiKirim: string | null;
-    timelineEntries: {
-      id: string;
-      judulUpdate: string;
-      catatan: string | null;
-      milestoneCode: string | null;
-      createdAt: string;
-    }[];
   };
   billing: Billing;
+  paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
+  manualTransfer?: {
+    bankName: string | null;
+    accountNumber: string | null;
+    accountHolderName: string | null;
+  } | null;
   // v2.1 — pembayaran otomatis (payment gateway)
   gatewayEnabled?: boolean;
   pendingGateway?: {
@@ -57,10 +55,13 @@ export const metadata: Metadata = {
 
 export default async function PortalPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ payment?: string }>;
 }) {
   const { token } = await params;
+  const { payment } = await searchParams;
 
   let order: PortalOrder;
   try {
@@ -83,18 +84,23 @@ export default async function PortalPage({
       ? order.pendingGateway
       : null;
 
-  // Pembeli boleh mengirim pembayaran sendiri bila masih ada sisa tagihan dan
-  // tidak ada pembayaran yang sedang menunggu verifikasi.
-  const bisaBayar =
-    !dibatalkan &&
-    !ditolak &&
-    !lanjutGateway &&
-    billing.sisa > 0 &&
-    billing.menungguVerifikasi === 0;
   const isPelunasan =
     campaign.paymentScheme === "DP_PELUNASAN" &&
     billing.dpTarget > 0 &&
     billing.dibayar >= billing.dpTarget;
+  const paymentDue =
+    campaign.paymentScheme === "DP_PELUNASAN" && billing.dpTarget > 0 && !isPelunasan
+      ? Math.max(0, billing.dpTarget - billing.dibayar)
+      : billing.sisa;
+
+  // Pembeli boleh mengirim pembayaran sendiri bila masih ada tagihan tahap
+  // aktif dan tidak ada pembayaran yang sedang menunggu verifikasi.
+  const bisaBayar =
+    !dibatalkan &&
+    !ditolak &&
+    !lanjutGateway &&
+    paymentDue > 0 &&
+    billing.menungguVerifikasi === 0;
 
   return (
     <div className="bg-serahin-dots relative min-h-full py-10">
@@ -306,7 +312,12 @@ export default async function PortalPage({
                 {isPelunasan ? "Lakukan pelunasan" : "Kirim pembayaran"}
               </h2>
               <p className="text-xs text-sand-500">
-                Sisa tagihan {formatRupiah(billing.sisa)}.
+                {isPelunasan
+                  ? "Sisa pelunasan"
+                  : campaign.paymentScheme === "DP_PELUNASAN"
+                    ? "DP yang perlu dibayar"
+                    : "Tagihan"}{" "}
+                {formatRupiah(paymentDue)}.
               </p>
             </div>
             <div className="px-5 py-4">
@@ -320,63 +331,28 @@ export default async function PortalPage({
               )}
               <PortalPaymentForm
                 token={token}
-                sisa={billing.sisa}
+                amountDue={paymentDue}
                 isPelunasan={isPelunasan}
-                gatewayEnabled={Boolean(order.gatewayEnabled)}
+                paymentChannel={order.paymentChannel}
+                gatewayAvailable={Boolean(order.gatewayEnabled)}
+                manualTransfer={order.manualTransfer}
                 linkCheckoutShopee={campaign.linkCheckoutShopee}
+                resumePayment={payment === "1"}
               />
             </div>
           </div>
         )}
-
-        {/* Timeline kampanye */}
-        <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
-          <div className="border-b border-sand-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-sand-900">
-              Progres produksi
-            </h2>
-            <p className="text-xs text-sand-500">
-              Estimasi kirim: {formatTanggal(campaign.estimasiKirim)}
-            </p>
-          </div>
-          {campaign.timelineEntries.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-sand-500">
-              Belum ada update progres.
-            </p>
-          ) : (
-            <ol className="space-y-4 px-6 py-5">
-              {campaign.timelineEntries.map((e) => (
-                <li key={e.id} className="relative pl-6">
-                  <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
-                  <p className="font-medium text-sand-900">{e.judulUpdate}</p>
-                  {e.milestoneCode && <span className="mt-1 inline-flex rounded bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-700">{e.milestoneCode.replaceAll("_", " ")}</span>}
-                  {e.catatan && (
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm text-sand-600">
-                      {e.catatan}
-                    </p>
-                  )}
-                  <p className="mt-0.5 text-xs text-sand-400">
-                    {formatWaktu(e.createdAt)}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
 
         <div className="rounded-xl border border-brand-200 bg-brand-50 p-5 text-center">
           <p className="text-sm font-semibold text-brand-900">
             Ingin melihat semua pesanan dan profil Anda?
           </p>
           <p className="mt-1 text-xs text-brand-700">
-            Kembali ke dashboard Buyer untuk mengelola pesanan Anda.
+            <Link href="/account" className="font-bold underline hover:text-brand-900">
+              Kembali ke Dashboard Buyer
+            </Link>{" "}
+            untuk mengelola pesanan Anda.
           </p>
-          <Link
-            href="/account"
-            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-700"
-          >
-            Kembali ke Dashboard Buyer
-          </Link>
         </div>
 
         <p className="text-center text-xs text-sand-400">

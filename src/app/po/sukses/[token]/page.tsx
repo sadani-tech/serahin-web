@@ -7,6 +7,7 @@ import { SerahinLogo } from "@/components/brand";
 import { PortalLinkBox } from "./PortalLinkBox";
 import { ClearDraft } from "./ClearDraft";
 import { ConversionEvent } from "@/components/ConversionEvent";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -96,12 +97,13 @@ export default async function PublicOrderSuccessPage({
 
         <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-lg">
           <p className="mb-1 text-sm font-semibold text-sand-900">
-            Pantau status pesanan Anda
+            Pesanan sudah tersimpan di akunmu
           </p>
           <p className="mb-3 text-xs text-sand-500">
-            Simpan link ini. Anda bisa mengecek status pesanan kapan saja tanpa
-            login.
+            Buka Pesanan Saya untuk melihat pembayaran dan status terbaru tanpa mencari link lagi.
           </p>
+          <Link href="/account" className="mb-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white">Lihat Pesanan Saya</Link>
+          <p className="mb-2 text-xs font-bold text-sand-500">Tautan cadangan pesanan</p>
           <PortalLinkBox token={order.tokenAkses} />
         </div>
 

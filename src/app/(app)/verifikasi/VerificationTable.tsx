@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { reviewOrders } from "./actions";
+import { ToastFeedback, useToast } from "@/components/Toast";
 
 export type VerificationRow = {
   id: string;
@@ -23,6 +24,7 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
   const [alasan, setAlasan] = useState("");
   const headRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const toast = useToast();
   const allChecked = rows.length > 0 && selected.size === rows.length;
   useEffect(() => {
     if (headRef.current) headRef.current.indeterminate = selected.size > 0 && !allChecked;
@@ -46,6 +48,7 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
     if (result.error) return setError(result.error);
     setSelected(new Set());
     setAlasan("");
+    toast.success(`${selected.size} pesanan berhasil ${keputusan === "APPROVE" ? "disetujui" : "ditolak"}.`);
     router.refresh();
   }
 
@@ -64,7 +67,7 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
             placeholder="Alasan penolakan (wajib untuk aksi Tolak)"
             className="min-h-20 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm"
           />
-          {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
+          <ToastFeedback error={error} />
         </div>
       )}
       <div className="overflow-x-auto">
