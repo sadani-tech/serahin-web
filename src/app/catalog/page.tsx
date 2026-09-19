@@ -11,6 +11,7 @@ import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import { publicSite } from "@/lib/public-site";
 import { toPublicSlug } from "@/lib/slug";
 import { CatalogQuickAdd } from "@/components/CatalogQuickAdd";
+import { ToastFeedback } from "@/components/Toast";
 
 export const dynamic = "force-dynamic";
 
@@ -187,11 +188,7 @@ export default async function CatalogPage({
             </div>
           )}
 
-          {catalogResult.error && (
-            <div role="alert" className="mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm font-bold text-rose-700">
-              {catalogResult.error}
-            </div>
-          )}
+          <ToastFeedback error={catalogResult.error} />
 
           {catalog && catalog.campaigns.length === 0 && (
             <div className="mt-8 rounded-3xl border border-dashed border-sand-300 bg-white px-6 py-14 text-center">

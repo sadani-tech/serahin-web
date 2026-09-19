@@ -97,6 +97,7 @@ export async function createPublicOrder(
     warning?: string;
   };
   let result: OrderResult;
+  const loginCallback = `/po/${formToken}?checkout=1`;
 
   if (gateway) {
     // Body JSON — pembeli membayar di halaman provider, tidak ada unggahan bukti.
@@ -116,7 +117,9 @@ export async function createPublicOrder(
         },
       );
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) redirect(`/account/login?callbackUrl=${encodeURIComponent(`/po/${formToken}`)}`);
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        redirect(`/api/auth/switch?callbackUrl=${encodeURIComponent(loginCallback)}`);
+      }
       return {
         error: e instanceof ApiError ? e.message : "Gagal memulai pembayaran.",
       };
@@ -147,7 +150,9 @@ export async function createPublicOrder(
         fd,
       );
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) redirect(`/account/login?callbackUrl=${encodeURIComponent(`/po/${formToken}`)}`);
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        redirect(`/api/auth/switch?callbackUrl=${encodeURIComponent(loginCallback)}`);
+      }
       return {
         error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan.",
       };

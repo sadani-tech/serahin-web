@@ -8,6 +8,7 @@ import { OrderBadge } from "@/components/badges";
 import { formatRupiah } from "@/lib/format";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
 import { bulkUpdateOrderStatus } from "@/app/(app)/pesanan/actions";
 import type { OrderStatus } from "@/lib/types";
@@ -33,7 +34,8 @@ export function OrderBulkTable({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
-  const { confirm, alert } = useConfirm();
+  const { confirm } = useConfirm();
+  const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
   const router = useRouter();
   const headRef = useRef<HTMLInputElement>(null);
@@ -95,15 +97,14 @@ export function OrderBulkTable({
     }
 
     if (res.error) {
-      await alert({ title: "Gagal", description: res.error });
+      toast.error(res.error);
       return;
     }
     setSelected(new Set());
     setTarget("");
     router.refresh();
-    await alert({
+    toast.success(`${res.updated ?? 0} pesanan diubah menjadi "${label}".`, {
       title: "Status diperbarui",
-      description: `${res.updated ?? 0} pesanan diubah menjadi "${label}".`,
     });
   }
 

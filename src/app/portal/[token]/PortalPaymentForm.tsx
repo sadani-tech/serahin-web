@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useActionState, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { Button, Field, FormError, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
+import { ToastFeedback } from "@/components/Toast";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -23,16 +24,18 @@ import {
 // manual + unggah bukti seperti sebelumnya.
 export function PortalPaymentForm({
   token,
-  sisa,
+  amountDue,
   isPelunasan,
   gatewayEnabled = false,
   linkCheckoutShopee,
+  resumePayment = false,
 }: {
   token: string;
-  sisa: number;
+  amountDue: number;
   isPelunasan: boolean;
   gatewayEnabled?: boolean;
   linkCheckoutShopee?: string | null;
+  resumePayment?: boolean;
 }) {
   const manualAction = submitPortalPayment.bind(null, token);
   const [state, formAction, manualPending] = useActionState<
@@ -50,7 +53,7 @@ export function PortalPaymentForm({
     gatewayEnabled ? "GATEWAY" : "MANUAL",
   );
   const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
-  const [jumlah, setJumlah] = useState(String(sisa));
+  const jumlah = String(amountDue);
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
   const [alamat, setAlamat] = useState("");
   const [localError, setLocalError] = useState<string | undefined>();
@@ -84,19 +87,31 @@ export function PortalPaymentForm({
     startTransition(() => (gateway ? gwFormAction(fd) : formAction(fd)));
   }
 
+  const errorMessage = localError ?? state?.error ?? gwState?.error;
+
+  useEffect(() => {
+    if (!resumePayment && !errorMessage) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById("portal-payment-form")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, resumePayment ? 150 : 0);
+    return () => window.clearTimeout(timer);
+  }, [errorMessage, resumePayment]);
+
   if (state?.ok) {
     return (
       <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">
+        <ToastFeedback success="Pembayaran terkirim dan sedang menunggu verifikasi Admin." />
         Pembayaran Anda terkirim dan sedang menunggu verifikasi Admin. Status
         akan diperbarui setelah diverifikasi.
       </div>
     );
   }
 
-  const errorMessage = localError ?? state?.error ?? gwState?.error;
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form id="portal-payment-form" onSubmit={handleSubmit} className="scroll-mt-24 space-y-3">
       {errorMessage && <FormError message={errorMessage} />}
 
       {gatewayEnabled && (
@@ -228,8 +243,8 @@ export function PortalPaymentForm({
           name="jumlahBayar"
           required
           value={jumlah}
-          onValueChange={setJumlah}
-          placeholder="0"
+          readOnly
+          className="bg-sand-50 font-bold"
         />
       </Field>
 

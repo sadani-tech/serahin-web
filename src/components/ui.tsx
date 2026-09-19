@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ComponentProps, ReactNode } from "react";
+import { ToastFeedback } from "@/components/Toast";
 
 // Kumpulan primitif UI ringan berbasis Tailwind — konsisten lintas modul.
 // Palet & geometri mengikuti design system Serahin v1.9 (lihat globals.css).
@@ -343,26 +344,7 @@ export function EmptyState({
 }
 
 export function FormError({ message }: { message?: string }) {
-  if (!message) return null;
-  return (
-    <div className="flex items-start gap-2 rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm font-medium text-rose-700 ring-1 ring-inset ring-rose-200">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="mt-0.5 h-4 w-4 shrink-0"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      <span className="min-w-0">{message}</span>
-    </div>
-  );
+  return <ToastFeedback error={message} />;
 }
 
 export function StatItem({

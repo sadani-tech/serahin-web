@@ -52,6 +52,16 @@ export const dynamic = "force-dynamic";
 
 type Tab = "info" | "pesanan" | "timeline";
 
+const MILESTONE_LABEL: Record<string, string> = {
+  OPEN: "Open",
+  CLOSED: "Closed",
+  PRODUCTION: "Produksi",
+  SHIPMENT: "Shipment",
+  PACKING: "Packing",
+  DELIVERED: "Deliver",
+  COMPLETED: "Selesai",
+};
+
 type CampaignDetail = {
   namaProduk: string;
   status: CampaignStatus;
@@ -568,7 +578,7 @@ export default async function CampaignDetailPage({
                         )}
                         {e.milestoneCode && (
                           <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">
-                            {e.milestoneCode.replaceAll("_", " ")}
+                            {MILESTONE_LABEL[e.milestoneCode] ?? e.milestoneCode.replaceAll("_", " ")}
                           </span>
                         )}
                       </div>
@@ -619,7 +629,7 @@ function Info({
   );
 }
 
-// Label DP sesuai tipe: "DP 50%" atau "DP Rp100.000"; null bila skema LUNAS.
+// Label DP sesuai tipe; nilai nominal selalu berlaku per unit produk.
 function dpLabel(c: {
   paymentScheme: PaymentScheme;
   dpTipe: DpTipe | null;
@@ -628,7 +638,7 @@ function dpLabel(c: {
 }): string | null {
   if (c.paymentScheme !== "DP_PELUNASAN") return null;
   if (c.dpTipe === "NOMINAL") {
-    return c.dpNominal != null ? `DP ${formatRupiah(c.dpNominal)}` : null;
+    return c.dpNominal != null ? `DP ${formatRupiah(c.dpNominal)} / unit` : null;
   }
   return c.dpPercent != null ? `DP ${c.dpPercent}%` : null;
 }

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Button, Field, FormError, Input, Textarea } from "@/components/ui";
+import { ToastFeedback } from "@/components/Toast";
 import {
   requestDataDeletion,
   withdrawCommunicationConsent,
@@ -13,6 +14,7 @@ export function DataDeletionForm() {
   if (state?.ok) {
     return (
       <div role="status" className="rounded-2xl bg-brand-50 p-5 ring-1 ring-brand-200">
+        <ToastFeedback success={state.message} />
         <p className="font-extrabold text-brand-800">Permintaan diterima</p>
         <p className="mt-2 text-sm text-brand-700">{state.message}</p>
         <p className="mt-2 text-sm font-bold text-brand-800">
@@ -62,13 +64,10 @@ export function CommunicationPreferenceForm() {
 
   return (
     <form action={action} className="not-prose mt-6 space-y-4 rounded-2xl border border-sand-200 bg-cream-soft p-5">
-      {state?.ok ? (
-        <p role="status" className="rounded-xl bg-brand-50 p-3 text-sm font-bold text-brand-800">
-          {state.message}
-        </p>
-      ) : state?.error ? (
-        <FormError message={state.error} />
-      ) : null}
+      <ToastFeedback
+        error={state && "error" in state ? state.error : undefined}
+        success={state?.ok ? state.message : undefined}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nomor WhatsApp" required>
           <Input name="phone" type="tel" minLength={8} maxLength={32} autoComplete="tel" required />

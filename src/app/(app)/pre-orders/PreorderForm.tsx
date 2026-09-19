@@ -252,7 +252,7 @@ export function PreorderForm({
             </Select>
           </Field>
           {scheme === "DP_PELUNASAN" && (
-            <Field label="Tipe DP" hint="Persentase dari total, atau nominal tetap.">
+            <Field label="Tipe DP" hint="Persentase harga per unit, atau nominal tetap per unit produk.">
               <Select
                 name="dpTipe"
                 value={dpTipe}
@@ -264,7 +264,7 @@ export function PreorderForm({
             </Field>
           )}
           {scheme === "DP_PELUNASAN" && dpTipe === "PERSEN" && (
-            <Field label="Persentase DP (%)" hint="Contoh: 50 untuk DP 50%">
+            <Field label="Persentase DP (%)" hint="Contoh 50: DP sebesar 50% dari harga setiap unit produk.">
               <Input
                 name="dpPercent"
                 type="number"
@@ -275,7 +275,7 @@ export function PreorderForm({
             </Field>
           )}
           {scheme === "DP_PELUNASAN" && dpTipe === "NOMINAL" && (
-            <Field label="Nominal DP (Rp)" required hint="DP tetap per pesanan, mis. 100.000">
+            <Field label="Nominal DP per unit (Rp)" required hint="Contoh 100.000: pesanan 3 unit memiliki total DP 300.000, maksimal sebesar total pesanan.">
               <CurrencyInput
                 name="dpNominal"
                 defaultValue={initial?.dpNominal ?? ""}

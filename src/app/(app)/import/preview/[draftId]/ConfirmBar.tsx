@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { Button } from "@/components/ui";
 import { confirmImport, cancelDraft } from "../../actions";
+import { ToastFeedback, useToast } from "@/components/Toast";
 
 export function ConfirmBar({
   draftId,
@@ -19,12 +20,14 @@ export function ConfirmBar({
   const [pending, startTransition] = useTransition();
   useOverlayWhilePending(pending);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   function handleConfirm() {
     setError(null);
     startTransition(async () => {
       const result = await confirmImport(draftId);
       if (result?.error) setError(result.error);
+      else toast.success("Import berhasil dikonfirmasi.");
     });
   }
 
@@ -33,6 +36,7 @@ export function ConfirmBar({
     startTransition(async () => {
       const result = await cancelDraft(draftId);
       if (result?.error) setError(result.error);
+      else toast.info("Sesi import dibatalkan.");
     });
   }
 
@@ -71,11 +75,7 @@ export function ConfirmBar({
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
-          <span className="font-medium">Gagal: </span>{error}
-        </div>
-      )}
+      <ToastFeedback error={error} />
     </div>
   );
 }

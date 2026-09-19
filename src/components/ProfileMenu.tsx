@@ -88,7 +88,7 @@ export function ProfileMenu({ user, align = "right" }: { user: ProfileUser; alig
                 {item.label}
               </Link>
             ))}
-            <Link role="menuitem" href="/" onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-xl px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
+            <Link role="menuitem" href="/catalog" onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-xl px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
               Lihat storefront
             </Link>
           </div>

@@ -25,6 +25,9 @@ type FormInfo = {
   deskripsi: string | null;
   harga: number;
   paymentScheme: PaymentScheme;
+  dpTipe: "PERSEN" | "NOMINAL";
+  dpPercent: number | null;
+  dpNominal: number | null;
   tanggalTutup: string | null;
   bukaPesanan: boolean;
   gatewayEnabled?: boolean;
@@ -47,11 +50,17 @@ type FormInfo = {
 
 export default async function PublicFormPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ checkout?: string }>;
 }) {
   const { token } = await params;
+  const { checkout } = await searchParams;
   const session = await getSession();
+  const buyerProfile = session?.role === "BUYER"
+    ? await api.get<{ name: string; email: string | null; phone: string | null }>("/auth/buyer/profile").catch(() => ({ name: session.name, email: session.email, phone: null }))
+    : null;
 
   let data: FormInfo;
   try {
@@ -128,9 +137,16 @@ export default async function PublicFormPage({
           formToken={token}
           variants={data.variants}
           gatewayEnabled={Boolean(data.gatewayEnabled)}
+          paymentScheme={data.paymentScheme}
+          dpTipe={data.dpTipe}
+          dpPercent={data.dpPercent}
+          dpNominal={data.dpNominal}
           orderingDisabled={Boolean(alasanTidakBisaPesan)}
           unavailableMessage={alasanTidakBisaPesan}
           buyerAuthenticated={session?.role === "BUYER"}
+          switchingAccount={Boolean(session && session.role !== "BUYER")}
+          buyerProfile={buyerProfile}
+          resumeCheckout={checkout === "1"}
         />
 
         <p className="mx-auto max-w-xl text-center text-xs text-sand-500">

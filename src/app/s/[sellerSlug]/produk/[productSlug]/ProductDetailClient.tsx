@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { useCart } from "@/components/CartProvider";
@@ -26,14 +25,13 @@ export function ProductDetailClient({
   const [imageIndex, setImageIndex] = useState(0);
   const [preview, setPreview] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [message, setMessage] = useState("");
   const { addItem } = useCart();
   const offerings = variant?.offerings?.length ? variant.offerings : variant?.offering ? [variant.offering] : [];
   const offering = offerings.find((item) => item.salesEventId === salesEventId) ?? offerings[0];
   const image = variant?.images[imageIndex] ?? variant?.images[0] ?? null;
   const canOrder = Boolean(offering?.orderable && offering.quotaRemaining > 0 && (!variant.colors.length || color));
 
-  async function add() {
+  async function add(goToCheckout = false) {
     if (!variant || !offering || !canOrder) return;
     const ok = await addItem({
       salesEventId: offering.salesEventId,
@@ -50,7 +48,8 @@ export function ProductDetailClient({
       image,
       colors: variant.colors,
     });
-    if (ok) setMessage("Produk ditambahkan ke keranjang.");
+    if (!ok) return;
+    if (goToCheckout) window.location.assign("/cart?checkout=1");
   }
 
   async function share() {
@@ -106,15 +105,14 @@ export function ProductDetailClient({
       {offering ? <div className="mt-6 rounded-2xl bg-cream-soft p-4">
         <p className="text-2xl font-extrabold text-brand-700">{formatRupiah(offering.price)}</p>
         <p className="mt-1 text-sm font-bold text-sand-600">{offering.eventTitle} · tutup {formatTanggal(offering.endsAt)} · sisa {offering.quotaRemaining}</p>
-        {(offering.productionEstimate || offering.shippingEstimate) && <p className="mt-2 text-xs text-sand-500">{offering.productionEstimate ? `Estimasi produksi ${formatTanggal(offering.productionEstimate)}` : ""}{offering.productionEstimate && offering.shippingEstimate ? " · " : ""}{offering.shippingEstimate ? `estimasi kirim ${formatTanggal(offering.shippingEstimate)}` : ""}</p>}
       </div> : <p className="mt-6 rounded-2xl bg-sand-100 p-4 text-sm font-bold text-sand-600">Produk ini ditampilkan sebagai arsip dan belum tersedia pada Batch PO aktif.</p>}
 
-      <div className="mt-5 flex gap-3">
-        <label className="w-24 text-sm font-bold text-sand-700">Jumlah<input type="number" min={1} max={offering?.quotaRemaining ?? 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))} className="mt-1 min-h-12 w-full rounded-xl border border-sand-300 px-3" /></label>
-        <button type="button" disabled={!canOrder} onClick={add} className="mt-6 min-h-12 flex-1 rounded-xl bg-brand-600 px-5 text-sm font-extrabold text-white disabled:bg-sand-300">{offering?.orderable ? "Tambah ke Keranjang" : "Batch PO Ditutup"}</button>
+      <label className="mt-5 block w-24 text-sm font-bold text-sand-700">Jumlah<input type="number" min={1} max={offering?.quotaRemaining ?? 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))} className="mt-1 min-h-12 w-full rounded-xl border border-sand-300 px-3" /></label>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <button type="button" disabled={!canOrder} onClick={() => void add(false)} className="min-h-12 rounded-xl border border-brand-400 bg-white px-4 text-sm font-extrabold text-brand-700 hover:bg-brand-50 disabled:border-sand-200 disabled:bg-sand-100 disabled:text-sand-400">{offering?.orderable ? "Tambah ke Keranjang" : "Batch PO Ditutup"}</button>
+        <button type="button" disabled={!canOrder} onClick={() => void add(true)} className="min-h-12 rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white hover:bg-brand-700 disabled:bg-sand-300">Beli Sekarang</button>
       </div>
-      {message && <p role="status" className="mt-3 text-sm font-bold text-brand-700">{message} <Link href="/cart" className="underline">Buka keranjang</Link></p>}
-      <p className="mt-5 text-xs leading-5 text-sand-500">Keranjang dan pembayaran tetap mengikuti satu Batch PO agar skema DP/pelunasan, kuota, dan timeline Serahin tetap jelas.</p>
+      <p className="mt-5 text-xs leading-5 text-sand-500">Keranjang dan pembayaran tetap mengikuti satu Batch PO agar skema DP/pelunasan dan kuota tetap jelas.</p>
       {preview && variant?.images.length ? <ImagePreviewModal images={variant.images} startIndex={imageIndex} title={product.name} onClose={() => setPreview(false)} /> : null}
     </section>
   </div>;

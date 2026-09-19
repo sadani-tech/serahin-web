@@ -12,8 +12,6 @@ export type PublicOffering = {
   label: string | null;
   orderable: boolean;
   paymentScheme: PaymentScheme;
-  productionEstimate: string | null;
-  shippingEstimate: string | null;
 };
 
 export type PublicProduct = {
