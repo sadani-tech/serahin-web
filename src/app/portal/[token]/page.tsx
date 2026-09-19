@@ -31,6 +31,12 @@ type PortalOrder = {
     linkCheckoutShopee: string | null;
   };
   billing: Billing;
+  paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
+  manualTransfer?: {
+    bankName: string | null;
+    accountNumber: string | null;
+    accountHolderName: string | null;
+  } | null;
   // v2.1 — pembayaran otomatis (payment gateway)
   gatewayEnabled?: boolean;
   pendingGateway?: {
@@ -327,7 +333,9 @@ export default async function PortalPage({
                 token={token}
                 amountDue={paymentDue}
                 isPelunasan={isPelunasan}
-                gatewayEnabled={Boolean(order.gatewayEnabled)}
+                paymentChannel={order.paymentChannel}
+                gatewayAvailable={Boolean(order.gatewayEnabled)}
+                manualTransfer={order.manualTransfer}
                 linkCheckoutShopee={campaign.linkCheckoutShopee}
                 resumePayment={payment === "1"}
               />
@@ -340,14 +348,11 @@ export default async function PortalPage({
             Ingin melihat semua pesanan dan profil Anda?
           </p>
           <p className="mt-1 text-xs text-brand-700">
-            Kembali ke dashboard Buyer untuk mengelola pesanan Anda.
+            <Link href="/account" className="font-bold underline hover:text-brand-900">
+              Kembali ke Dashboard Buyer
+            </Link>{" "}
+            untuk mengelola pesanan Anda.
           </p>
-          <Link
-            href="/account"
-            className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-700"
-          >
-            Kembali ke Dashboard Buyer
-          </Link>
         </div>
 
         <p className="text-center text-xs text-sand-400">

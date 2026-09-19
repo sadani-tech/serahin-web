@@ -45,6 +45,8 @@ export function PublicOrderForm({
   formToken,
   variants,
   gatewayEnabled = false,
+  manualTransferEnabled = false,
+  manualTransfer,
   paymentScheme = "DP_PELUNASAN",
   dpTipe = "PERSEN",
   dpPercent = 50,
@@ -61,6 +63,12 @@ export function PublicOrderForm({
   formToken: string;
   variants: PublicVariantOption[];
   gatewayEnabled?: boolean;
+  manualTransferEnabled?: boolean;
+  manualTransfer?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  } | null;
   paymentScheme?: "DP_PELUNASAN" | "LUNAS";
   dpTipe?: "PERSEN" | "NOMINAL";
   dpPercent?: number | null;
@@ -85,6 +93,7 @@ export function PublicOrderForm({
     gatewayEnabled ? "GATEWAY" : "MANUAL",
   );
   const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
+  const paymentUnavailable = gateway ? !gatewayEnabled : !manualTransferEnabled;
   const [qty, setQty] = useState<Record<string, number>>({});
   const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
@@ -608,12 +617,13 @@ export function PublicOrderForm({
                       value={value}
                       checked={metodeBayar === value}
                       onChange={() => setMetodeBayar(value)}
-                      disabled={orderingDisabled}
+                      disabled={orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)}
                       className="mt-0.5 h-4 w-4 accent-brand-600"
                     />
                     <span>
                       <span className="block font-bold text-sand-800">{judul}</span>
                       <span className="block text-xs text-sand-500">{sub}</span>
+                      {value === "MANUAL" && !manualTransferEnabled && <span className="mt-1 block text-xs font-bold text-rose-700">Rekening Seller belum tersedia.</span>}
                     </span>
                   </label>
                 ))}
@@ -629,6 +639,18 @@ export function PublicOrderForm({
             </div>
           ) : (
             <>
+              {manualTransfer ? (
+                <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-950 ring-1 ring-inset ring-sun-200">
+                  <p className="text-xs font-extrabold uppercase tracking-wider">Rekening tujuan Seller</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <p><span className="block text-xs opacity-70">Bank</span><strong>{manualTransfer.bankName}</strong></p>
+                    <p><span className="block text-xs opacity-70">Nomor rekening</span><strong className="font-mono text-base tracking-wide">{manualTransfer.accountNumber}</strong></p>
+                    <p className="sm:col-span-2"><span className="block text-xs opacity-70">Atas nama</span><strong>{manualTransfer.accountHolderName}</strong></p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 ring-1 ring-inset ring-rose-200">Seller belum menyediakan rekening transfer. Pilih pembayaran otomatis atau hubungi Seller.</div>
+              )}
               <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
               <Field label={paymentScheme === "DP_PELUNASAN" ? "Nominal DP" : "Nominal pembayaran"} required hint={paymentRule}>
                 <CurrencyInput name="jumlahBayar" required readOnly disabled={orderingDisabled} value={jumlahBayar} className="bg-sand-50 font-bold" />
@@ -672,31 +694,9 @@ export function PublicOrderForm({
                 .
               </span>
             </label>
-            <label className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                name="whatsappConsent"
-                value="1"
-                disabled={orderingDisabled}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
-              />
-              <span>
-                Saya bersedia menerima update transaksional pesanan dari Serahin
-                melalui nomor WhatsApp yang saya isi. Persetujuan ini dapat ditarik
-                melalui halaman{" "}
-                <Link href="/data-deletion#communication-preferences" target="_blank" className="font-bold text-brand-700 underline">
-                  preferensi komunikasi
-                </Link>{" "}
-                dan tunduk pada{" "}
-                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
-                  Kebijakan Privasi
-                </Link>
-                .
-              </span>
-            </label>
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
-          <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap}>
+          <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || paymentUnavailable}>
             {state?.needsConfirm || state?.needsCartConfirm
               ? "Ya, lanjutkan"
               : gateway

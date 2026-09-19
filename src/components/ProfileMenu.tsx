@@ -20,15 +20,16 @@ const roleLabel: Record<UserRole, string> = {
 const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   ADMIN: [
     { href: "/dashboard", label: "Dashboard Admin" },
-    { href: "/seller-applications", label: "Aplikasi Seller" },
+    { href: "/penjual", label: "Penjual" },
   ],
   SELLER: [
     { href: "/seller/dashboard", label: "Dashboard Seller" },
-    { href: "/seller/profile", label: "Profil bisnis" },
+    { href: "/rekening", label: "Rekening Seller" },
+    { href: "/seller/profile", label: "Profile Bisnis" },
   ],
   BUYER: [
     { href: "/account", label: "Pesanan Saya" },
-    { href: "/account/profile", label: "Profil akun" },
+    { href: "/account/profile", label: "Profile" },
   ],
 };
 
@@ -89,7 +90,7 @@ export function ProfileMenu({ user, align = "right" }: { user: ProfileUser; alig
               </Link>
             ))}
             <Link role="menuitem" href="/catalog" onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-xl px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
-              Lihat storefront
+              Katalog
             </Link>
           </div>
           <form action={logoutAction} className="border-t border-sand-100 p-2">

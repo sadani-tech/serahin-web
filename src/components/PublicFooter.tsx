@@ -55,12 +55,6 @@ export async function PublicFooter() {
                 {page.judul}
               </Link>
             ))}
-          <Link
-            href="/seller"
-            className="text-xs font-medium text-sand-600 hover:text-brand-700 hover:underline"
-          >
-            Seller Portal
-          </Link>
         </nav>
         <p className="text-xs text-sand-500">
           © {new Date().getFullYear()} {publicSite.legalName} · Serahin

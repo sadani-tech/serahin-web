@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { useCart } from "@/components/CartProvider";
@@ -14,6 +15,7 @@ export function ProductDetailClient({
   product: PublicProduct;
   initialVariantId?: string;
 }) {
+  const router = useRouter();
   const available = product.variants.filter((variant) => variant.offering);
   const initialVariant = available.find((variant) => variant.id === initialVariantId);
   const [variantId, setVariantId] = useState(
@@ -49,7 +51,7 @@ export function ProductDetailClient({
       colors: variant.colors,
     });
     if (!ok) return;
-    if (goToCheckout) window.location.assign("/cart?checkout=1");
+    if (goToCheckout) router.push("/cart?checkout=1");
   }
 
   async function share() {

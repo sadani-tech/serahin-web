@@ -31,6 +31,12 @@ type FormInfo = {
   tanggalTutup: string | null;
   bukaPesanan: boolean;
   gatewayEnabled?: boolean;
+  manualTransferEnabled?: boolean;
+  manualTransfer?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  } | null;
   variants: {
     id: string;
     namaVarian: string;
@@ -137,6 +143,8 @@ export default async function PublicFormPage({
           formToken={token}
           variants={data.variants}
           gatewayEnabled={Boolean(data.gatewayEnabled)}
+          manualTransferEnabled={Boolean(data.manualTransferEnabled)}
+          manualTransfer={data.manualTransfer}
           paymentScheme={data.paymentScheme}
           dpTipe={data.dpTipe}
           dpPercent={data.dpPercent}

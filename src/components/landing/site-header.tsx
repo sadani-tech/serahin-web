@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { SerahinLogo } from "@/components/landing/brand";
 import { AuthChoiceModal } from "@/components/landing/AuthChoiceModal";
+import { ProfileMenu } from "@/components/ProfileMenu";
+import type { UserRole } from "@/lib/types";
 
-export function SiteHeader() {
+type HeaderUser = {
+  name?: string | null;
+  email?: string | null;
+  role: UserRole;
+};
+
+export function SiteHeader({ user }: { user: HeaderUser | null }) {
   return (
     <header className="site-header">
       <div className="container nav-wrap">
@@ -14,11 +22,18 @@ export function SiteHeader() {
           <a href="#fitur">Fitur</a>
           <a href="#cara-kerja">Cara kerja</a>
           <a href="#pembeli">Pembeli</a>
+          <a href="#testimoni">Testimoni</a>
           <a href="#roadmap">Roadmap</a>
           <Link href="/catalog">Katalog Buyer</Link>
         </nav>
 
-        <AuthChoiceModal />
+        {user ? (
+          <div className="desktop-login landing-profile-menu">
+            <ProfileMenu user={user} />
+          </div>
+        ) : (
+          <AuthChoiceModal />
+        )}
 
         <details className="mobile-menu-details">
           <summary className="menu-button" aria-label="Buka menu navigasi">
@@ -29,9 +44,16 @@ export function SiteHeader() {
               <a href="#fitur">Fitur</a>
               <a href="#cara-kerja">Cara kerja</a>
               <a href="#pembeli">Pembeli</a>
+              <a href="#testimoni">Testimoni</a>
               <a href="#roadmap">Roadmap</a>
               <Link href="/catalog">Katalog Buyer</Link>
-              <AuthChoiceModal mobile />
+              {user ? (
+                <div className="landing-profile-menu--mobile">
+                  <ProfileMenu user={user} align="left" />
+                </div>
+              ) : (
+                <AuthChoiceModal mobile />
+              )}
             </nav>
           </div>
         </details>

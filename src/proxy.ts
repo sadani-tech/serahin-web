@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret");
+const configuredSecret = process.env.JWT_SECRET?.trim() ?? "";
+if (process.env.NODE_ENV === "production" && (configuredSecret.length < 32 || ["change-me", "dev-secret", "secret"].includes(configuredSecret))) {
+  throw new Error("JWT_SECRET production wajib unik dan minimal 32 karakter.");
+}
+const secret = new TextEncoder().encode(configuredSecret || "dev-secret");
 
 async function sessionRole(token: string | undefined): Promise<"ADMIN" | "BUYER" | "SELLER" | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret);
-    return payload.role === "BUYER" ? "BUYER" : payload.role === "SELLER" ? "SELLER" : "ADMIN";
+    return payload.role === "BUYER" || payload.role === "SELLER" || payload.role === "ADMIN"
+      ? payload.role
+      : null;
   } catch {
     return null;
   }
@@ -69,7 +75,7 @@ export default async function proxy(req: NextRequest) {
   if (role === "BUYER" && !isPublic && !pathname.startsWith("/account")) return NextResponse.redirect(new URL("/account", req.nextUrl.origin));
   if (role === "SELLER" && pathname.startsWith("/account")) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
   if (role === "SELLER" && (pathname.startsWith("/data-privacy") || (pathname.startsWith("/konten") && !pathname.startsWith("/konten/faq")))) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
-  if (role === "SELLER" && pathname.startsWith("/seller-applications")) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
+  if (role === "SELLER" && pathname.startsWith("/penjual")) return NextResponse.redirect(new URL("/seller/dashboard", req.nextUrl.origin));
   if (role === "ADMIN" && pathname.startsWith("/account") && !isBuyerAuthPage) return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   return NextResponse.next();
 }
@@ -80,6 +86,6 @@ export const config = {
   // dari pengunjung anonim ke-redirect ke `/login` sehingga favicon dan
   // preview link sosial gagal dimuat.
   matcher: [
-    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
+    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|testimonials/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
   ],
 };

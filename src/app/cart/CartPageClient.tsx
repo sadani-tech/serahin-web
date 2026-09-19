@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ProductImage } from "@/components/ProductImage";
 import { useCart } from "@/components/CartProvider";
 import { ToastFeedback } from "@/components/Toast";
@@ -13,10 +14,18 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   switchingAccount?: boolean;
   buyerProfile?: { name: string; email: string | null; phone: string | null } | null;
 }) {
+  const router = useRouter();
   const { cart, ready, authenticated, syncConflict, setQuantity, setColor, removeItem, clear, sync } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<"GATEWAY" | "MANUAL">("GATEWAY");
   const [gatewayMethod, setGatewayMethod] = useState("");
   const [gatewayMethods, setGatewayMethods] = useState<Array<{ code: string; name: string; fee?: number; imageUrl?: string }>>([]);
+  const [gatewayAvailable, setGatewayAvailable] = useState(false);
+  const [manualTransferEnabled, setManualTransferEnabled] = useState(true);
+  const [manualTransfer, setManualTransfer] = useState<{
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  } | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
   const [paymentBilling, setPaymentBilling] = useState<{
     billingType: "DOWN_PAYMENT" | "FULL_PAYMENT";
@@ -26,7 +35,8 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
     totalQuantity: number;
   } | null>(null);
   const [accepted, setAccepted] = useState(false);
-  const [whatsapp, setWhatsapp] = useState(false);
+  // WhatsApp belum terintegrasi — consent dikunci false sampai fitur tersedia.
+  const whatsapp = false;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [showAccessModal, setShowAccessModal] = useState(false);
@@ -44,6 +54,12 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         const data = await response.json() as {
           amount: number;
           gatewayEnabled: boolean;
+          manualTransferEnabled: boolean;
+          manualTransfer: {
+            bankName: string;
+            accountNumber: string;
+            accountHolderName: string;
+          } | null;
           methods: Array<{ code: string; name: string; fee?: number; imageUrl?: string }>;
           billingType: "DOWN_PAYMENT" | "FULL_PAYMENT";
           downPaymentType: "PERCENTAGE" | "FIXED_AMOUNT" | null;
@@ -54,8 +70,15 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         setPaymentAmount(data.amount);
         setPaymentBilling(data);
         setGatewayMethods(data.methods);
+        setGatewayAvailable(data.gatewayEnabled);
+        setManualTransferEnabled(data.manualTransferEnabled);
+        setManualTransfer(data.manualTransfer);
         setGatewayMethod((current) => current || data.methods[0]?.code || "");
-        if (!data.gatewayEnabled) setPaymentMethod("MANUAL");
+        setPaymentMethod((current) => {
+          if (current === "MANUAL" && !data.manualTransferEnabled) return "GATEWAY";
+          if (current === "GATEWAY" && !data.gatewayEnabled && data.manualTransferEnabled) return "MANUAL";
+          return current;
+        });
       } catch {
         setError("Metode pembayaran belum dapat dimuat. Silakan coba lagi.");
       }
@@ -96,8 +119,8 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       }
       if (!response.ok) throw new Error(data.message ?? "Checkout belum berhasil.");
       if (data.needsConfirm) throw new Error(data.warning ?? "Pesanan serupa baru saja dibuat.");
-      if (data.paymentUrl) window.location.assign(data.paymentUrl);
-      else if (data.tokenAkses) window.location.assign(`/portal/${data.tokenAkses}`);
+      if (data.paymentUrl) window.location.href = data.paymentUrl;
+      else if (data.tokenAkses) router.push(`/portal/${data.tokenAkses}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Checkout belum berhasil.");
       setPending(false);
@@ -129,12 +152,12 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       <p className="mt-1 text-xs leading-5 text-sand-500">Keranjang ini langsung menjadi pesanan. Tidak ada form produk tambahan setelah halaman ini.</p>
       <div className="mt-4 flex justify-between border-b border-sand-200 pb-4"><span className="text-sm font-bold text-sand-600">Total produk</span><strong className="text-lg text-brand-700">{formatRupiah(total)}</strong></div>
       {authenticated && buyerProfile ? <div className="mt-4 rounded-xl bg-brand-50 p-3 text-sm text-brand-800 ring-1 ring-brand-200"><div className="flex items-start justify-between gap-3"><div><p className="font-extrabold">Data Buyer</p><p className="mt-1 text-xs leading-5">{buyerProfile.name}<br/>{buyerProfile.email ?? "Email belum tersedia"}{buyerProfile.phone ? ` · ${buyerProfile.phone}` : ""}</p></div><Link href="/account/profile?callbackUrl=%2Fcart%3Fcheckout%3D1" className="text-xs font-extrabold underline">Ubah</Link></div></div> : <div className="mt-4 rounded-xl bg-sun-50 p-3 text-xs leading-5 text-sun-900 ring-1 ring-sun-200">Masuk baru diperlukan saat kamu siap membuat pesanan. Isi keranjang tetap tersimpan.</div>}
-      <fieldset className="mt-5"><legend className="text-sm font-extrabold text-sand-700">Cara pembayaran</legend><label className="mt-2 flex cursor-pointer gap-3 rounded-xl border border-sand-200 p-3"><input type="radio" checked={paymentMethod === "GATEWAY"} disabled={authenticated && gatewayMethods.length === 0} onChange={() => setPaymentMethod("GATEWAY")} /><span className="min-w-0 flex-1"><strong className="block text-sm">Bayar online</strong><span className="text-xs text-sand-500">Diproses aman melalui payment-service (Paywuz).</span>{paymentMethod === "GATEWAY" && gatewayMethods.length > 0 && <select value={gatewayMethod} onChange={(event) => setGatewayMethod(event.target.value)} className="mt-2 min-h-10 w-full rounded-lg border border-sand-300 bg-white px-2 text-sm">{gatewayMethods.map((method) => <option key={method.code} value={method.code}>{method.name}{method.fee ? ` (+${formatRupiah(method.fee)})` : ""}</option>)}</select>}</span></label><label className="mt-2 flex cursor-pointer gap-3 rounded-xl border border-sand-200 p-3"><input type="radio" checked={paymentMethod === "MANUAL"} onChange={() => setPaymentMethod("MANUAL")} /><span><strong className="block text-sm">Transfer manual</strong><span className="text-xs text-sand-500">Bayar dan unggah bukti melalui portal pesanan.</span></span></label></fieldset>
+      <fieldset className="mt-5"><legend className="text-sm font-extrabold text-sand-700">Cara pembayaran</legend><label className={`mt-2 flex gap-3 rounded-xl border border-sand-200 p-3 ${authenticated && !gatewayAvailable ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}><input type="radio" checked={paymentMethod === "GATEWAY"} disabled={authenticated && !gatewayAvailable} onChange={() => setPaymentMethod("GATEWAY")} /><span className="min-w-0 flex-1"><strong className="block text-sm">Bayar online</strong><span className="text-xs text-sand-500">Diproses aman melalui payment-service (Paywuz).</span>{paymentMethod === "GATEWAY" && gatewayMethods.length > 0 && <select value={gatewayMethod} onChange={(event) => setGatewayMethod(event.target.value)} className="mt-2 min-h-10 w-full rounded-lg border border-sand-300 bg-white px-2 text-sm">{gatewayMethods.map((method) => <option key={method.code} value={method.code}>{method.name}{method.fee ? ` (+${formatRupiah(method.fee)})` : ""}</option>)}</select>}</span></label><label className={`mt-2 flex gap-3 rounded-xl border border-sand-200 p-3 ${authenticated && !manualTransferEnabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}><input type="radio" checked={paymentMethod === "MANUAL"} disabled={authenticated && !manualTransferEnabled} onChange={() => setPaymentMethod("MANUAL")} /><span><strong className="block text-sm">Transfer manual</strong><span className="text-xs text-sand-500">Bayar ke rekening Seller dan unggah bukti melalui portal pesanan.</span>{authenticated && !manualTransferEnabled && <span className="mt-1 block text-xs font-bold text-rose-700">Seller belum menyediakan rekening transfer.</span>}</span></label></fieldset>
       {paymentAmount !== null && <div className="mt-4 space-y-1 rounded-xl bg-sand-50 p-3 text-sm"><div className="flex justify-between"><span>{paymentBilling?.billingType === "DOWN_PAYMENT" ? "DP yang dibayar sekarang" : "Tagihan tahap ini"}</span><strong>{formatRupiah(paymentAmount)}</strong></div>{paymentBilling?.billingType === "DOWN_PAYMENT" && <p className="text-xs text-sand-500">{paymentBilling.downPaymentType === "FIXED_AMOUNT" ? `${formatRupiah(paymentBilling.downPaymentAmount ?? 0)} per unit × ${paymentBilling.totalQuantity} unit` : `${paymentBilling.downPaymentPercentage ?? 50}% dari harga setiap unit produk`}</p>}{paymentMethod === "GATEWAY" && selectedGatewayMethod?.fee ? <div className="flex justify-between text-sand-600"><span>Estimasi fee {selectedGatewayMethod.name}</span><strong>{formatRupiah(selectedGatewayMethod.fee)}</strong></div> : null}</div>}
+      {authenticated && paymentMethod === "MANUAL" && manualTransfer && <div className="mt-3 rounded-xl bg-sun-50 p-3 text-sm text-sun-950 ring-1 ring-sun-200"><p className="text-xs font-extrabold uppercase tracking-wider">Tujuan transfer</p><p className="mt-1 font-extrabold">{manualTransfer.bankName} <span className="font-mono tracking-wide">{manualTransfer.accountNumber}</span></p><p className="text-xs">a.n. {manualTransfer.accountHolderName}</p></div>}
       <label className="mt-5 flex gap-3 text-sm leading-5 text-sand-700"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="mt-1" /><span>Saya menyetujui <Link href="/terms" className="font-bold text-brand-700 underline">Syarat & Ketentuan</Link>, <Link href="/privacy" className="font-bold text-brand-700 underline">Kebijakan Privasi</Link>, dan <Link href="/refund-policy" className="font-bold text-brand-700 underline">Kebijakan Refund</Link>.</span></label>
-      <label className="mt-3 flex gap-3 text-sm leading-5 text-sand-600"><input type="checkbox" checked={whatsapp} onChange={(event) => setWhatsapp(event.target.checked)} className="mt-1" /><span>Saya bersedia menerima pembaruan transaksional melalui WhatsApp. (opsional)</span></label>
       <ToastFeedback error={error} info={authenticated && resumeCheckout ? "Akun Buyer siap. Periksa ringkasan lalu selesaikan pembayaran." : undefined} />
-      <button type="button" disabled={pending || syncConflict || cart.items.some((item) => item.eligible === false)} onClick={checkout} className="mt-5 min-h-12 w-full rounded-xl bg-brand-600 px-5 text-sm font-extrabold text-white disabled:bg-sand-300">{pending ? "Memproses…" : !authenticated ? "Masuk untuk Melanjutkan" : paymentMethod === "GATEWAY" ? "Bayar Sekarang" : "Buat Pesanan"}</button>
+      <button type="button" disabled={pending || syncConflict || cart.items.some((item) => item.eligible === false) || (authenticated && paymentMethod === "GATEWAY" && !gatewayAvailable) || (authenticated && paymentMethod === "MANUAL" && !manualTransferEnabled)} onClick={checkout} className="mt-5 min-h-12 w-full rounded-xl bg-brand-600 px-5 text-sm font-extrabold text-white disabled:bg-sand-300">{pending ? "Memproses…" : !authenticated ? "Masuk untuk Melanjutkan" : paymentMethod === "GATEWAY" ? "Bayar Sekarang" : "Buat Pesanan"}</button>
       <p className="mt-3 text-center text-xs text-sand-500">Kuota dan harga akan divalidasi kembali sebelum pesanan dibuat.</p>
       {showAccessModal && <BuyerAccessModal callbackUrl="/cart?checkout=1" switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
     </aside>

@@ -181,6 +181,24 @@ export default async function DashboardPage({
         />
       </div>
 
+      <section aria-label="Antrean operasional" className="grid gap-3 sm:grid-cols-3">
+        <Link href="/verifikasi?tab=payments" className="rounded-2xl border border-sun-200 bg-sun-50 p-4 transition hover:border-sun-400">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-sun-800">Pembayaran menunggu</p>
+          <p className="mt-2 text-2xl font-extrabold text-sand-900">{data.pembayaranMenunggu}</p>
+          <p className="mt-1 text-xs text-sand-600">Antrean finansial lintas Seller</p>
+        </Link>
+        <Link href="/broadcast" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 transition hover:border-rose-400">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-rose-800">Broadcast gagal</p>
+          <p className="mt-2 text-2xl font-extrabold text-sand-900">{data.operationalFailures.broadcast}</p>
+          <p className="mt-1 text-xs text-sand-600">Kampanye email perlu retry</p>
+        </Link>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-rose-800">Email dead-letter</p>
+          <p className="mt-2 text-2xl font-extrabold text-sand-900">{data.operationalFailures.email}</p>
+          <p className="mt-1 text-xs text-sand-600">Pengiriman lifecycle melewati batas retry</p>
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <DashboardSection
           title="Perlu perhatian"

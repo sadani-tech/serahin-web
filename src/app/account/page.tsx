@@ -12,11 +12,26 @@ type Dashboard = {
   activeStatusGroup: StatusGroup;
   orders: Array<{
     id: string; status: string; createdAt: string;
+    nextAction: string;
+    rejectionReason: string | null;
     salesEvent: { title: string };
-    items: Array<{ quantity: number; unitPrice: string; variantNameSnapshot?: string }>;
+    items: Array<{
+      quantity: number; unitPrice: string; variantNameSnapshot?: string;
+      salesEventItem?: { displayImages: string[]; productVariant: { images: string[] } };
+    }>;
     billing: { total: number; paid: number; pending: number; remaining: number };
   }>;
   pagination: { page: number; total: number; totalPages: number };
+};
+
+const NEXT_ACTION: Record<string, string> = {
+  PAY_DOWN_PAYMENT: "Bayar DP",
+  WAIT_VERIFICATION: "Menunggu verifikasi",
+  REUPLOAD_PAYMENT: "Unggah ulang bukti",
+  PAY_SETTLEMENT: "Bayar pelunasan",
+  COMPLETE_SHIPPING: "Lengkapi pengiriman",
+  TRACK_SHIPMENT: "Lacak pesanan",
+  NONE: "Lihat detail",
 };
 
 const STATUS: Record<string, { label: string; className: string }> = {
@@ -108,18 +123,28 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         {data.orders.length ? <div className="space-y-3">{data.orders.map((order) => {
           const status = STATUS[order.status] ?? { label: order.status, className: "bg-sand-100 text-sand-700" };
           const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
-          const action = order.status === "AWAITING_DOWN_PAYMENT" || order.status === "SUBMITTED" ? "Bayar sekarang" : "Lihat detail";
+          const action = NEXT_ACTION[order.nextAction] ?? "Lihat detail";
+          const thumb = order.items[0]?.salesEventItem?.displayImages[0] ?? order.items[0]?.salesEventItem?.productVariant.images[0] ?? null;
           return <article key={order.id} className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-md">
             <div className="flex items-center justify-between gap-3 border-b border-sand-100 bg-sand-50/70 px-4 py-3 sm:px-5">
               <p className="text-xs font-bold text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p>
               <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-extrabold ${status.className}`}>{status.label}</span>
             </div>
-            <div className="p-4 sm:p-5">
-              <Link href={`/account/orders/${order.id}`} className="block text-base font-extrabold text-sand-900 hover:text-brand-700">{order.salesEvent.title}</Link>
-              <p className="mt-1 text-sm text-sand-500">{itemCount} item{order.items[0]?.variantNameSnapshot ? ` · ${order.items[0].variantNameSnapshot}` : ""}</p>
-              <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-sand-100 pt-4">
-                <div><p className="text-[0.68rem] font-bold uppercase tracking-wide text-sand-400">Total pesanan</p><p className="mt-0.5 text-xl font-extrabold text-brand-700">{formatRupiah(order.billing.total)}</p>{order.billing.remaining > 0 && <p className="mt-1 text-xs font-semibold text-sun-800">Sisa pembayaran {formatRupiah(order.billing.remaining)}</p>}</div>
-                <Link href={`/account/orders/${order.id}`} className="inline-flex min-h-10 items-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white hover:bg-brand-700">{action}</Link>
+            <div className="flex gap-3 p-4 sm:p-5">
+              {thumb ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={thumb} alt={order.salesEvent.title} className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-sand-200" />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-sand-100 text-xs text-sand-400">—</div>
+              )}
+              <div className="min-w-0 flex-1">
+                <Link href={`/account/orders/${order.id}`} className="block text-base font-extrabold text-sand-900 hover:text-brand-700">{order.salesEvent.title}</Link>
+                <p className="mt-1 text-sm text-sand-500">{itemCount} item{order.items[0]?.variantNameSnapshot ? ` · ${order.items[0].variantNameSnapshot}` : ""}</p>
+                {order.rejectionReason && <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">Pembayaran ditolak: {order.rejectionReason}</p>}
+                <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-sand-100 pt-4">
+                  <div><p className="text-[0.68rem] font-bold uppercase tracking-wide text-sand-400">Total pesanan</p><p className="mt-0.5 text-xl font-extrabold text-brand-700">{formatRupiah(order.billing.total)}</p>{order.billing.remaining > 0 && <p className="mt-1 text-xs font-semibold text-sun-800">Sisa pembayaran {formatRupiah(order.billing.remaining)}</p>}</div>
+                  <Link href={`/account/orders/${order.id}`} className="inline-flex min-h-10 items-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white hover:bg-brand-700">{action}</Link>
+                </div>
               </div>
             </div>
           </article>;
