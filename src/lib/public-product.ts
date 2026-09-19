@@ -1,6 +1,19 @@
 import { api } from "@/lib/api";
 import type { PaymentScheme } from "@/lib/types";
 
+export type PublicOffering = {
+  salesEventId: string;
+  formToken: string;
+  eventTitle: string;
+  status: string;
+  endsAt: string;
+  price: number;
+  quotaRemaining: number;
+  label: string | null;
+  orderable: boolean;
+  paymentScheme: PaymentScheme;
+};
+
 export type PublicProduct = {
   id: string;
   name: string;
@@ -23,20 +36,8 @@ export type PublicProduct = {
     description: string | null;
     images: string[];
     colors: string[];
-    offering: null | {
-      salesEventId: string;
-      formToken: string;
-      eventTitle: string;
-      status: string;
-      endsAt: string;
-      price: number;
-      quotaRemaining: number;
-      label: string | null;
-      orderable: boolean;
-      paymentScheme: PaymentScheme;
-      productionEstimate: string | null;
-      shippingEstimate: string | null;
-    };
+    offering: PublicOffering | null;
+    offerings: PublicOffering[];
   }>;
 };
 

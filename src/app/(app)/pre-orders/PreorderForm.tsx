@@ -50,6 +50,9 @@ export type VendorOption = {
 export type PreorderFormValues = {
   namaProduk?: string;
   deskripsi?: string;
+  productSlug?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   deskripsiPelunasan?: string;
   linkCheckoutShopee?: string;
   tanggalBuka?: string;
@@ -145,7 +148,7 @@ export function PreorderForm({
     <form action={formAction} className="space-y-6">
       {state?.error && <FormError message={state.error} />}
 
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">
           Detail Produk
         </h3>
@@ -158,6 +161,17 @@ export function PreorderForm({
                 placeholder="mis. Kaos Komunitas Batch 1"
                 required
               />
+            </Field>
+          </div>
+          <Field label="Slug produk" hint="Opsional. URL lama otomatis diarahkan saat slug diubah.">
+            <Input name="productSlug" defaultValue={initial?.productSlug ?? ""} placeholder="kaos-komunitas" pattern="[a-zA-Z0-9-]+" />
+          </Field>
+          <Field label="Judul SEO">
+            <Input name="seoTitle" defaultValue={initial?.seoTitle ?? ""} maxLength={120} placeholder="Judul untuk hasil pencarian" />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Deskripsi SEO">
+              <Textarea name="seoDescription" defaultValue={initial?.seoDescription ?? ""} rows={3} maxLength={300} placeholder="Ringkasan produk untuk mesin pencari dan share preview" />
             </Field>
           </div>
           <div className="sm:col-span-2">
@@ -179,7 +193,7 @@ export function PreorderForm({
         </p>
       </Card>
 
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">
           Jadwal PO
         </h3>
@@ -217,7 +231,7 @@ export function PreorderForm({
         </div>
       </Card>
 
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">
           Skema Pembayaran
         </h3>
@@ -238,7 +252,7 @@ export function PreorderForm({
             </Select>
           </Field>
           {scheme === "DP_PELUNASAN" && (
-            <Field label="Tipe DP" hint="Persentase dari total, atau nominal tetap.">
+            <Field label="Tipe DP" hint="Persentase harga per unit, atau nominal tetap per unit produk.">
               <Select
                 name="dpTipe"
                 value={dpTipe}
@@ -250,7 +264,7 @@ export function PreorderForm({
             </Field>
           )}
           {scheme === "DP_PELUNASAN" && dpTipe === "PERSEN" && (
-            <Field label="Persentase DP (%)" hint="Contoh: 50 untuk DP 50%">
+            <Field label="Persentase DP (%)" hint="Contoh 50: DP sebesar 50% dari harga setiap unit produk.">
               <Input
                 name="dpPercent"
                 type="number"
@@ -261,7 +275,7 @@ export function PreorderForm({
             </Field>
           )}
           {scheme === "DP_PELUNASAN" && dpTipe === "NOMINAL" && (
-            <Field label="Nominal DP (Rp)" required hint="DP tetap per pesanan, mis. 100.000">
+            <Field label="Nominal DP per unit (Rp)" required hint="Contoh 100.000: pesanan 3 unit memiliki total DP 300.000, maksimal sebesar total pesanan.">
               <CurrencyInput
                 name="dpNominal"
                 defaultValue={initial?.dpNominal ?? ""}
@@ -310,7 +324,7 @@ export function PreorderForm({
         )}
       </Card>
 
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">Vendor</h3>
         <p className="mb-3 text-xs text-sand-500">
           Pilih satu atau lebih vendor. Vendor per item ditentukan pada bagian varian.
@@ -348,7 +362,7 @@ export function PreorderForm({
         )}
       </Card>
 
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-sand-900">
             Varian & Kuota
@@ -413,8 +427,8 @@ export function PreorderForm({
                 </div>
                 {isExpanded && (
                   <>
-                    <div className="mt-3 flex flex-wrap items-end gap-2">
-                      <div className="min-w-40 flex-1">
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end">
+                      <div className="col-span-2 sm:min-w-40 sm:flex-1">
                         <Field label="Nama varian">
                           <Input
                             value={v.namaVarian}
@@ -425,7 +439,7 @@ export function PreorderForm({
                           />
                         </Field>
                       </div>
-                      <div className="w-28">
+                      <div className="sm:w-28">
                         <Field label="Harga (Rp)">
                           <CurrencyInput
                             value={v.harga}
@@ -439,7 +453,7 @@ export function PreorderForm({
                           />
                         </Field>
                       </div>
-                      <div className="w-24">
+                      <div className="sm:w-24">
                         <Field label="Kuota">
                           <Input
                             type="number"
@@ -549,9 +563,9 @@ export function PreorderForm({
       </Card>
 
       {/* Spacer supaya konten terakhir tidak tertutup tombol floating di mobile. */}
-      <div className="h-20 lg:hidden" />
+      <div className="h-24 lg:hidden" />
 
-      <div className="safe-bottom fixed inset-x-0 bottom-[57px] z-30 border-t border-sand-200 bg-white/95 px-4 py-3 backdrop-blur lg:static lg:inset-auto lg:z-auto lg:flex lg:justify-end lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
+      <div className="fixed inset-x-0 bottom-[68px] z-30 border-t border-sand-200 bg-white px-4 py-3 shadow-[0_-8px_20px_-6px_rgba(28,25,23,0.12)] lg:static lg:inset-auto lg:z-auto lg:flex lg:justify-end lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:shadow-none">
         <Button type="submit" disabled={pending} className="w-full lg:w-auto">
           {pending ? "Menyimpan…" : submitLabel}
         </Button>

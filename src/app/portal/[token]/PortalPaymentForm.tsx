@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useActionState, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { Button, Field, FormError, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
+import { ToastFeedback } from "@/components/Toast";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -18,21 +19,30 @@ import {
 // Pada tahap pelunasan (isPelunasan), pembeli wajib memilih metode pengiriman;
 // opsi Ekspedisi mewajibkan alamat lengkap, Shopee tidak butuh alamat (v1.8).
 //
-// v2.1 — bila gatewayEnabled, pembeli bisa memilih "Bayar otomatis" (QRIS / VA /
-// e-wallet / kartu) yang mengarahkan ke halaman pembayaran; atau tetap transfer
-// manual + unggah bukti seperti sebelumnya.
+// Kanal pembayaran dikunci mengikuti pilihan saat checkout. Portal tidak
+// menawarkan perpindahan dari transfer manual ke gateway atau sebaliknya.
 export function PortalPaymentForm({
   token,
-  sisa,
+  amountDue,
   isPelunasan,
-  gatewayEnabled = false,
+  paymentChannel,
+  gatewayAvailable = false,
+  manualTransfer,
   linkCheckoutShopee,
+  resumePayment = false,
 }: {
   token: string;
-  sisa: number;
+  amountDue: number;
   isPelunasan: boolean;
-  gatewayEnabled?: boolean;
+  paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
+  gatewayAvailable?: boolean;
+  manualTransfer?: {
+    bankName: string | null;
+    accountNumber: string | null;
+    accountHolderName: string | null;
+  } | null;
   linkCheckoutShopee?: string | null;
+  resumePayment?: boolean;
 }) {
   const manualAction = submitPortalPayment.bind(null, token);
   const [state, formAction, manualPending] = useActionState<
@@ -46,11 +56,13 @@ export function PortalPaymentForm({
   >(gatewayAction, undefined);
 
   const pending = manualPending || gwPending;
-  const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
-    gatewayEnabled ? "GATEWAY" : "MANUAL",
+  const gateway = paymentChannel === "GATEWAY";
+  const manualAccountReady = Boolean(
+    manualTransfer?.bankName &&
+      manualTransfer.accountNumber &&
+      manualTransfer.accountHolderName,
   );
-  const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
-  const [jumlah, setJumlah] = useState(String(sisa));
+  const jumlah = String(amountDue);
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
   const [alamat, setAlamat] = useState("");
   const [localError, setLocalError] = useState<string | undefined>();
@@ -84,57 +96,53 @@ export function PortalPaymentForm({
     startTransition(() => (gateway ? gwFormAction(fd) : formAction(fd)));
   }
 
+  const errorMessage = localError ?? state?.error ?? gwState?.error;
+
+  useEffect(() => {
+    if (!resumePayment && !errorMessage) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById("portal-payment-form")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, resumePayment ? 150 : 0);
+    return () => window.clearTimeout(timer);
+  }, [errorMessage, resumePayment]);
+
   if (state?.ok) {
     return (
       <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">
+        <ToastFeedback success="Pembayaran terkirim dan sedang menunggu verifikasi Admin." />
         Pembayaran Anda terkirim dan sedang menunggu verifikasi Admin. Status
         akan diperbarui setelah diverifikasi.
       </div>
     );
   }
 
-  const errorMessage = localError ?? state?.error ?? gwState?.error;
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form id="portal-payment-form" onSubmit={handleSubmit} className="scroll-mt-24 space-y-3">
       {errorMessage && <FormError message={errorMessage} />}
 
-      {gatewayEnabled && (
-        <Field label="Metode pembayaran" required>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {(
-              [
-                ["GATEWAY", "Bayar otomatis", "QRIS / VA / e-wallet / kartu"],
-                ["MANUAL", "Transfer manual", "Transfer bank + unggah bukti"],
-              ] as const
-            ).map(([value, judul, sub]) => (
-              <label
-                key={value}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm ${
-                  metodeBayar === value
-                    ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
-                    : "border-sand-200 hover:border-sand-300"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="metodeBayarRadio"
-                  value={value}
-                  checked={metodeBayar === value}
-                  onChange={() => setMetodeBayar(value)}
-                  className="mt-0.5 h-4 w-4 accent-brand-600"
-                />
-                <span>
-                  <span className="block font-medium text-sand-800">
-                    {judul}
-                  </span>
-                  <span className="block text-xs text-sand-500">{sub}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </Field>
-      )}
+      <div className={`rounded-xl px-4 py-3 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>
+        <p className="text-xs font-extrabold uppercase tracking-wider">
+          {gateway ? "Pembayaran otomatis" : "Rekening tujuan Seller"}
+        </p>
+        {gateway ? (
+          <p className={`mt-1 text-sm ${gatewayAvailable ? "" : "font-bold text-rose-700"}`}>
+            {gatewayAvailable
+              ? "Metode pembayaran mengikuti pilihan saat checkout dan diproses melalui payment gateway."
+              : "Payment gateway sedang tidak tersedia. Coba lagi beberapa saat atau hubungi Seller."}
+          </p>
+        ) : manualAccountReady ? (
+          <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+            <div><dt className="text-xs opacity-70">Bank</dt><dd className="font-extrabold">{manualTransfer!.bankName}</dd></div>
+            <div><dt className="text-xs opacity-70">Nomor rekening</dt><dd className="font-mono text-base font-extrabold tracking-wide">{manualTransfer!.accountNumber}</dd></div>
+            <div className="sm:col-span-2"><dt className="text-xs opacity-70">Atas nama</dt><dd className="font-extrabold">{manualTransfer!.accountHolderName}</dd></div>
+          </dl>
+        ) : (
+          <p className="mt-1 text-sm font-bold text-rose-700">Rekening Seller belum tersedia. Hubungi Seller sebelum melakukan transfer.</p>
+        )}
+      </div>
 
       {isPelunasan && (
         <Field
@@ -228,8 +236,8 @@ export function PortalPaymentForm({
           name="jumlahBayar"
           required
           value={jumlah}
-          onValueChange={setJumlah}
-          placeholder="0"
+          readOnly
+          className="bg-sand-50 font-bold"
         />
       </Field>
 
@@ -248,7 +256,11 @@ export function PortalPaymentForm({
         />
       )}
 
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={pending || (gateway ? !gatewayAvailable : !manualAccountReady)}
+      >
         {pending
           ? gateway
             ? "Mengarahkan…"

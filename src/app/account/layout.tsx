@@ -13,11 +13,11 @@ export default async function AccountLayout({ children }: { children: ReactNode 
         <nav className="mx-auto flex min-h-16 max-w-6xl items-center gap-2 px-4 sm:gap-4 sm:px-6">
           <SerahinLogo href="/" size="sm" />
           {isBuyer && (
-            <>
-              <Link href="/account" className="ml-auto hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Pesanan Saya</Link>
+            <div className="ml-auto flex items-center gap-2">
+              <Link href="/account" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Pesanan Saya</Link>
               <Link href="/account/profile" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Profil</Link>
               <ProfileMenu user={{ name: user.name, email: user.email, role: "BUYER" }} />
-            </>
+            </div>
           )}
         </nav>
       </header>

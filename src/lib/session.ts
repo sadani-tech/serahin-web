@@ -3,9 +3,11 @@ import { jwtVerify } from "jose";
 import type { SessionUser } from "@/lib/types";
 import { TOKEN_COOKIE } from "@/lib/api";
 
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "dev-secret",
-);
+const configuredSecret = process.env.JWT_SECRET?.trim() ?? "";
+if (process.env.NODE_ENV === "production" && (configuredSecret.length < 32 || ["change-me", "dev-secret", "secret"].includes(configuredSecret))) {
+  throw new Error("JWT_SECRET production wajib unik dan minimal 32 karakter.");
+}
+const secret = new TextEncoder().encode(configuredSecret || "dev-secret");
 
 /** Baca & verifikasi JWT dari cookie; null bila tidak ada / invalid. */
 export async function getSession(): Promise<SessionUser | null> {
@@ -14,11 +16,12 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret);
+    if (payload.role !== "ADMIN" && payload.role !== "SELLER" && payload.role !== "BUYER") return null;
     return {
       id: payload.sub as string,
       email: payload.email as string | null,
       name: payload.name as string,
-      role: (payload.role as SessionUser["role"]) ?? "ADMIN",
+      role: payload.role,
       actorType: (payload.actorType as SessionUser["role"]) ?? (payload.role as SessionUser["role"]),
       sellerId: payload.sellerId as string | undefined,
     };

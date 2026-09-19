@@ -19,9 +19,7 @@ import {
   CAMPAIGN_STATUS_LABEL,
   ORDER_STATUS_LABEL,
   PAYMENT_SCHEME_LABEL,
-  orderAktif,
 } from "@/lib/domain";
-import { computeBilling } from "@/lib/billing";
 import {
   computeVendorStats,
   ratingStars,
@@ -33,7 +31,6 @@ import type {
   CampaignStatus,
   PaymentScheme,
   DpTipe,
-  PaymentVerification,
   KetepatanWaktu,
   KesesuaianKualitas,
 } from "@/lib/types";
@@ -44,10 +41,23 @@ import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
 import { OrderBulkTable, type OrderRow } from "@/components/OrderBulkTable";
+import { DestructiveActionForm } from "@/components/DestructiveActionForm";
+import { getSession } from "@/lib/session";
+import { removeInvalidOrder } from "../../management-actions";
 
 export const dynamic = "force-dynamic";
 
 type Tab = "info" | "pesanan" | "timeline";
+
+const MILESTONE_LABEL: Record<string, string> = {
+  OPEN: "Open",
+  CLOSED: "Closed",
+  PRODUCTION: "Produksi",
+  SHIPMENT: "Shipment",
+  PACKING: "Packing",
+  DELIVERED: "Deliver",
+  COMPLETED: "Selesai",
+};
 
 type CampaignDetail = {
   namaProduk: string;
@@ -65,12 +75,15 @@ type CampaignDetail = {
   deskripsi: string | null;
   formToken: string;
   formAktif: boolean;
+  orderCount: number;
   variants: {
     id: string;
     namaVarian: string;
     kuotaMaks: number;
     harga: string;
     hargaPerluTinjau: boolean;
+    terisi: number;
+    sisa: number;
     vendor: { id: string; nama: string } | null;
   }[];
   timelineEntries: {
@@ -82,19 +95,7 @@ type CampaignDetail = {
     dibuatOleh: { name: string } | null;
     milestoneCode: string | null;
   }[];
-  orders: {
-    id: string;
-    namaPembeli: string;
-    kontak: string;
-    status: OrderStatus;
-    items: {
-      variantId: string;
-      jumlah: number;
-      hargaSaatPesan: string;
-      variant: { id: string; namaVarian: string };
-    }[];
-    payments: { jumlah: string; statusVerifikasi: PaymentVerification }[];
-  }[];
+  orders: never[];
   vendors: { id: string; nama: string; evaluations: EvalInput[] }[];
   evaluations: {
     vendorId: string;
@@ -106,15 +107,45 @@ type CampaignDetail = {
   }[];
 };
 
+type CampaignOrderEnvelope = {
+  data: Array<{
+    id: string;
+    namaPembeli: string;
+    kontak: string;
+    status: OrderStatus;
+    createdAt: string;
+    items: Array<{ variantId: string; namaVarian: string; jumlah: number }>;
+    billing: { total: number; dibayar: number; menunggu: number; sisa: number };
+    paymentStatus: string;
+    shipment: { method: "SHOPEE" | "COURIER"; label: string; courier: string | null; trackingNumber: string | null } | null;
+  }>;
+  meta: { page: number; limit: number; total: number; totalPages: number };
+  filters: { variants: Array<{ id: string; name: string }>; shippingMethods: string[] };
+};
+
+const ORDER_FILTERS = [
+  ["SUBMITTED", "Baru Masuk"],
+  ["AWAITING_DOWN_PAYMENT", "Menunggu DP"],
+  ["DOWN_PAYMENT_RECEIVED", "DP Diterima"],
+  ["PAID", "Lunas"],
+  ["IN_PRODUCTION", "Produksi"],
+  ["READY_TO_SHIP", "Siap Kirim"],
+  ["SHIPPED", "Dikirim"],
+  ["COMPLETED", "Selesai"],
+  ["CANCELLED", "Dibatalkan"],
+  ["REJECTED", "Ditolak"],
+] as const;
+
 export default async function CampaignDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string; status?: string; variant?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; status?: string; payment?: string; variant?: string; shipping?: string; page?: string; limit?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
+  const session = await getSession();
   const tab: Tab = (["info", "pesanan", "timeline"].includes(sp.tab ?? "")
     ? sp.tab
     : "info") as Tab;
@@ -128,56 +159,40 @@ export default async function CampaignDetailPage({
   }
 
   // Kuota terisi per varian (item pesanan aktif) — v1.5.
-  const terisiPerVarian = new Map<string, number>();
-  for (const o of campaign.orders) {
-    if (!orderAktif(o.status)) continue;
-    for (const it of o.items) {
-      terisiPerVarian.set(
-        it.variantId,
-        (terisiPerVarian.get(it.variantId) ?? 0) + it.jumlah,
-      );
-    }
-  }
   const kuotaTotal = campaign.variants.reduce((s, v) => s + v.kuotaMaks, 0);
-  const kuotaTerisi = campaign.variants.reduce(
-    (s, v) => s + (terisiPerVarian.get(v.id) ?? 0),
-    0,
-  );
-
-  // Filter pesanan (FR-2.4).
-  const filterStatus = sp.status as OrderStatus | undefined;
-  const filterVariant = sp.variant;
-  const orders = campaign.orders.filter((o) => {
-    if (filterStatus && o.status !== filterStatus) return false;
-    if (filterVariant && !o.items.some((it) => it.variantId === filterVariant))
-      return false;
-    return true;
-  });
+  const kuotaTerisi = campaign.variants.reduce((s, v) => s + (v.terisi ?? 0), 0);
+  const requestedPage = Math.max(1, Number(sp.page) || 1);
+  const requestedLimit = [10, 25, 50, 100].includes(Number(sp.limit)) ? Number(sp.limit) : 25;
+  const ordersEnvelope = tab === "pesanan"
+    ? await api.get<CampaignOrderEnvelope>(`/pre-orders/${id}/orders`, {
+        page: requestedPage,
+        limit: requestedLimit,
+        search: sp.q,
+        orderStatus: sp.status,
+        paymentStatus: sp.payment,
+        variantId: sp.variant,
+        shippingMethod: sp.shipping,
+      })
+    : null;
+  const orders = ordersEnvelope?.data ?? [];
 
   // Baris pesanan siap-render untuk tabel bulk (billing dihitung di server).
-  const orderRows: OrderRow[] = orders.map((o) => {
-    const billing = computeBilling({
-      items: o.items,
-      paymentScheme: campaign.paymentScheme,
-      dpTipe: campaign.dpTipe,
-      dpPercent: campaign.dpPercent,
-      dpNominal: campaign.dpNominal,
-      payments: o.payments,
-    });
-    return {
+  const orderRows: OrderRow[] = orders.map((o) => ({
       id: o.id,
       namaPembeli: o.namaPembeli,
       kontak: o.kontak,
       varianLabel:
         o.items.length === 1
-          ? o.items[0].variant.namaVarian
+          ? o.items[0].namaVarian
           : `${o.items.length} varian`,
       totalQty: o.items.reduce((s, it) => s + it.jumlah, 0),
       status: o.status,
-      sisa: billing.sisa,
-      aktif: orderAktif(o.status),
-    };
-  });
+      sisa: o.billing.sisa,
+      aktif: !["DIBATALKAN", "DITOLAK"].includes(o.status),
+      paymentStatus: o.paymentStatus,
+      shipment: o.shipment,
+      createdAt: o.createdAt,
+    }));
 
   const deadlineLewat =
     !!campaign.deadlinePelunasan &&
@@ -185,6 +200,17 @@ export default async function CampaignDetailPage({
     new Date(campaign.deadlinePelunasan).getTime() < Date.now();
 
   const tabHref = (t: Tab) => `/pre-orders/${id}?tab=${t}`;
+  const ordersHref = (page: number) => {
+    const query = new URLSearchParams({ tab: "pesanan" });
+    if (sp.q) query.set("q", sp.q);
+    if (sp.status) query.set("status", sp.status);
+    if (sp.payment) query.set("payment", sp.payment);
+    if (sp.variant) query.set("variant", sp.variant);
+    if (sp.shipping) query.set("shipping", sp.shipping);
+    if (requestedLimit !== 25) query.set("limit", String(requestedLimit));
+    if (page > 1) query.set("page", String(page));
+    return `/pre-orders/${id}?${query.toString()}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -236,7 +262,7 @@ export default async function CampaignDetailPage({
         {(
           [
             ["info", "Info & Status"],
-            ["pesanan", `Pesanan (${campaign.orders.length})`],
+            ["pesanan", `Pesanan (${campaign.orderCount})`],
             ["timeline", `Timeline (${campaign.timelineEntries.length})`],
           ] as [Tab, string][]
         ).map(([t, label]) => (
@@ -302,7 +328,7 @@ export default async function CampaignDetailPage({
               />
               <ScrollList className="divide-y divide-sand-100" maxRows={15}>
                 {campaign.variants.map((v) => {
-                  const terisi = terisiPerVarian.get(v.id) ?? 0;
+                  const terisi = v.terisi ?? 0;
                   const persen = v.kuotaMaks
                     ? Math.min(100, Math.round((terisi / v.kuotaMaks) * 100))
                     : 0;
@@ -453,7 +479,7 @@ export default async function CampaignDetailPage({
         <Card>
           <CardHeader
             title="Pesanan"
-            subtitle={`${orders.length} pesanan ditampilkan`}
+            subtitle={`${ordersEnvelope?.meta.total ?? 0} pesanan ditemukan`}
             action={
               <LinkButton href={`/pre-orders/${id}/pesanan/baru`}>
                 + Tambah Pesanan
@@ -461,19 +487,23 @@ export default async function CampaignDetailPage({
             }
           />
           {/* Filter */}
-          <form className="flex flex-wrap items-end gap-3 border-b border-sand-100 px-5 py-4">
+          <form className="grid grid-cols-2 gap-2.5 border-b border-sand-100 px-3.5 py-3.5 sm:gap-3 sm:px-5 sm:py-4 md:grid-cols-3 xl:grid-cols-6">
             <input type="hidden" name="tab" value="pesanan" />
+            <label className="col-span-2 text-xs font-medium text-sand-500 md:col-span-2">
+              Cari pesanan
+              <input name="q" defaultValue={sp.q ?? ""} placeholder="Nama, email, nomor pesanan, SKU, resi" className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs text-sand-900 sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm" />
+            </label>
             <div>
               <label className="mb-1 block text-xs font-medium text-sand-500">
                 Status
               </label>
               <select
                 name="status"
-                defaultValue={filterStatus ?? ""}
-                className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
+                defaultValue={sp.status ?? ""}
+                className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm"
               >
                 <option value="">Semua status</option>
-                {Object.entries(ORDER_STATUS_LABEL).map(([v, l]) => (
+                {ORDER_FILTERS.map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
                   </option>
@@ -486,8 +516,8 @@ export default async function CampaignDetailPage({
               </label>
               <select
                 name="variant"
-                defaultValue={filterVariant ?? ""}
-                className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm"
+                defaultValue={sp.variant ?? ""}
+                className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm"
               >
                 <option value="">Semua varian</option>
                 {campaign.variants.map((v) => (
@@ -497,20 +527,40 @@ export default async function CampaignDetailPage({
                 ))}
               </select>
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-sand-500">Pembayaran</label>
+              <select name="payment" defaultValue={sp.payment ?? ""} className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm">
+                <option value="">Semua pembayaran</option>
+                <option value="PENDING_VERIFICATION">Menunggu Verifikasi</option>
+                <option value="VERIFIED">Terverifikasi</option>
+                <option value="REJECTED">Ditolak</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-sand-500">Pengiriman</label>
+              <select name="shipping" defaultValue={sp.shipping ?? ""} className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm">
+                <option value="">Semua pengiriman</option>
+                <option value="SHOPEE">Shopee</option>
+                <option value="COURIER">Manual/Ekspedisi</option>
+                <option value="NONE">Belum dipilih</option>
+              </select>
+            </div>
+            <div className="col-span-2 flex items-end gap-2 md:col-span-3 xl:col-span-6">
             <button
               type="submit"
-              className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700"
+              className="min-h-9 rounded-lg bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
             >
               Terapkan
             </button>
-            {(filterStatus || filterVariant) && (
+            {(sp.q || sp.status || sp.payment || sp.variant || sp.shipping) && (
               <Link
                 href={tabHref("pesanan")}
-                className="px-2 py-1.5 text-sm text-sand-500 hover:text-sand-700"
+                className="px-2 py-1.5 text-xs text-sand-500 hover:text-sand-700 sm:text-sm"
               >
                 Reset
               </Link>
             )}
+            </div>
           </form>
 
           {orders.length === 0 ? (
@@ -519,7 +569,30 @@ export default async function CampaignDetailPage({
               description="Belum ada pesanan yang cocok dengan filter."
             />
           ) : (
-            <OrderBulkTable campaignId={id} rows={orderRows} />
+            <>
+              <OrderBulkTable campaignId={id} rows={orderRows} />
+              {session?.role === "ADMIN" && (
+                <div className="border-t border-sand-200 bg-rose-50/40 p-4">
+                  <h3 className="font-extrabold text-sand-900">Pembersihan pesanan invalid</h3>
+                  <p className="mt-1 text-xs text-sand-500">Order tanpa payment/shipment dihapus permanen. Order dengan histori finansial hanya dibatalkan dan diarsipkan.</p>
+                  <div className="mt-3 space-y-3">
+                    {orders.map((order) => (
+                      <div key={order.id} className="rounded-xl border border-sand-200 bg-white p-3">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div><p className="text-sm font-bold text-sand-900">{order.namaPembeli}</p><p className="font-mono text-xs text-sand-500">{order.id}</p></div><span className="text-xs font-bold text-sand-500">{ORDER_STATUS_LABEL[order.status]}</span></div>
+                        <DestructiveActionForm action={removeInvalidOrder.bind(null, id, order.id)} target={order.id} label="Bersihkan pesanan" compact />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(ordersEnvelope?.meta.totalPages ?? 0) > 1 && (
+                <nav className="flex items-center justify-center gap-3 border-t border-sand-100 px-5 py-4 text-sm font-bold" aria-label="Navigasi halaman pesanan">
+                  {requestedPage > 1 ? <Link href={ordersHref(requestedPage - 1)} className="rounded-lg border border-sand-200 px-3 py-2">Sebelumnya</Link> : <span />}
+                  <span className="text-sand-500">Halaman {ordersEnvelope?.meta.page} dari {ordersEnvelope?.meta.totalPages}</span>
+                  {requestedPage < (ordersEnvelope?.meta.totalPages ?? 1) ? <Link href={ordersHref(requestedPage + 1)} className="rounded-lg border border-sand-200 px-3 py-2">Berikutnya</Link> : <span />}
+                </nav>
+              )}
+            </>
           )}
         </Card>
       )}
@@ -548,7 +621,7 @@ export default async function CampaignDetailPage({
                         )}
                         {e.milestoneCode && (
                           <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">
-                            {e.milestoneCode.replaceAll("_", " ")}
+                            {MILESTONE_LABEL[e.milestoneCode] ?? e.milestoneCode.replaceAll("_", " ")}
                           </span>
                         )}
                       </div>
@@ -599,7 +672,7 @@ function Info({
   );
 }
 
-// Label DP sesuai tipe: "DP 50%" atau "DP Rp100.000"; null bila skema LUNAS.
+// Label DP sesuai tipe; nilai nominal selalu berlaku per unit produk.
 function dpLabel(c: {
   paymentScheme: PaymentScheme;
   dpTipe: DpTipe | null;
@@ -608,7 +681,7 @@ function dpLabel(c: {
 }): string | null {
   if (c.paymentScheme !== "DP_PELUNASAN") return null;
   if (c.dpTipe === "NOMINAL") {
-    return c.dpNominal != null ? `DP ${formatRupiah(c.dpNominal)}` : null;
+    return c.dpNominal != null ? `DP ${formatRupiah(c.dpNominal)} / unit` : null;
   }
   return c.dpPercent != null ? `DP ${c.dpPercent}%` : null;
 }

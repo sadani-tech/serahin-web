@@ -54,13 +54,13 @@ export default async function ProductPage({
     description: product.seoDescription ?? undefined,
     image: product.variants.flatMap((variant) => variant.images),
     brand: { "@type": "Brand", name: product.seller.businessName },
-    offers: product.variants.filter((variant) => variant.offering).map((variant) => ({
-      "@type": "Offer", priceCurrency: "IDR", price: variant.offering!.price,
+    offers: product.variants.flatMap((variant) => (variant.offerings?.length ? variant.offerings : variant.offering ? [variant.offering] : []).map((offering) => ({
+      "@type": "Offer", priceCurrency: "IDR", price: offering.price,
       url: canonicalUrl,
       sku: variant.sku ?? undefined,
       seller: { "@type": "Organization", name: product.seller.businessName },
-      availability: variant.offering!.orderable && variant.offering!.quotaRemaining > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-    })),
+      availability: offering.orderable && offering.quotaRemaining > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    }))),
   };
   return <div className="bg-serahin-dots min-h-full">
       <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} />

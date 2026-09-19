@@ -5,6 +5,7 @@ import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { publicSite } from "@/lib/public-site";
 import { getSession } from "@/lib/session";
 import { CartProvider } from "@/components/CartProvider";
+import { ToastProvider } from "@/components/Toast";
 
 // Nunito — sans-serif membulat yang senada dengan lambang Serahin.
 // Di-host sendiri saat build oleh next/font, jadi tidak ada request ke
@@ -67,9 +68,13 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-sand-50 text-sand-900">
-        <CartProvider authenticated={session?.role === "BUYER"}>
-          <ConfirmProvider>{children}</ConfirmProvider>
-        </CartProvider>
+        <ToastProvider>
+          <ConfirmProvider>
+            <CartProvider authenticated={session?.role === "BUYER"}>
+              {children}
+            </CartProvider>
+          </ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );

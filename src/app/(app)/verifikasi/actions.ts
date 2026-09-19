@@ -26,3 +26,25 @@ export async function reviewOrders(
     };
   }
 }
+
+export async function reviewPayments(
+  ids: string[],
+  keputusan: "TERVERIFIKASI" | "DITOLAK",
+  alasan?: string,
+): Promise<{ updated?: number; error?: string }> {
+  if (!ids.length) return { updated: 0 };
+  if (keputusan === "DITOLAK" && !alasan?.trim()) return { error: "Alasan penolakan wajib diisi." };
+  try {
+    const result = await api.post<{ updated: number }>("/payments/bulk-verify", {
+      ids,
+      keputusan,
+      alasan: alasan?.trim(),
+    });
+    revalidatePath("/verifikasi");
+    revalidatePath("/dashboard");
+    revalidatePath("/seller/dashboard");
+    return result;
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal memproses pembayaran." };
+  }
+}

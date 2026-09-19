@@ -1,6 +1,7 @@
 import { AuthForm } from "../AuthForm";
 import { AuthShell } from "../AuthShell";
 import { buyerRegisterAction } from "@/lib/buyer-auth-actions";
+import { GoogleBuyerSignIn } from "@/components/GoogleBuyerSignIn";
 
 export default async function BuyerRegisterPage({ searchParams }: { searchParams: Promise<{ callbackUrl?: string }> }) {
   const { callbackUrl = "/account" } = await searchParams;
@@ -12,6 +13,6 @@ export default async function BuyerRegisterPage({ searchParams }: { searchParams
       { name: "password", label: "Kata sandi (min. 8 karakter)", type: "password", autoComplete: "new-password" },
       { name: "confirmPassword", label: "Ulangi kata sandi", type: "password", autoComplete: "new-password" },
       { name: "acceptPolicies", label: "Saya menyetujui Syarat & Ketentuan, Kebijakan Privasi, dan Kebijakan Refund Serahin.", type: "checkbox", required: true },
-    ]} footer={{ href: `/account/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, label: "Sudah punya akun? Masuk" }} success={{ title: "Pendaftaran berhasil", copy: "Kami sudah mengirim email aktivasi ke alamat yang Anda daftarkan. Buka email tersebut dan tekan tombol Aktifkan akun untuk menyelesaikan pendaftaran." }} />
+    ]} footer={{ href: `/account/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, label: "Sudah punya akun? Masuk" }} success={{ title: "Pendaftaran berhasil", copy: "Kami sudah mengirim email aktivasi ke alamat yang Anda daftarkan. Buka email tersebut dan tekan tombol Aktifkan akun untuk menyelesaikan pendaftaran." }} social={<GoogleBuyerSignIn callbackUrl={callbackUrl} />} />
   </AuthShell>;
 }

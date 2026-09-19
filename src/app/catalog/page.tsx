@@ -10,6 +10,8 @@ import { formatRupiah, formatTanggal } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import { publicSite } from "@/lib/public-site";
 import { toPublicSlug } from "@/lib/slug";
+import { CatalogQuickAdd } from "@/components/CatalogQuickAdd";
+import { ToastFeedback } from "@/components/Toast";
 
 export const dynamic = "force-dynamic";
 
@@ -123,21 +125,21 @@ export default async function CatalogPage({
           <form
             action="/catalog"
             method="get"
-            className="mt-7 grid gap-4 rounded-3xl border border-brand-100 bg-white/95 p-5 shadow-[0_18px_50px_rgba(38,76,39,.09)] md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.3fr_auto] lg:items-end"
+            className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-brand-100 bg-white/95 p-3.5 shadow-[0_18px_50px_rgba(38,76,39,.09)] sm:mt-7 sm:gap-4 sm:rounded-3xl sm:p-5 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.3fr_auto] lg:items-end"
           >
-            <label className="block text-sm font-bold text-sand-700">
+            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Seller
-              <select name="seller" defaultValue={params.seller ?? ""} className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium">
+              <select name="seller" defaultValue={params.seller ?? ""} className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">
                 <option value="">Semua Seller</option>
                 {catalog?.filters.sellers.map((seller) => <option key={seller.slug} value={seller.slug}>{seller.label}</option>)}
               </select>
             </label>
-            <label className="block text-sm font-bold text-sand-700">
+            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Batch PO
               <select
                 name="campaign"
                 defaultValue={params.campaign ?? ""}
-                className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium"
+                className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
               >
                 <option value="">Semua Batch PO</option>
                 {catalog?.filters.campaigns.map((campaign) => (
@@ -147,12 +149,12 @@ export default async function CatalogPage({
                 ))}
               </select>
             </label>
-            <label className="block text-sm font-bold text-sand-700">
+            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Kategori
               <select
                 name="category"
                 defaultValue={params.category ?? ""}
-                className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium"
+                className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
               >
                 <option value="">Semua Kategori</option>
                 {catalog?.filters.categories.map((category) => (
@@ -162,7 +164,7 @@ export default async function CatalogPage({
                 ))}
               </select>
             </label>
-            <label className="block text-sm font-bold text-sand-700">
+            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Cari produk
               <input
                 type="search"
@@ -170,10 +172,10 @@ export default async function CatalogPage({
                 defaultValue={params.q ?? ""}
                 maxLength={120}
                 placeholder="Nama Batch PO atau produk"
-                className="mt-1.5 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm"
+                className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
               />
             </label>
-            <button className="min-h-11 rounded-xl bg-accent-600 px-5 text-sm font-extrabold text-white shadow-sm hover:bg-accent-700">
+            <button className="col-span-2 min-h-9 rounded-lg bg-accent-600 px-5 text-xs font-extrabold text-white shadow-sm hover:bg-accent-700 sm:min-h-11 sm:rounded-xl sm:text-sm lg:col-span-1">
               Terapkan
             </button>
           </form>
@@ -186,11 +188,7 @@ export default async function CatalogPage({
             </div>
           )}
 
-          {catalogResult.error && (
-            <div role="alert" className="mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm font-bold text-rose-700">
-              {catalogResult.error}
-            </div>
-          )}
+          <ToastFeedback error={catalogResult.error} />
 
           {catalog && catalog.campaigns.length === 0 && (
             <div className="mt-8 rounded-3xl border border-dashed border-sand-300 bg-white px-6 py-14 text-center">
@@ -223,14 +221,10 @@ export default async function CatalogPage({
                     <p className="mt-2 text-xs font-bold text-sand-500">
                       {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · tutup {formatTanggal(campaign.tanggalTutup)}
                     </p>
-                    <Link
-                      href={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`}
-                      aria-disabled={variant.sisa <= 0}
-                      aria-label={`Lihat dan pesan dari ${campaign.namaProduk}`}
-                      className={`mt-5 inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-3 text-center text-xs font-extrabold sm:text-sm ${variant.sisa > 0 ? "bg-brand-600 text-white hover:bg-brand-700" : "pointer-events-none bg-sand-200 text-sand-500"}`}
-                    >
-                      {variant.sisa > 0 ? "Lihat Produk" : "Kuota habis"}
-                    </Link>
+                    <div className="mt-5 flex gap-2">
+                      <Link href={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} className="inline-flex min-h-9 items-center justify-center rounded-lg border border-sand-300 px-2 text-xs font-extrabold text-sand-700 hover:border-brand-400 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">Detail</Link>
+                      <CatalogQuickAdd detailHref={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }} item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }} />
+                    </div>
                   </div>
                 </article>
               )),
