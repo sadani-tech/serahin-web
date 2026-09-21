@@ -40,6 +40,7 @@ export default async function NewProductPage({
       <ProductEditor
         action={createPreorderProduct.bind(null, id)}
         vendors={campaign.vendors}
+        campaignId={id}
         submitLabel="Tambah Produk"
       />
     </div>

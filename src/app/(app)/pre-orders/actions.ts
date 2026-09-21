@@ -17,8 +17,10 @@ export async function uploadVariantImage(
   if (!(file instanceof File) || file.size === 0) {
     return { error: "File gambar wajib dipilih." };
   }
+  const campaignId = formData.get("campaignId");
   const fd = new FormData();
   fd.set("file", file);
+  if (typeof campaignId === "string" && campaignId) fd.set("campaignId", campaignId);
   try {
     const res = await api.postForm<{ url: string }>(
       "/pre-orders/upload-gambar",
@@ -32,6 +34,24 @@ export async function uploadVariantImage(
   }
 }
 
+export type MediaLibraryItem = { id: string; url: string; fileName: string | null; createdAt: string };
+
+/** Pustaka gambar Seller pemilik Batch PO ini, untuk dipilih ulang tanpa unggah ulang. */
+export async function listMediaLibrary(
+  campaignId: string,
+  page = 1,
+): Promise<{ data: MediaLibraryItem[]; error?: string }> {
+  try {
+    const res = await api.get<{ data: MediaLibraryItem[] }>(
+      `/pre-orders/${campaignId}/media-library`,
+      { page, limit: 60 },
+    );
+    return { data: res.data };
+  } catch (e) {
+    return { data: [], error: e instanceof ApiError ? e.message : "Gagal memuat pustaka gambar." };
+  }
+}
+
 function getFormDataValue(formData: FormData, key: string): string | undefined {
   const value = formData.get(key);
   return value === null ? undefined : (value as string);
@@ -42,7 +62,7 @@ function getFormDataNumber(
   key: string,
 ): number | undefined {
   const value = formData.get(key);
-  if (value === null) return undefined;
+  if (value === null || String(value).trim() === "") return undefined;
   const num = Number(value);
   return isNaN(num) ? undefined : num;
 }
@@ -60,6 +80,7 @@ export async function createPreorder(
       seoDescription: getFormDataValue(formData, "seoDescription"),
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       linkCheckoutShopee: getFormDataValue(formData, "linkCheckoutShopee"),
+      nominalCheckoutShopee: getFormDataNumber(formData, "nominalCheckoutShopee"),
       tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
       tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
       paymentScheme: getFormDataValue(formData, "paymentScheme") as
@@ -94,6 +115,7 @@ export async function updatePreorder(
       seoDescription: getFormDataValue(formData, "seoDescription"),
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       linkCheckoutShopee: getFormDataValue(formData, "linkCheckoutShopee"),
+      nominalCheckoutShopee: getFormDataNumber(formData, "nominalCheckoutShopee"),
       tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
       tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
       paymentScheme: getFormDataValue(formData, "paymentScheme") as
@@ -130,6 +152,7 @@ function productPayload(formData: FormData) {
   return {
     namaVarian: String(formData.get("namaVarian") ?? "").trim(),
     harga: Number(formData.get("harga") ?? 0),
+    hpp: getFormDataNumber(formData, "hpp"),
     kuotaMaks: Number(formData.get("kuotaMaks") ?? 0),
     vendorId: String(formData.get("vendorId") ?? "").trim() || undefined,
     kategori: String(formData.get("kategori") ?? "").trim(),
@@ -249,6 +272,7 @@ export async function addTimelineEntry(campaignId: string, formData: FormData) {
   const catatan = String(formData.get("catatan") ?? "");
   const milestoneCode =
     String(formData.get("milestoneCode") ?? "") || undefined;
+  const isBuyerVisible = formData.get("isBuyerVisible") === "on";
 
   if (!judulUpdate.trim()) {
     return { error: "Judul update wajib diisi" };
@@ -259,6 +283,7 @@ export async function addTimelineEntry(campaignId: string, formData: FormData) {
       judulUpdate,
       catatan,
       milestoneCode,
+      isBuyerVisible,
     });
   } catch (e) {
     return {

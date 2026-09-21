@@ -18,6 +18,7 @@ type CampaignDetail = {
   seoDescription: string | null;
   deskripsiPelunasan: string | null;
   linkCheckoutShopee: string | null;
+  nominalCheckoutShopee: number | null;
   tanggalBuka: string;
   tanggalTutup: string;
   estimasiProduksi: string | null;
@@ -93,6 +94,7 @@ export default async function EditCampaignPage({
           seoDescription: campaign.seoDescription ?? undefined,
           deskripsiPelunasan: campaign.deskripsiPelunasan ?? undefined,
           linkCheckoutShopee: campaign.linkCheckoutShopee ?? undefined,
+          nominalCheckoutShopee: campaign.nominalCheckoutShopee ?? undefined,
           tanggalBuka: toDateInput(campaign.tanggalBuka),
           tanggalTutup: toDateInput(campaign.tanggalTutup),
           estimasiProduksi: toDateInput(campaign.estimasiProduksi),

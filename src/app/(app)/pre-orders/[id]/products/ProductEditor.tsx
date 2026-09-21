@@ -19,6 +19,7 @@ import type { PreorderFormState } from "../../actions";
 export type ProductEditorValues = {
   namaVarian?: string;
   harga?: string | number;
+  hpp?: string | number | null;
   kuotaMaks?: number;
   vendorId?: string | null;
   kategori?: string | null;
@@ -37,6 +38,7 @@ export function ProductEditor({
   action,
   initial,
   vendors,
+  campaignId,
   submitLabel,
 }: {
   action: (
@@ -45,6 +47,7 @@ export function ProductEditor({
   ) => Promise<PreorderFormState>;
   initial?: ProductEditorValues;
   vendors: Vendor[];
+  campaignId: string;
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
@@ -72,6 +75,16 @@ export function ProductEditor({
               required
               placeholder="150.000"
             />
+          </Field>
+          <Field label="HPP per unit (Rp)">
+            <CurrencyInput
+              name="hpp"
+              defaultValue={initial?.hpp ?? ""}
+              placeholder="Kosongkan bila belum diketahui"
+            />
+            {initial?.hpp !== undefined && initial?.harga !== undefined && Number(initial.hpp) > Number(initial.harga) && (
+              <p className="mt-1 text-xs font-semibold text-sun-700">HPP lebih tinggi dari harga jual. Periksa kembali margin Produk ini.</p>
+            )}
           </Field>
           <Field label="Kuota" required>
             <Input
@@ -151,7 +164,7 @@ export function ProductEditor({
             </Field>
           </div>
           <div className="sm:col-span-2">
-            <VariantImagesInput value={images} onChange={setImages} />
+            <VariantImagesInput value={images} onChange={setImages} campaignId={campaignId} />
           </div>
           <div className="sm:col-span-2">
             <Field label="Opsi warna">

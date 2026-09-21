@@ -37,6 +37,16 @@ type FormInfo = {
     accountNumber: string;
     accountHolderName: string;
   } | null;
+  manualTransfers?: {
+    id: string;
+    accountType: "BANK" | "EWALLET";
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+    isPrimary: boolean;
+  }[];
+  linkCheckoutShopee?: string | null;
+  nominalCheckoutShopee?: number | null;
   variants: {
     id: string;
     namaVarian: string;
@@ -145,6 +155,9 @@ export default async function PublicFormPage({
           gatewayEnabled={Boolean(data.gatewayEnabled)}
           manualTransferEnabled={Boolean(data.manualTransferEnabled)}
           manualTransfer={data.manualTransfer}
+          manualTransfers={data.manualTransfers}
+          linkCheckoutShopee={data.linkCheckoutShopee}
+          nominalCheckoutShopee={data.nominalCheckoutShopee}
           paymentScheme={data.paymentScheme}
           dpTipe={data.dpTipe}
           dpPercent={data.dpPercent}

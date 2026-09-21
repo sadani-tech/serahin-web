@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { Button, Field, FormError, Input, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ProductImage } from "@/components/ProductImage";
@@ -15,6 +15,8 @@ import { ToastFeedback } from "@/components/Toast";
 import { BuyerAccessModal } from "@/components/BuyerAccessModal";
 import { CopyButton } from "@/components/CopyButton";
 import { computeDownPaymentTarget } from "@/lib/billing";
+import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
+import type { MetodePengiriman } from "@/lib/types";
 
 export type PublicVariantOption = {
   id: string;
@@ -48,6 +50,9 @@ export function PublicOrderForm({
   gatewayEnabled = false,
   manualTransferEnabled = false,
   manualTransfer,
+  manualTransfers,
+  linkCheckoutShopee,
+  nominalCheckoutShopee,
   paymentScheme = "DP_PELUNASAN",
   dpTipe = "PERSEN",
   dpPercent = 50,
@@ -70,6 +75,16 @@ export function PublicOrderForm({
     accountNumber: string;
     accountHolderName: string;
   } | null;
+  manualTransfers?: {
+    id: string;
+    accountType: "BANK" | "EWALLET";
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+    isPrimary: boolean;
+  }[];
+  linkCheckoutShopee?: string | null;
+  nominalCheckoutShopee?: number | null;
   paymentScheme?: "DP_PELUNASAN" | "LUNAS";
   dpTipe?: "PERSEN" | "NOMINAL";
   dpPercent?: number | null;
@@ -95,6 +110,26 @@ export function PublicOrderForm({
   );
   const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
   const paymentUnavailable = gateway ? !gatewayEnabled : !manualTransferEnabled;
+  // Pilihan pengiriman (Checkout Shopee / Manual by Ekspedisi) hanya untuk
+  // skema Lunas langsung — skema DP/Pelunasan memilih metode pengiriman
+  // belakangan di portal saat tahap pelunasan.
+  const shopeeAvailable =
+    paymentScheme === "LUNAS" && Boolean(linkCheckoutShopee && nominalCheckoutShopee);
+  const [metode, setMetode] = useState<MetodePengiriman | "">("");
+  const [alamat, setAlamat] = useState("");
+  const includeShopee = paymentScheme === "LUNAS" && metode === "SHOPEE";
+  const displayedAccounts = manualTransfers?.length
+    ? manualTransfers
+    : manualTransfer
+      ? [{
+          id: manualTransfer.accountNumber,
+          accountType: "BANK" as const,
+          bankName: manualTransfer.bankName,
+          accountNumber: manualTransfer.accountNumber,
+          accountHolderName: manualTransfer.accountHolderName,
+          isPrimary: true,
+        }]
+      : [];
   const [qty, setQty] = useState<Record<string, number>>({});
   const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
@@ -168,8 +203,16 @@ export function PublicOrderForm({
         dpNominal,
       )
     : total;
-  const jumlahBayar = String(dpTarget);
   const jumlahItem = items.reduce((sum, item) => sum + item.jumlah, 0);
+  const shopeeAmount =
+    includeShopee && !gateway
+      ? Math.min(dpTarget, Math.round((nominalCheckoutShopee ?? 0) * jumlahItem))
+      : 0;
+  const bankAmount = dpTarget - shopeeAmount;
+  // Nominal yang ditagih ke Buyer (transfer bank) — dikurangi porsi Shopee
+  // saat metode pengiriman Checkout Shopee dipilih. Manual by Ekspedisi tidak
+  // berubah (bankAmount === dpTarget karena shopeeAmount 0).
+  const jumlahBayar = String(bankAmount);
   const adaItem = items.length > 0;
   const warnaBelumLengkap = variants.some(
     (v) =>
@@ -179,7 +222,9 @@ export function PublicOrderForm({
       !warnaSel[v.id],
   );
   const paymentRule = paymentScheme === "LUNAS"
-    ? "Pembayaran lunas sesuai total pesanan."
+    ? includeShopee && shopeeAmount > 0
+      ? `Total ${formatRupiah(dpTarget)} dikurangi ${formatRupiah(shopeeAmount)} via Shopee.`
+      : "Pembayaran lunas sesuai total pesanan."
     : dpTipe === "NOMINAL"
       ? `${formatRupiah(dpNominal ?? 0)} per unit × ${jumlahItem} unit.`
       : `${dpPercent ?? 50}% dari harga setiap unit produk.`;
@@ -248,11 +293,20 @@ export function PublicOrderForm({
       setShowAccessModal(true);
       return;
     }
+    if (!gateway && paymentScheme === "LUNAS" && shopeeAvailable) {
+      if (!metode) return;
+      if (metode === "EKSPEDISI" && !alamat.trim()) return;
+    }
     const fd = new FormData(e.currentTarget);
     fd.set("cart", JSON.stringify(items));
     fd.set("jumlahBayar", jumlahBayar);
     fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
     fd.set("checkoutSource", checkoutSource);
+    if (!gateway && includeShopee) fd.set("includeShopee", "1");
+    if (!gateway && metode) {
+      fd.set("metodePengiriman", metode);
+      fd.set("alamatPengiriman", metode === "EKSPEDISI" ? alamat.trim() : "");
+    }
     if (!checkoutKey.current) checkoutKey.current = window.crypto.randomUUID();
     fd.set("checkoutKey", checkoutKey.current);
     persistDraft();
@@ -640,25 +694,95 @@ export function PublicOrderForm({
             </div>
           ) : (
             <>
-              {manualTransfer ? (
+              {displayedAccounts.length > 0 ? (
                 <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-950 ring-1 ring-inset ring-sun-200">
                   <p className="text-xs font-extrabold uppercase tracking-wider">Rekening tujuan Seller</p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <p><span className="block text-xs opacity-70">Bank</span><strong>{manualTransfer.bankName}</strong></p>
-                    <p>
-                      <span className="block text-xs opacity-70">Nomor rekening</span>
-                      <span className="flex items-center gap-2">
-                        <strong className="font-mono text-base tracking-wide">{manualTransfer.accountNumber}</strong>
-                        <CopyButton text={manualTransfer.accountNumber} />
-                      </span>
-                    </p>
-                    <p className="sm:col-span-2"><span className="block text-xs opacity-70">Atas nama</span><strong>{manualTransfer.accountHolderName}</strong></p>
+                  <div className="mt-1.5 space-y-1">
+                    {displayedAccounts.map((account) => (
+                      <div
+                        key={account.id}
+                        className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-lg px-1.5 py-1 text-xs"
+                        title={`${account.bankName} ${account.accountNumber} a.n. ${account.accountHolderName}`}
+                      >
+                        <span className="shrink-0 rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold">
+                          {account.accountType === "EWALLET" ? "E-wallet" : "Bank"}
+                        </span>
+                        <span className="shrink-0 font-semibold">{account.bankName}</span>
+                        <span className="shrink-0 font-mono font-bold tracking-tight">{account.accountNumber}</span>
+                        <span className="min-w-0 flex-1 truncate text-[10px]">a.n. {account.accountHolderName}</span>
+                        {account.isPrimary && <span className="shrink-0 text-[10px] opacity-70">utama</span>}
+                        <CopyButton text={account.accountNumber} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               ) : (
                 <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 ring-1 ring-inset ring-rose-200">Seller belum menyediakan rekening transfer. Pilih pembayaran otomatis atau hubungi Seller.</div>
               )}
-              <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
+
+              {paymentScheme === "LUNAS" && shopeeAvailable && (
+                <Field label="Metode pengiriman" required hint="Pilih salah satu opsi pengiriman untuk pesanan ini.">
+                  <div className="space-y-2">
+                    {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[]).map((opt) => (
+                      <label
+                        key={opt}
+                        className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                          metode === opt
+                            ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                            : "border-sand-200 hover:border-sand-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="metodePengirimanRadio"
+                          value={opt}
+                          checked={metode === opt}
+                          onChange={() => setMetode(opt)}
+                          className="h-4 w-4 accent-brand-600"
+                        />
+                        <span className="font-medium text-sand-800">{METODE_PENGIRIMAN_LABEL[opt]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </Field>
+              )}
+
+              {metode === "EKSPEDISI" && (
+                <Field label="Alamat pengiriman lengkap" required hint="Tulis Nama, Nomor HP, dan alamat lengkap untuk pengiriman ekspedisi.">
+                  <Textarea
+                    value={alamat}
+                    onChange={(e) => setAlamat(e.target.value)}
+                    rows={4}
+                    placeholder="Nama · No HP · Alamat lengkap (jalan, kecamatan, kota, kode pos)"
+                    required
+                  />
+                </Field>
+              )}
+
+              {includeShopee && (
+                <div className="space-y-3 rounded-lg bg-orange-50 px-4 py-3 text-sm ring-1 ring-inset ring-orange-200">
+                  <div>
+                    {shopeeAmount > 0 && (
+                      <p className="font-semibold text-orange-900">{formatRupiah(shopeeAmount)} dibayar lewat Shopee.</p>
+                    )}
+                    {linkCheckoutShopee && (
+                      <a href={linkCheckoutShopee} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 font-semibold text-orange-700 underline">
+                        Checkout di Shopee →
+                      </a>
+                    )}
+                  </div>
+                  <FileUploadField
+                    name="buktiShopee"
+                    label="Bukti checkout Shopee"
+                    hint="Tidak perlu nomor transaksi — cukup screenshot/bukti checkout. JPG, PNG, WEBP, atau PDF (maks 5MB)."
+                    required
+                    disabled={orderingDisabled}
+                  />
+                </div>
+              )}
+              {bankAmount > 0 && (
+                <FileUploadField name="buktiPembayaran" label="Bukti transfer bank" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
+              )}
               <Field label={paymentScheme === "DP_PELUNASAN" ? "Nominal DP" : "Nominal pembayaran"} required hint={paymentRule}>
                 <CurrencyInput name="jumlahBayar" required readOnly disabled={orderingDisabled} value={jumlahBayar} className="bg-sand-50 font-bold" />
               </Field>
@@ -703,7 +827,21 @@ export function PublicOrderForm({
             </label>
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
-          <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || paymentUnavailable}>
+          <Button
+            type="submit"
+            className="w-full"
+            loading={pending}
+            disabled={
+              orderingDisabled ||
+              !adaItem ||
+              warnaBelumLengkap ||
+              paymentUnavailable ||
+              (!gateway &&
+                paymentScheme === "LUNAS" &&
+                shopeeAvailable &&
+                (!metode || (metode === "EKSPEDISI" && !alamat.trim())))
+            }
+          >
             {state?.needsConfirm || state?.needsCartConfirm
               ? "Ya, lanjutkan"
               : gateway

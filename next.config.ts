@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   // CI/verification dapat memakai direktori terpisah tanpa mengganggu proses
   // `next dev` yang sedang menggunakan `.next`.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "api-serahin-dev.suraise.com" },
+      { protocol: "https", hostname: "api-serahin.suraise.com" },
+      { protocol: "http", hostname: "localhost", port: "4000" },
+    ],
+  },
   // Teruskan berkas unggahan (/uploads/*) ke backend yang menyajikannya, agar
   // bukti pembayaran & gambar varian tampil dari origin web (mis. saat dev
   // web:3000 ↔ api:4000).
