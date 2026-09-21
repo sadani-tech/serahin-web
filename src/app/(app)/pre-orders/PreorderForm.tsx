@@ -50,6 +50,9 @@ export type VendorOption = {
 export type PreorderFormValues = {
   namaProduk?: string;
   deskripsi?: string;
+  productSlug?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   deskripsiPelunasan?: string;
   linkCheckoutShopee?: string;
   tanggalBuka?: string;
@@ -184,6 +187,44 @@ export function PreorderForm({
           Sejak v1.5, harga ditetapkan per varian (lihat bagian Varian & Kuota),
           bukan satu harga untuk seluruh Batch PO.
         </p>
+      </Card>
+
+      <Card className="p-5">
+        <h3 className="mb-4 text-sm font-semibold text-sand-900">
+          Slug &amp; SEO halaman publik
+        </h3>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Field
+              label="Slug produk"
+              hint="Bagian URL halaman katalog publik (dikosongkan = otomatis dari nama produk)."
+            >
+              <Input
+                name="productSlug"
+                defaultValue={initial?.productSlug}
+                placeholder="mis. kaos-komunitas-batch-1"
+              />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Judul SEO" hint="Tampil sebagai judul tab browser & hasil pencarian.">
+              <Input
+                name="seoTitle"
+                defaultValue={initial?.seoTitle}
+                placeholder="mis. Kaos Komunitas Batch 1 — Pre-Order Serahin"
+              />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Deskripsi SEO" hint="Tampil sebagai ringkasan hasil pencarian.">
+              <Input
+                name="seoDescription"
+                defaultValue={initial?.seoDescription}
+                placeholder="Ringkasan singkat untuk mesin pencari"
+              />
+            </Field>
+          </div>
+        </div>
       </Card>
 
       <Card className="p-5">

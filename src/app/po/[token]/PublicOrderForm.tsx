@@ -13,6 +13,7 @@ import type { PublicOrderState } from "../constants";
 import { publicSite } from "@/lib/public-site";
 import { ToastFeedback } from "@/components/Toast";
 import { BuyerAccessModal } from "@/components/BuyerAccessModal";
+import { CopyButton } from "@/components/CopyButton";
 import { computeDownPaymentTarget } from "@/lib/billing";
 
 export type PublicVariantOption = {
@@ -644,7 +645,13 @@ export function PublicOrderForm({
                   <p className="text-xs font-extrabold uppercase tracking-wider">Rekening tujuan Seller</p>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <p><span className="block text-xs opacity-70">Bank</span><strong>{manualTransfer.bankName}</strong></p>
-                    <p><span className="block text-xs opacity-70">Nomor rekening</span><strong className="font-mono text-base tracking-wide">{manualTransfer.accountNumber}</strong></p>
+                    <p>
+                      <span className="block text-xs opacity-70">Nomor rekening</span>
+                      <span className="flex items-center gap-2">
+                        <strong className="font-mono text-base tracking-wide">{manualTransfer.accountNumber}</strong>
+                        <CopyButton text={manualTransfer.accountNumber} />
+                      </span>
+                    </p>
                     <p className="sm:col-span-2"><span className="block text-xs opacity-70">Atas nama</span><strong>{manualTransfer.accountHolderName}</strong></p>
                   </div>
                 </div>

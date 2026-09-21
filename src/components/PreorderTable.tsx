@@ -28,6 +28,7 @@ export type CampaignRow = {
   variants: { harga: string }[];
   _count: { orders: number };
   needsProducts?: boolean;
+  needsBankAccount?: boolean;
 };
 
 const PAGE_SIZE = 10;
@@ -130,6 +131,11 @@ export default function PreorderTable({
                         Perlu tambah Produk sebelum dibuka
                       </p>
                     )}
+                    {c.needsBankAccount && (
+                      <p className="mt-1 text-xs font-bold text-amber-700">
+                        Rekening utama belum diatur
+                      </p>
+                    )}
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-sand-100">
                       <div
                         className={`h-full rounded-full transition-all ${
@@ -207,6 +213,11 @@ export default function PreorderTable({
                       {c.needsProducts && (
                         <p className="mt-1 text-xs font-bold text-amber-700">
                           Perlu Produk
+                        </p>
+                      )}
+                      {c.needsBankAccount && (
+                        <p className="mt-1 text-xs font-bold text-amber-700">
+                          Perlu rekening
                         </p>
                       )}
                     </td>
