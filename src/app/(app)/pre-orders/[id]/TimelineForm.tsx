@@ -19,14 +19,15 @@ export function TimelineForm({ campaignId }: { campaignId: string }) {
     >
       <label className="block text-xs font-bold uppercase tracking-wide text-sand-500">
         Milestone
-        <select name="milestoneCode" defaultValue="" className="mt-1 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium normal-case tracking-normal text-sand-800">
-          <option value="">Update umum</option>
-          <option value="SUPPLIER_PROCESSING">Diproses supplier</option>
-          <option value="INTERNATIONAL_TRANSIT">Pengiriman internasional</option>
-          <option value="ARRIVED_INDONESIA">Tiba di Indonesia</option>
-          <option value="QUALITY_CHECK">Pemeriksaan kualitas</option>
-          <option value="READY_TO_SHIP">Siap dikirim</option>
-          <option value="SHIPPED">Sudah dikirim</option>
+        <select name="milestoneCode" defaultValue="" required className="mt-1 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium normal-case tracking-normal text-sand-800">
+          <option value="" disabled>Pilih progres</option>
+          <option value="OPEN">Open</option>
+          <option value="CLOSED">Closed</option>
+          <option value="PRODUCTION">Produksi</option>
+          <option value="SHIPMENT">Shipment</option>
+          <option value="PACKING">Packing</option>
+          <option value="DELIVERED">Deliver</option>
+          <option value="COMPLETED">Selesai</option>
         </select>
       </label>
       <Input

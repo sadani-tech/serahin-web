@@ -76,11 +76,13 @@ export async function resetPasswordAction(_prev: BuyerActionState, form: FormDat
 }
 
 export async function updateBuyerProfileAction(_prev: BuyerActionState, form: FormData): Promise<BuyerActionState> {
+  const callbackUrl = safePath(String(form.get("callbackUrl") ?? ""), "");
   try {
     await api.patch("/auth/buyer/profile", { name: form.get("name"), phone: form.get("phone") });
     revalidatePath("/account"); revalidatePath("/account/profile");
-    return { message: "Profil berhasil diperbarui." };
   } catch (error) { return { error: error instanceof Error ? error.message : "Profil gagal diperbarui." }; }
+  if (callbackUrl) redirect(callbackUrl);
+  return { message: "Profil berhasil diperbarui." };
 }
 
 export async function changeBuyerPasswordAction(_prev: BuyerActionState, form: FormData): Promise<BuyerActionState> {

@@ -111,6 +111,9 @@ export async function startPortalGatewayPayment(
     );
     paymentUrl = res.paymentUrl;
   } catch (e) {
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+      redirect(`/api/auth/switch?callbackUrl=${encodeURIComponent(`/portal/${token}?payment=1`)}`);
+    }
     return {
       error: e instanceof ApiError ? e.message : "Gagal memulai pembayaran.",
     };

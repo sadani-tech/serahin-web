@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export type CartItem = {
   variantId: string;
@@ -70,6 +72,8 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
   const [ready, setReady] = useState(false);
   const [syncConflict, setSyncConflict] = useState(false);
   const syncResolved = useRef(false);
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   const applyRemote = useCallback((remote: RemoteCart) => {
     setCart({
@@ -153,7 +157,13 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
   const addItem = useCallback(async (event: Omit<CartDraft, "items">, item: CartItem) => {
     let next: CartDraft;
     if (cart && cart.salesEventId !== event.salesEventId) {
-      if (!window.confirm("Keranjang Serahin hanya dapat berisi satu Batch PO. Ganti isi keranjang dengan produk ini?")) return false;
+      const replace = await confirm({
+        title: "Ganti isi keranjang?",
+        description: "Keranjang Serahin hanya dapat berisi satu Batch PO. Produk dari Batch PO sebelumnya akan diganti.",
+        confirmLabel: "Ganti keranjang",
+        variant: "primary",
+      });
+      if (!replace) return false;
       next = { ...event, items: [item] };
     } else {
       const existing = cart?.items.find((candidate) => sameItem(candidate, item));
@@ -169,9 +179,11 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
       await push(next, cart && cart.salesEventId !== event.salesEventId ? "REPLACE_WITH_LOCAL" : undefined);
     } catch {
       // Draft lokal tetap menjadi sumber pemulihan bila jaringan terputus.
+      toast.warning("Produk tersimpan di perangkat, tetapi keranjang akun belum tersinkron.");
     }
+    toast.success(`${item.name} masuk ke keranjang.`);
     return true;
-  }, [cart, push]);
+  }, [cart, confirm, push, toast]);
 
   const setQuantity = useCallback((variantId: string, selectedColor: string | undefined, quantity: number) => {
     setCart((current) => {

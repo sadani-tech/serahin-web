@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ import { ArrowIcon, CheckIcon, Icon } from "@/components/landing/icons";
 import { SiteHeader } from "@/components/landing/site-header";
 import { AuthChoiceModal } from "@/components/landing/AuthChoiceModal";
 import { faqs, roadmap, steps } from "@/lib/landing-content";
+import { getSession } from "@/lib/session";
 
 function HeroDashboard() {
   return (
@@ -153,10 +155,94 @@ function BuyerCatalogPreview() {
   );
 }
 
-export default function LandingPage() {
+const testimonialPhotos = [
+  { src: "/testimonials/buyer-story-2.jpg", alt: "Detail tas pesanan Buyer Serahin" },
+  { src: "/testimonials/buyer-story-4.jpg", alt: "Produk pre-order digunakan dalam aktivitas sehari-hari" },
+  { src: "/testimonials/buyer-story-3.jpg", alt: "Buyer menggunakan tas hasil pre-order" },
+  { src: "/testimonials/buyer-story-1.jpg", alt: "Buyer membawa produk tas dari pre-order Serahin" },
+];
+
+const buyerTestimonials = [
+  "Punyaku sudah sampai—aslinya bagus banget. Bagian dalamnya juga gemas.",
+  "Aku suka banget. Begitu datang langsung pengin dipakai ke mana-mana.",
+  "Lucu banget dipasang di koper. Jadi makin enak dibawa pergi.",
+];
+
+const sellerTestimonials = [
+  "Biasanya kelabakan ngurus form order dan pelunasan sekarang jauh lebih gampang dipantau.",
+  "Membantu banget Serahin, dulu pakai excel yang perlu koordinasi sana sini, sekarang tinggal kirim link beres.",
+  "Pembayaran langsung masuk ke rekening tanpa perlu repot ngecek satu satu.",
+];
+
+function TestimonialsSection() {
+  return (
+    <section className="section testimonials-section" id="testimoni">
+      <div className="container">
+        <div className="section-heading section-heading--center">
+          <span className="eyebrow">Cerita dari mereka</span>
+          <h2>Lebih tenang di<br/><span className="highlight">dua sisi pre-order.</span></h2>
+          <p>Pengalaman kecil yang terasa berarti, baik saat belanja maupun mengelola pesanan.</p>
+        </div>
+
+        <div className="testimonials-layout">
+          <figure className="testimonial-gallery">
+            <div className="testimonial-photo-grid">
+              {testimonialPhotos.map((photo, index) => (
+                <div className={`testimonial-photo testimonial-photo--${index + 1}`} key={photo.src}>
+                  <Image src={photo.src} alt={photo.alt} fill sizes="(max-width: 640px) 42vw, (max-width: 900px) 220px, 260px" />
+                </div>
+              ))}
+            </div>
+            <figcaption>
+              <span className="testimonial-photo-mark" aria-hidden="true">♥</span>
+              <span><strong>Dibawa ke mana-mana</strong><small>Cerita produk dari Buyer Serahin.</small></span>
+            </figcaption>
+          </figure>
+
+          <div className="testimonial-voices">
+            <div className="testimonial-role-heading">
+              <span className="testimonial-role-icon testimonial-role-icon--buyer" aria-hidden="true">B</span>
+              <span><small>DARI SISI BUYER</small><strong>Belanja tanpa banyak menebak</strong></span>
+            </div>
+            <div className="testimonial-quotes">
+              {buyerTestimonials.map((quote) => (
+                <blockquote className="testimonial-quote-card testimonial-quote-card--buyer" key={quote}>
+                  <span className="testimonial-stars" aria-label="Pengalaman menyenangkan">★★★★★</span>
+                  <p>“{quote}”</p>
+                  <footer>Buyer Serahin</footer>
+                </blockquote>
+              ))}
+            </div>
+
+            <div className="testimonial-role-heading testimonial-role-heading--seller">
+              <span className="testimonial-role-icon testimonial-role-icon--seller" aria-hidden="true">S</span>
+              <span><small>DARI SISI SELLER</small><strong>Kelola PO dengan lebih ringan</strong></span>
+            </div>
+            <div className="testimonial-quotes">
+              {sellerTestimonials.map((quote) => (
+                <blockquote className="testimonial-quote-card testimonial-quote-card--seller" key={quote}>
+                  <span className="testimonial-quote-mark" aria-hidden="true">“</span>
+                  <p>“{quote}”</p>
+                  <footer>Seller Serahin</footer>
+                </blockquote>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default async function LandingPage() {
+  const session = await getSession();
+  const headerUser = session
+    ? { name: session.name, email: session.email, role: session.role }
+    : null;
+
   return (
     <main id="top">
-      <SiteHeader/>
+      <SiteHeader user={headerUser}/>
 
       <section className="hero section-dots">
         <div className="container hero-grid">
@@ -281,6 +367,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <TestimonialsSection />
+
       <section className="section roadmap-section" id="roadmap">
         <div className="container">
           <div className="section-heading section-heading--center">
@@ -339,7 +427,7 @@ export default function LandingPage() {
       <footer>
         <div className="container footer-main">
           <div className="footer-brand"><SerahinLogo/><p>Kelola pre-order dari kampanye dibuka sampai barang diserahkan.</p></div>
-          <div className="footer-links"><strong>Produk</strong><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara kerja</a><a href="#roadmap">Roadmap</a></div>
+          <div className="footer-links"><strong>Produk</strong><a href="#fitur">Fitur</a><a href="#cara-kerja">Cara kerja</a><a href="#testimoni">Testimoni</a><a href="#roadmap">Roadmap</a></div>
           <div className="footer-links"><strong>Pengalaman</strong><a href="#pembeli">Portal pembeli</a><a href="#faq">FAQ</a><Link href="/account/login">Masuk Buyer</Link><Link href="/seller/login">Masuk Seller</Link></div>
           <div className="footer-note"><span>STATUS PRODUK</span><p><i/> Fondasi v1.0–v2.3.2 tersedia</p><small>Roadmap diturunkan dari PRD aktif Serahin.</small></div>
         </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui";
 import { uploadVariantImage } from "@/app/(app)/pre-orders/actions";
+import { ToastFeedback } from "@/components/Toast";
 
 // Input gambar varian dengan dua mode: tempel tautan (URL) atau unggah berkas.
 // Nilai yang disimpan tetap berupa URL string (gambarUrl) — hasil upload
@@ -84,7 +85,7 @@ export function VariantImageInput({
       )}
 
       {uploading && <p className="text-xs text-sand-500">Mengunggah…</p>}
-      {error && <p className="text-xs text-rose-600">{error}</p>}
+      <ToastFeedback error={error} />
 
       {value ? (
         <div className="flex items-center gap-2">

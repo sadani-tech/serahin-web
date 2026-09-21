@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Button, Field, FormError, Input } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
@@ -11,6 +11,9 @@ import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
 import type { PublicOrderState } from "../constants";
 import { publicSite } from "@/lib/public-site";
+import { ToastFeedback } from "@/components/Toast";
+import { BuyerAccessModal } from "@/components/BuyerAccessModal";
+import { computeDownPaymentTarget } from "@/lib/billing";
 
 export type PublicVariantOption = {
   id: string;
@@ -42,32 +45,55 @@ export function PublicOrderForm({
   formToken,
   variants,
   gatewayEnabled = false,
+  manualTransferEnabled = false,
+  manualTransfer,
+  paymentScheme = "DP_PELUNASAN",
+  dpTipe = "PERSEN",
+  dpPercent = 50,
+  dpNominal = null,
   orderingDisabled = false,
   unavailableMessage,
   checkoutSource = "CAMPAIGN_LINK",
   idPrefix = formToken,
   buyerAuthenticated = false,
+  switchingAccount = false,
+  buyerProfile,
+  resumeCheckout = false,
 }: {
   formToken: string;
   variants: PublicVariantOption[];
   gatewayEnabled?: boolean;
+  manualTransferEnabled?: boolean;
+  manualTransfer?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  } | null;
+  paymentScheme?: "DP_PELUNASAN" | "LUNAS";
+  dpTipe?: "PERSEN" | "NOMINAL";
+  dpPercent?: number | null;
+  dpNominal?: number | null;
   orderingDisabled?: boolean;
   unavailableMessage?: string;
   checkoutSource?: "CAMPAIGN_LINK" | "HOME_CATALOG";
   idPrefix?: string;
   buyerAuthenticated?: boolean;
+  switchingAccount?: boolean;
+  buyerProfile?: { name: string; email: string | null; phone: string | null } | null;
+  resumeCheckout?: boolean;
 }) {
   const action = createPublicOrder.bind(null, formToken);
   const [state, formAction, pending] = useActionState<PublicOrderState, FormData>(
     action,
     undefined,
   );
-  const [jumlahBayar, setJumlahBayar] = useState("");
+  const checkoutKey = useRef("");
   // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
   const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
     gatewayEnabled ? "GATEWAY" : "MANUAL",
   );
   const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
+  const paymentUnavailable = gateway ? !gatewayEnabled : !manualTransferEnabled;
   const [qty, setQty] = useState<Record<string, number>>({});
   const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
@@ -79,6 +105,7 @@ export function PublicOrderForm({
     title: string;
     start: number;
   } | null>(null);
+  const [showAccessModal, setShowAccessModal] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -97,6 +124,28 @@ export function PublicOrderForm({
     return () => window.clearTimeout(timer);
   }, [formToken]);
 
+  useEffect(() => {
+    if (!buyerAuthenticated || !resumeCheckout) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [buyerAuthenticated, idPrefix, resumeCheckout]);
+
+  useEffect(() => {
+    if (!state?.error && !state?.warning) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [idPrefix, state]);
+
   const setQ = (id: string, value: number) =>
     setQty((current) => ({ ...current, [id]: Math.max(0, value) }));
   const selectedVariants = variants.filter((v) => (qty[v.id] ?? 0) > 0);
@@ -107,6 +156,18 @@ export function PublicOrderForm({
     warna: warnaSel[v.id] || undefined,
   }));
   const total = variants.reduce((sum, v) => sum + v.harga * (qty[v.id] ?? 0), 0);
+  const dpTarget = paymentScheme === "DP_PELUNASAN"
+    ? computeDownPaymentTarget(
+        selectedVariants.map((variant) => ({
+          hargaSaatPesan: variant.harga,
+          jumlah: qty[variant.id] ?? 0,
+        })),
+        dpTipe,
+        dpPercent,
+        dpNominal,
+      )
+    : total;
+  const jumlahBayar = String(dpTarget);
   const jumlahItem = items.reduce((sum, item) => sum + item.jumlah, 0);
   const adaItem = items.length > 0;
   const warnaBelumLengkap = variants.some(
@@ -116,7 +177,11 @@ export function PublicOrderForm({
       v.warna.length > 0 &&
       !warnaSel[v.id],
   );
-  const bayarLebihDariTotal = jumlahBayar !== "" && Number(jumlahBayar) > total;
+  const paymentRule = paymentScheme === "LUNAS"
+    ? "Pembayaran lunas sesuai total pesanan."
+    : dpTipe === "NOMINAL"
+      ? `${formatRupiah(dpNominal ?? 0)} per unit × ${jumlahItem} unit.`
+      : `${dpPercent ?? 50}% dari harga setiap unit produk.`;
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, string>();
     variants.forEach((variant) => {
@@ -177,11 +242,18 @@ export function PublicOrderForm({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (orderingDisabled) return;
+    if (!buyerAuthenticated) {
+      persistDraft();
+      setShowAccessModal(true);
+      return;
+    }
     const fd = new FormData(e.currentTarget);
     fd.set("cart", JSON.stringify(items));
     fd.set("jumlahBayar", jumlahBayar);
     fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
     fd.set("checkoutSource", checkoutSource);
+    if (!checkoutKey.current) checkoutKey.current = window.crypto.randomUUID();
+    fd.set("checkoutKey", checkoutKey.current);
     persistDraft();
     startTransition(() => formAction(fd));
   }
@@ -193,7 +265,7 @@ export function PublicOrderForm({
   function scrollToCheckout() {
     if (!buyerAuthenticated) {
       persistDraft();
-      window.location.assign(`/account/login?callbackUrl=${encodeURIComponent(`/po/${formToken}`)}`);
+      setShowAccessModal(true);
       return;
     }
     document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
@@ -216,11 +288,7 @@ export function PublicOrderForm({
       </p>
 
       {state?.error && <FormError message={state.error} />}
-      {(state?.needsConfirm || state?.needsCartConfirm) && state.warning && (
-        <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm font-medium text-sun-800 ring-1 ring-inset ring-sun-200">
-          {state.warning}
-        </div>
-      )}
+      <ToastFeedback warning={(state?.needsConfirm || state?.needsCartConfirm) ? state.warning : undefined} />
       {state?.needsConfirm && <input type="hidden" name="confirmDuplikat" value="1" />}
       {state?.needsCartConfirm && <input type="hidden" name="confirmPerubahanKuota" value="1" />}
       {unavailableMessage && (
@@ -501,7 +569,7 @@ export function PublicOrderForm({
             <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
           </div>
           <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem || warnaBelumLengkap}>
-            Lanjutkan ke Tahap Akhir
+            {buyerAuthenticated ? "Konfirmasi & Bayar" : "Lanjutkan Pesanan"}
           </Button>
           {adaItem && <button type="button" onClick={() => { setQty({}); setWarnaSel({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
         </div>
@@ -511,15 +579,21 @@ export function PublicOrderForm({
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl space-y-5 p-5 sm:p-7">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Tahap akhir</p>
-            <h2 id={`${idPrefix}-checkout-heading`} className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Lengkapi pesanan Anda</h2>
-            <p className="mt-1 text-sm text-sand-500">Data ini dipakai Admin untuk memverifikasi pesanan dan pembayaran Anda.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Checkout</p>
+            <h2 id={`${idPrefix}-checkout-heading`} className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Konfirmasi dan bayar</h2>
+            <p className="mt-1 text-sm text-sand-500">Pilihan produk di atas langsung menjadi pesananmu. Tidak perlu mengisi form produk lagi.</p>
           </div>
 
-          <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
-            Nama, email, dan WhatsApp diambil dari akun Buyer. Jika belum masuk,
-            pilihan produk disimpan selama 24 jam dan Anda akan diarahkan ke halaman login.
-          </div>
+          {buyerAuthenticated && buyerProfile ? (
+            <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+              <div><p className="font-extrabold">Data Buyer otomatis digunakan</p><p className="mt-1 text-xs leading-5">{buyerProfile.name} · {buyerProfile.email ?? "Email belum tersedia"}{buyerProfile.phone ? ` · ${buyerProfile.phone}` : ""}</p></div>
+              <Link href={`/account/profile?callbackUrl=${encodeURIComponent(`/po/${formToken}?checkout=1`)}`} className="text-xs font-extrabold underline">Ubah profil</Link>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-900 ring-1 ring-inset ring-sun-200">
+              Pilihanmu disimpan selama 24 jam. Masuk hanya diperlukan saat kamu siap membuat pesanan.
+            </div>
+          )}
           {gatewayEnabled && (
             <Field label="Metode pembayaran" required>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -543,12 +617,13 @@ export function PublicOrderForm({
                       value={value}
                       checked={metodeBayar === value}
                       onChange={() => setMetodeBayar(value)}
-                      disabled={orderingDisabled}
+                      disabled={orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)}
                       className="mt-0.5 h-4 w-4 accent-brand-600"
                     />
                     <span>
                       <span className="block font-bold text-sand-800">{judul}</span>
                       <span className="block text-xs text-sand-500">{sub}</span>
+                      {value === "MANUAL" && !manualTransferEnabled && <span className="mt-1 block text-xs font-bold text-rose-700">Rekening Seller belum tersedia.</span>}
                     </span>
                   </label>
                 ))}
@@ -564,10 +639,21 @@ export function PublicOrderForm({
             </div>
           ) : (
             <>
+              {manualTransfer ? (
+                <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-950 ring-1 ring-inset ring-sun-200">
+                  <p className="text-xs font-extrabold uppercase tracking-wider">Rekening tujuan Seller</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <p><span className="block text-xs opacity-70">Bank</span><strong>{manualTransfer.bankName}</strong></p>
+                    <p><span className="block text-xs opacity-70">Nomor rekening</span><strong className="font-mono text-base tracking-wide">{manualTransfer.accountNumber}</strong></p>
+                    <p className="sm:col-span-2"><span className="block text-xs opacity-70">Atas nama</span><strong>{manualTransfer.accountHolderName}</strong></p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 ring-1 ring-inset ring-rose-200">Seller belum menyediakan rekening transfer. Pilih pembayaran otomatis atau hubungi Seller.</div>
+              )}
               <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
-              <Field label="Jumlah yang dibayarkan" required hint={bayarLebihDariTotal ? undefined : jumlahBayar ? `= ${formatRupiah(Number(jumlahBayar))}` : "Nominal transfer sesuai bukti pembayaran."}>
-                <CurrencyInput name="jumlahBayar" required disabled={orderingDisabled} value={jumlahBayar} onValueChange={setJumlahBayar} placeholder="150.000" />
-                {bayarLebihDariTotal && <span className="mt-1 block text-xs font-medium text-rose-700">Jumlah yang dibayarkan tidak boleh lebih dari total harga.</span>}
+              <Field label={paymentScheme === "DP_PELUNASAN" ? "Nominal DP" : "Nominal pembayaran"} required hint={paymentRule}>
+                <CurrencyInput name="jumlahBayar" required readOnly disabled={orderingDisabled} value={jumlahBayar} className="bg-sand-50 font-bold" />
               </Field>
             </>
           )}
@@ -576,6 +662,11 @@ export function PublicOrderForm({
               <span className="text-sm font-bold text-sand-600">Total pesanan</span>
               <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
             </div>
+            <div className="mt-2 flex items-center justify-between gap-4 border-t border-sand-200 pt-2">
+              <span className="text-sm font-bold text-brand-700">{paymentScheme === "DP_PELUNASAN" ? "DP yang dibayar sekarang" : "Dibayar sekarang"}</span>
+              <span className="text-lg font-extrabold text-brand-700">{formatRupiah(dpTarget)}</span>
+            </div>
+            <p className="mt-1 text-right text-xs text-sand-500">{paymentRule}</p>
           </div>
           <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
             <label className="flex items-start gap-3">
@@ -603,31 +694,9 @@ export function PublicOrderForm({
                 .
               </span>
             </label>
-            <label className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                name="whatsappConsent"
-                value="1"
-                disabled={orderingDisabled}
-                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
-              />
-              <span>
-                Saya bersedia menerima update transaksional pesanan dari Serahin
-                melalui nomor WhatsApp yang saya isi. Persetujuan ini dapat ditarik
-                melalui halaman{" "}
-                <Link href="/data-deletion#communication-preferences" target="_blank" className="font-bold text-brand-700 underline">
-                  preferensi komunikasi
-                </Link>{" "}
-                dan tunduk pada{" "}
-                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
-                  Kebijakan Privasi
-                </Link>
-                .
-              </span>
-            </label>
           </div>
           {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
-          <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}>
+          <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || paymentUnavailable}>
             {state?.needsConfirm || state?.needsCartConfirm
               ? "Ya, lanjutkan"
               : gateway
@@ -638,6 +707,7 @@ export function PublicOrderForm({
       </section>
 
       {preview && <ImagePreviewModal images={preview.images} startIndex={preview.start} title={preview.title} onClose={() => setPreview(null)} />}
+      {showAccessModal && <BuyerAccessModal callbackUrl={`/po/${formToken}?checkout=1`} switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
     </form>
   );
 }

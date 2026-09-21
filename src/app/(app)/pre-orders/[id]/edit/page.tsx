@@ -13,6 +13,9 @@ type CampaignDetail = {
   vendors: { id: string; nama: string }[];
   namaProduk: string;
   deskripsi: string | null;
+  productSlug: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
   deskripsiPelunasan: string | null;
   linkCheckoutShopee: string | null;
   tanggalBuka: string;
@@ -85,6 +88,9 @@ export default async function EditCampaignPage({
           vendorIds: campaign.vendors.map((vendor) => vendor.id),
           namaProduk: campaign.namaProduk,
           deskripsi: campaign.deskripsi ?? undefined,
+          productSlug: campaign.productSlug ?? undefined,
+          seoTitle: campaign.seoTitle ?? undefined,
+          seoDescription: campaign.seoDescription ?? undefined,
           deskripsiPelunasan: campaign.deskripsiPelunasan ?? undefined,
           linkCheckoutShopee: campaign.linkCheckoutShopee ?? undefined,
           tanggalBuka: toDateInput(campaign.tanggalBuka),

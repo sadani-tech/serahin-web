@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui";
 import { uploadVariantImage } from "@/app/(app)/pre-orders/actions";
+import { ToastFeedback } from "@/components/Toast";
 
 // Galeri gambar varian (multi-image). Nilai berupa array URL. Bisa tambah lewat
 // tempel tautan atau unggah berkas; gambar pertama dipakai sebagai "Utama".
@@ -143,7 +144,7 @@ export function VariantImagesInput({
       )}
 
       {uploading && <p className="text-xs text-sand-500">Mengunggah…</p>}
-      {error && <p className="text-xs text-rose-600">{error}</p>}
+      <ToastFeedback error={error} />
     </div>
   );
 }

@@ -55,6 +55,9 @@ export async function createPreorder(
     const created = await api.post<{ id: string }>("/pre-orders", {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
+      productSlug: getFormDataValue(formData, "productSlug"),
+      seoTitle: getFormDataValue(formData, "seoTitle"),
+      seoDescription: getFormDataValue(formData, "seoDescription"),
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       linkCheckoutShopee: getFormDataValue(formData, "linkCheckoutShopee"),
       tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
@@ -86,6 +89,9 @@ export async function updatePreorder(
     await api.patch(`/pre-orders/${id}`, {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
+      productSlug: getFormDataValue(formData, "productSlug"),
+      seoTitle: getFormDataValue(formData, "seoTitle"),
+      seoDescription: getFormDataValue(formData, "seoDescription"),
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       linkCheckoutShopee: getFormDataValue(formData, "linkCheckoutShopee"),
       tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
