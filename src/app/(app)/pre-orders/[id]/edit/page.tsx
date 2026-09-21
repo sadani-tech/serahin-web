@@ -25,24 +25,6 @@ type CampaignDetail = {
   dpNominal: string | null;
   deadlinePelunasan: string | null;
   status: CampaignStatus;
-  variants: {
-    id: string;
-    namaVarian: string;
-    kuotaMaks: number;
-    harga: string;
-    gambarUrl: string | null;
-    images: string[];
-    warna: string[];
-    kategori: string | null;
-    label: string | null;
-    ukuran: string | null;
-    material: string | null;
-    sku: string | null;
-    deskripsi: string | null;
-    vendorId: string | null;
-    hargaPerluTinjau: boolean;
-    terisi: number;
-  }[];
 };
 
 type VendorRow = {
@@ -114,23 +96,6 @@ export default async function EditCampaignPage({
           dpPercent: campaign.dpPercent ?? undefined,
           dpNominal: campaign.dpNominal ? toNumber(campaign.dpNominal) : undefined,
           deadlinePelunasan: toDateInput(campaign.deadlinePelunasan),
-          variants: campaign.variants.map((v) => ({
-            id: v.id,
-            namaVarian: v.namaVarian,
-            kuotaMaks: v.kuotaMaks,
-            harga: toNumber(v.harga),
-            images: v.images ?? [],
-            warna: v.warna ?? [],
-            kategori: v.kategori ?? "Others",
-            label: v.label ?? "",
-            ukuran: v.ukuran ?? "",
-            material: v.material ?? "",
-            sku: v.sku ?? "",
-            deskripsi: v.deskripsi ?? "",
-            vendorId: v.vendorId ?? "",
-            perluTinjau: v.hargaPerluTinjau,
-            terisi: v.terisi,
-          })),
         }}
       />
     </div>

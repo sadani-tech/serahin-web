@@ -10,11 +10,7 @@ import {
   LinkButton,
   ScrollList,
 } from "@/components/ui";
-import {
-  formatRupiah,
-  formatTanggal,
-  formatWaktu,
-} from "@/lib/format";
+import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
 import {
   CAMPAIGN_STATUS_LABEL,
   ORDER_STATUS_LABEL,
@@ -44,10 +40,12 @@ import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
 import { OrderBulkTable, type OrderRow } from "@/components/OrderBulkTable";
+import { ProductDeleteButton } from "./ProductDeleteButton";
+import { TimelineDeleteButton } from "./TimelineDeleteButton";
 
 export const dynamic = "force-dynamic";
 
-type Tab = "info" | "pesanan" | "timeline";
+type Tab = "info" | "produk" | "pesanan" | "timeline";
 
 type CampaignDetail = {
   namaProduk: string;
@@ -65,6 +63,9 @@ type CampaignDetail = {
   deskripsi: string | null;
   formToken: string;
   formAktif: boolean;
+  productCount: number;
+  activeProductCount: number;
+  needsProducts: boolean;
   variants: {
     id: string;
     namaVarian: string;
@@ -106,18 +107,46 @@ type CampaignDetail = {
   }[];
 };
 
+type ProductRow = {
+  id: string;
+  namaVarian: string;
+  harga: string;
+  kuotaMaks: number;
+  terisi: number;
+  gambarUrl: string | null;
+  kategori: string | null;
+  label: string | null;
+  vendor: { id: string; nama: string } | null;
+  isActive: boolean;
+};
+
+type ProductPage = {
+  data: ProductRow[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+};
+
 export default async function CampaignDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string; status?: string; variant?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    status?: string;
+    variant?: string;
+    q?: string;
+    productStatus?: string;
+    page?: string;
+    created?: string;
+  }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const tab: Tab = (["info", "pesanan", "timeline"].includes(sp.tab ?? "")
-    ? sp.tab
-    : "info") as Tab;
+  const tab: Tab = (
+    ["info", "produk", "pesanan", "timeline"].includes(sp.tab ?? "")
+      ? sp.tab
+      : "info"
+  ) as Tab;
 
   let campaign: CampaignDetail;
   try {
@@ -126,6 +155,17 @@ export default async function CampaignDetailPage({
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
   }
+
+  const productPage = Math.max(1, Number(sp.page ?? 1) || 1);
+  const products =
+    tab === "produk"
+      ? await api.get<ProductPage>(`/pre-orders/${id}/products`, {
+          page: productPage,
+          limit: 20,
+          q: sp.q,
+          status: sp.productStatus,
+        })
+      : null;
 
   // Kuota terisi per varian (item pesanan aktif) — v1.5.
   const terisiPerVarian = new Map<string, number>();
@@ -209,19 +249,25 @@ export default async function CampaignDetailPage({
               {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]}
               {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
             </p>
+            {campaign.needsProducts && (
+              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
+                Batch PO ini belum punya Produk aktif dengan kuota tersedia.
+                Tambahkan minimal satu Produk sebelum membuka pemesanan publik.
+                <Link
+                  href={`/pre-orders/${id}?tab=produk`}
+                  className="ml-2 underline"
+                >
+                  Tambah Produk
+                </Link>
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <LinkButton
-              href={`/pre-orders/${id}/edit`}
-              variant="secondary"
-            >
+            <LinkButton href={`/pre-orders/${id}/edit`} variant="secondary">
               Edit
             </LinkButton>
             <DuplicatePreorderButton campaignId={id} />
-            <LinkButton
-              href={`/import/pre-orders/${id}`}
-              variant="secondary"
-            >
+            <LinkButton href={`/import/pre-orders/${id}`} variant="secondary">
               Impor Pesanan
             </LinkButton>
             <LinkButton href={`/pre-orders/${id}/pesanan/baru`}>
@@ -236,6 +282,7 @@ export default async function CampaignDetailPage({
         {(
           [
             ["info", "Info & Status"],
+            ["produk", `Produk (${campaign.productCount})`],
             ["pesanan", `Pesanan (${campaign.orders.length})`],
             ["timeline", `Timeline (${campaign.timelineEntries.length})`],
           ] as [Tab, string][]
@@ -260,21 +307,41 @@ export default async function CampaignDetailPage({
             <Card>
               <CardHeader title="Detail Batch PO" />
               <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-5 py-4 text-sm">
-                <Info label="Harga / unit" value={formatRupiah(campaign.harga)} />
-                <Info label="Skema pembayaran"
+                <Info
+                  label="Harga / unit"
+                  value={formatRupiah(campaign.harga)}
+                />
+                <Info
+                  label="Skema pembayaran"
                   value={
                     PAYMENT_SCHEME_LABEL[campaign.paymentScheme] +
                     (dpLabel(campaign) ? ` — ${dpLabel(campaign)}` : "")
                   }
                 />
-                <Info label="Tanggal buka" value={formatTanggal(campaign.tanggalBuka)} />
-                <Info label="Tanggal tutup" value={formatTanggal(campaign.tanggalTutup)} />
-                <Info label="Estimasi produksi" value={formatTanggal(campaign.estimasiProduksi)} />
-                <Info label="Estimasi kirim" value={formatTanggal(campaign.estimasiKirim)} />
+                <Info
+                  label="Tanggal buka"
+                  value={formatTanggal(campaign.tanggalBuka)}
+                />
+                <Info
+                  label="Tanggal tutup"
+                  value={formatTanggal(campaign.tanggalTutup)}
+                />
+                <Info
+                  label="Estimasi produksi"
+                  value={formatTanggal(campaign.estimasiProduksi)}
+                />
+                <Info
+                  label="Estimasi kirim"
+                  value={formatTanggal(campaign.estimasiKirim)}
+                />
                 <Info
                   label="Deadline pelunasan"
                   value={
-                    <span className={deadlineLewat ? "font-medium text-rose-600" : ""}>
+                    <span
+                      className={
+                        deadlineLewat ? "font-medium text-rose-600" : ""
+                      }
+                    >
                       {formatTanggal(campaign.deadlinePelunasan)}
                       {deadlineLewat && " (terlewat)"}
                     </span>
@@ -321,7 +388,9 @@ export default async function CampaignDetailPage({
                             </span>
                           )}
                         </span>
-                        <span className={penuh ? "text-rose-600" : "text-sand-600"}>
+                        <span
+                          className={penuh ? "text-rose-600" : "text-sand-600"}
+                        >
                           {terisi} / {v.kuotaMaks}
                           {penuh && " · penuh"}
                         </span>
@@ -347,8 +416,8 @@ export default async function CampaignDetailPage({
                   Alur status
                 </p>
                 <p className="mt-1 text-sm text-sand-600">
-                  {CAMPAIGN_STATUS_LABEL.OPEN} → {CAMPAIGN_STATUS_LABEL.CLOSED} →{" "}
-                  {CAMPAIGN_STATUS_LABEL.PRODUKSI} →{" "}
+                  {CAMPAIGN_STATUS_LABEL.OPEN} → {CAMPAIGN_STATUS_LABEL.CLOSED}{" "}
+                  → {CAMPAIGN_STATUS_LABEL.PRODUKSI} →{" "}
                   {CAMPAIGN_STATUS_LABEL.SIAP_KIRIM} →{" "}
                   {CAMPAIGN_STATUS_LABEL.SELESAI}
                 </p>
@@ -384,7 +453,10 @@ export default async function CampaignDetailPage({
                       (variant) => variant.vendor?.id === vendor.id,
                     );
                     return (
-                      <section key={vendor.id} className="rounded-xl border border-sand-200 p-4">
+                      <section
+                        key={vendor.id}
+                        className="rounded-xl border border-sand-200 p-4"
+                      >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
                             <Link
@@ -394,7 +466,10 @@ export default async function CampaignDetailPage({
                               {vendor.nama}
                             </Link>
                             <p className="mt-1 text-sm text-amber-600">
-                              {ratingStars(computeVendorStats(vendor.evaluations).avgRating)}
+                              {ratingStars(
+                                computeVendorStats(vendor.evaluations)
+                                  .avgRating,
+                              )}
                             </p>
                           </div>
                           <span className="rounded-full bg-sand-100 px-2.5 py-1 text-xs font-semibold text-sand-600">
@@ -403,13 +478,17 @@ export default async function CampaignDetailPage({
                         </div>
                         {vendorVariants.length > 0 && (
                           <p className="mt-2 text-xs text-sand-600">
-                            {vendorVariants.map((variant) => variant.namaVarian).join(", ")}
+                            {vendorVariants
+                              .map((variant) => variant.namaVarian)
+                              .join(", ")}
                           </p>
                         )}
 
                         <div className="mt-4 border-t border-sand-100 pt-4">
                           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-sand-500">
-                            {evaluation ? "Evaluasi vendor" : "Isi evaluasi vendor"}
+                            {evaluation
+                              ? "Evaluasi vendor"
+                              : "Isi evaluasi vendor"}
                           </p>
                           {campaign.status !== "SELESAI" && !evaluation && (
                             <p className="mb-2 text-xs text-sand-500">
@@ -524,46 +603,236 @@ export default async function CampaignDetailPage({
         </Card>
       )}
 
+      {tab === "produk" && products && (
+        <Card>
+          <CardHeader
+            title="Produk"
+            subtitle={`${products.meta.total} Produk/Varian`}
+            action={
+              <LinkButton href={`/pre-orders/${id}/products/new`}>
+                + Tambah Produk
+              </LinkButton>
+            }
+          />
+          {campaign.needsProducts && (
+            <div className="mx-5 mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Tambahkan Produk aktif dengan kuota tersedia agar Batch PO dapat
+              dibuka untuk pemesanan publik.
+            </div>
+          )}
+          <form className="flex flex-wrap items-end gap-3 border-y border-sand-100 px-5 py-4">
+            <input type="hidden" name="tab" value="produk" />
+            <label className="flex-1 text-xs font-medium text-sand-500">
+              Cari Produk, SKU, kategori, atau label
+              <input
+                name="q"
+                defaultValue={sp.q ?? ""}
+                className="mt-1 block min-h-10 w-full rounded-lg border border-sand-300 px-3 text-sm text-sand-800"
+                placeholder="Cari Produk"
+              />
+            </label>
+            <label className="text-xs font-medium text-sand-500">
+              Status
+              <select
+                name="productStatus"
+                defaultValue={sp.productStatus ?? ""}
+                className="mt-1 block min-h-10 rounded-lg border border-sand-300 px-3 text-sm text-sand-800"
+              >
+                <option value="">Semua</option>
+                <option value="ACTIVE">Aktif</option>
+                <option value="INACTIVE">Nonaktif</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              className="min-h-10 rounded-lg bg-brand-600 px-4 text-sm font-bold text-white hover:bg-brand-700"
+            >
+              Terapkan
+            </button>
+            {(sp.q || sp.productStatus) && (
+              <Link
+                href={tabHref("produk")}
+                className="px-2 text-sm text-sand-600 hover:underline"
+              >
+                Reset
+              </Link>
+            )}
+          </form>
+          {products.data.length === 0 ? (
+            <EmptyState
+              title={
+                products.meta.total === 0
+                  ? "Batch PO belum memiliki Produk"
+                  : "Tidak ada Produk yang cocok"
+              }
+              description={
+                products.meta.total === 0
+                  ? "Tambahkan Produk pertama untuk menyiapkan Batch PO."
+                  : "Ubah kata kunci atau filter lalu coba lagi."
+              }
+              action={
+                products.meta.total === 0 ? (
+                  <LinkButton href={`/pre-orders/${id}/products/new`}>
+                    + Tambah Produk pertama
+                  </LinkButton>
+                ) : undefined
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
+                    <th className="px-5 py-3">Produk</th>
+                    <th className="px-5 py-3">Kategori</th>
+                    <th className="px-5 py-3">Harga</th>
+                    <th className="px-5 py-3">Kuota</th>
+                    <th className="px-5 py-3">Vendor</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-sand-100">
+                  {products.data.map((product) => (
+                    <tr key={product.id}>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-3">
+                          {product.gambarUrl ? (
+                            <img
+                              src={product.gambarUrl}
+                              alt=""
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-lg bg-sand-100" />
+                          )}
+                          <div>
+                            <p className="font-semibold text-sand-900">
+                              {product.namaVarian}
+                            </p>
+                            {product.label && (
+                              <p className="text-xs text-sand-500">
+                                {product.label}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-sand-700">
+                        {product.kategori ?? "—"}
+                      </td>
+                      <td className="px-5 py-3 text-sand-700">
+                        {formatRupiah(product.harga)}
+                      </td>
+                      <td className="px-5 py-3 text-sand-700">
+                        {product.terisi} / {product.kuotaMaks}
+                      </td>
+                      <td className="px-5 py-3 text-sand-700">
+                        {product.vendor?.nama ?? "—"}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`rounded px-2 py-1 text-xs font-bold ${product.isActive ? "bg-emerald-50 text-emerald-700" : "bg-sand-100 text-sand-600"}`}
+                        >
+                          {product.isActive ? "Aktif" : "Nonaktif"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <Link
+                          href={`/pre-orders/${id}/products/${product.id}/edit`}
+                          className="mr-2 text-sm font-bold text-brand-700 hover:underline"
+                        >
+                          Edit
+                        </Link>
+                        <ProductDeleteButton
+                          campaignId={id}
+                          productId={product.id}
+                          terisi={product.terisi}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {products.meta.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 px-5 py-4 text-sm">
+              <Link
+                className={
+                  products.meta.page <= 1
+                    ? "pointer-events-none opacity-40"
+                    : "text-brand-700 hover:underline"
+                }
+                href={`/pre-orders/${id}?tab=produk&page=${products.meta.page - 1}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${sp.productStatus ? `&productStatus=${sp.productStatus}` : ""}`}
+              >
+                ← Sebelumnya
+              </Link>
+              <span>
+                Halaman {products.meta.page} / {products.meta.totalPages}
+              </span>
+              <Link
+                className={
+                  products.meta.page >= products.meta.totalPages
+                    ? "pointer-events-none opacity-40"
+                    : "text-brand-700 hover:underline"
+                }
+                href={`/pre-orders/${id}?tab=produk&page=${products.meta.page + 1}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${sp.productStatus ? `&productStatus=${sp.productStatus}` : ""}`}
+              >
+                Berikutnya →
+              </Link>
+            </div>
+          )}
+        </Card>
+      )}
+
       {tab === "timeline" && (
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader title="Riwayat timeline" subtitle="Kronologis, terbaru di atas" />
+              <CardHeader
+                title="Riwayat timeline"
+                subtitle="Kronologis, terbaru di atas"
+              />
               {campaign.timelineEntries.length === 0 ? (
                 <EmptyState title="Belum ada update timeline" />
               ) : (
                 <ScrollList maxRows={12} rowHeight={4}>
-                <ol className="relative space-y-5 px-6 py-5">
-                  {campaign.timelineEntries.map((e) => (
-                    <li key={e.id} className="relative pl-6">
-                      <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-sand-900">
-                          {e.judulUpdate}
-                        </p>
-                        {e.otomatis && (
-                          <span className="rounded bg-sand-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-sand-500">
-                            otomatis
-                          </span>
+                  <ol className="relative space-y-5 px-6 py-5">
+                    {campaign.timelineEntries.map((e) => (
+                      <li key={e.id} className="relative pl-6">
+                        <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-sand-900">
+                            {e.judulUpdate}
+                          </p>
+                          {e.otomatis && (
+                            <span className="rounded bg-sand-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-sand-500">
+                              otomatis
+                            </span>
+                          )}
+                          {e.milestoneCode && (
+                            <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">
+                              {e.milestoneCode.replaceAll("_", " ")}
+                            </span>
+                          )}
+                          <TimelineDeleteButton
+                            campaignId={id}
+                            entryId={e.id}
+                          />
+                        </div>
+                        {e.catatan && (
+                          <p className="mt-0.5 whitespace-pre-wrap text-sm text-sand-600">
+                            {e.catatan}
+                          </p>
                         )}
-                        {e.milestoneCode && (
-                          <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">
-                            {e.milestoneCode.replaceAll("_", " ")}
-                          </span>
-                        )}
-                      </div>
-                      {e.catatan && (
-                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-sand-600">
-                          {e.catatan}
+                        <p className="mt-1 text-xs text-sand-400">
+                          {formatWaktu(e.createdAt)}
+                          {e.dibuatOleh?.name ? ` · ${e.dibuatOleh.name}` : ""}
                         </p>
-                      )}
-                      <p className="mt-1 text-xs text-sand-400">
-                        {formatWaktu(e.createdAt)}
-                        {e.dibuatOleh?.name ? ` · ${e.dibuatOleh.name}` : ""}
-                      </p>
-                    </li>
-                  ))}
-                </ol>
+                      </li>
+                    ))}
+                  </ol>
                 </ScrollList>
               )}
             </Card>
@@ -582,13 +851,7 @@ export default async function CampaignDetailPage({
   );
 }
 
-function Info({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function Info({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-sand-500">

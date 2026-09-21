@@ -40,7 +40,7 @@ export default async function NewPreorderPage() {
           Batch PO Baru
         </h1>
         <p className="mt-1 text-sm text-sand-500">
-          Buat batch Pre-Order baru beserta varian dan kuotanya.
+          Buat informasi Batch PO terlebih dahulu. Produk dapat ditambahkan setelah Batch PO dibuat.
         </p>
       </div>
 

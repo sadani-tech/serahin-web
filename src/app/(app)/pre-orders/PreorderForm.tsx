@@ -70,6 +70,7 @@ export function PreorderForm({
   initial,
   submitLabel,
   vendors = [],
+  includeVariants = false,
 }: {
   action: (
     prev: PreorderFormState,
@@ -78,10 +79,14 @@ export function PreorderForm({
   initial?: PreorderFormValues;
   submitLabel: string;
   vendors?: VendorOption[];
+  /** Dipakai hanya untuk kompatibilitas UI lama; v2.3.5 memakai tab Produk. */
+  includeVariants?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   useOverlayWhilePending(pending);
-  const [scheme, setScheme] = useState(initial?.paymentScheme ?? "DP_PELUNASAN");
+  const [scheme, setScheme] = useState(
+    initial?.paymentScheme ?? "DP_PELUNASAN",
+  );
   const [dpTipe, setDpTipe] = useState<DpTipe>(initial?.dpTipe ?? "PERSEN");
   const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>(
     initial?.vendorIds ?? [],
@@ -117,7 +122,9 @@ export function PreorderForm({
   const removeVariant = (i: number) =>
     setVariants((v) => (v.length > 1 ? v.filter((_, idx) => idx !== i) : v));
   const updateVariant = (i: number, patch: Partial<VariantRow>) =>
-    setVariants((v) => v.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+    setVariants((v) =>
+      v.map((row, idx) => (idx === i ? { ...row, ...patch } : row)),
+    );
 
   const toggleVendor = (vendorId: string) => {
     const selected = selectedVendorIds.includes(vendorId);
@@ -180,9 +187,7 @@ export function PreorderForm({
       </Card>
 
       <Card className="p-5">
-        <h3 className="mb-4 text-sm font-semibold text-sand-900">
-          Jadwal PO
-        </h3>
+        <h3 className="mb-4 text-sm font-semibold text-sand-900">Jadwal PO</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Tanggal buka PO" required>
             <Input
@@ -238,7 +243,10 @@ export function PreorderForm({
             </Select>
           </Field>
           {scheme === "DP_PELUNASAN" && (
-            <Field label="Tipe DP" hint="Persentase dari total, atau nominal tetap.">
+            <Field
+              label="Tipe DP"
+              hint="Persentase dari total, atau nominal tetap."
+            >
               <Select
                 name="dpTipe"
                 value={dpTipe}
@@ -261,7 +269,11 @@ export function PreorderForm({
             </Field>
           )}
           {scheme === "DP_PELUNASAN" && dpTipe === "NOMINAL" && (
-            <Field label="Nominal DP (Rp)" required hint="DP tetap per pesanan, mis. 100.000">
+            <Field
+              label="Nominal DP (Rp)"
+              required
+              hint="DP tetap per pesanan, mis. 100.000"
+            >
               <CurrencyInput
                 name="dpNominal"
                 defaultValue={initial?.dpNominal ?? ""}
@@ -313,7 +325,8 @@ export function PreorderForm({
       <Card className="p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">Vendor</h3>
         <p className="mb-3 text-xs text-sand-500">
-          Pilih satu atau lebih vendor. Vendor per item ditentukan pada bagian varian.
+          Pilih satu atau lebih vendor. Vendor per item ditentukan pada bagian
+          varian.
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           {vendors.map((vendor) => {
@@ -322,7 +335,9 @@ export function PreorderForm({
               <label
                 key={vendor.id}
                 className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${
-                  selected ? "border-brand-500 bg-brand-50" : "border-sand-200 bg-white"
+                  selected
+                    ? "border-brand-500 bg-brand-50"
+                    : "border-sand-200 bg-white"
                 }`}
               >
                 <input
@@ -334,9 +349,12 @@ export function PreorderForm({
                   className="mt-0.5 h-4 w-4 accent-brand-600"
                 />
                 <span className="min-w-0 text-sm">
-                  <span className="block font-semibold text-sand-900">{vendor.nama}</span>
+                  <span className="block font-semibold text-sand-900">
+                    {vendor.nama}
+                  </span>
                   <span className="mt-0.5 block text-xs text-sand-500">
-                    Rating {vendor.avgRating ?? "—"} · {vendor.jumlahKampanye} Batch PO · {vendor.jumlahTelat}× telat
+                    Rating {vendor.avgRating ?? "—"} · {vendor.jumlahKampanye}{" "}
+                    Batch PO · {vendor.jumlahTelat}× telat
                   </span>
                 </span>
               </label>
@@ -348,205 +366,228 @@ export function PreorderForm({
         )}
       </Card>
 
-      <Card className="p-5">
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-sand-900">
-            Varian & Kuota
-          </h3>
-        </div>
-        {/* Varian dikirim sebagai satu field JSON (mendukung images/warna bersarang). */}
-        <input
-          type="hidden"
-          name="variantsJson"
-          value={JSON.stringify(
-            variants.map(({ expanded, ...row }) => (void expanded, row)),
-          )}
-        />
-        <datalist id="kategori-umum">
-          <option value="Sepatu" />
-          <option value="Tas" />
-          <option value="Baju" />
-          <option value="Elektronik" />
-          <option value="Others" />
-        </datalist>
-        <div className="space-y-3">
-          {variants.map((v, i) => {
-            const isFilled = v.namaVarian.trim().length > 0;
-            const isExpanded = v.expanded !== false;
-            return (
-              <div key={i} className="rounded-lg border border-sand-200 p-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => updateVariant(i, { expanded: !isExpanded })}
-                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                    aria-expanded={isExpanded}
-                  >
-                    <span
-                      className={`shrink-0 text-sand-400 transition-transform ${
-                        isExpanded ? "rotate-90" : ""
-                      }`}
+      {includeVariants && (
+        <Card className="p-5">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-sand-900">
+              Varian & Kuota
+            </h3>
+          </div>
+          {/* Varian dikirim sebagai satu field JSON (mendukung images/warna bersarang). */}
+          <input
+            type="hidden"
+            name="variantsJson"
+            value={JSON.stringify(
+              variants.map(({ expanded, ...row }) => (void expanded, row)),
+            )}
+          />
+          <datalist id="kategori-umum">
+            <option value="Sepatu" />
+            <option value="Tas" />
+            <option value="Baju" />
+            <option value="Elektronik" />
+            <option value="Others" />
+          </datalist>
+          <div className="space-y-3">
+            {variants.map((v, i) => {
+              const isFilled = v.namaVarian.trim().length > 0;
+              const isExpanded = v.expanded !== false;
+              return (
+                <div key={i} className="rounded-lg border border-sand-200 p-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateVariant(i, { expanded: !isExpanded })
+                      }
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      aria-expanded={isExpanded}
                     >
-                      ▶
-                    </span>
-                    <span className="truncate text-sm font-semibold text-sand-900">
-                      {isFilled ? v.namaVarian : `Varian ${i + 1} (belum diisi)`}
-                    </span>
-                    {!isExpanded && isFilled && (
-                      <span className="truncate text-xs font-normal text-sand-500">
-                        {v.kategori && `${v.kategori} · `}
-                        {v.harga ? `${formatRupiah(v.harga)} · ` : ""}
-                        Kuota {v.kuotaMaks || 0}
+                      <span
+                        className={`shrink-0 text-sand-400 transition-transform ${
+                          isExpanded ? "rotate-90" : ""
+                        }`}
+                      >
+                        ▶
                       </span>
-                    )}
-                  </button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => removeVariant(i)}
-                    className="shrink-0 text-rose-600"
-                    disabled={variants.length === 1}
-                    title="Hapus varian"
-                  >
-                    Hapus
-                  </Button>
-                </div>
-                {isExpanded && (
-                  <>
-                    <div className="mt-3 flex flex-wrap items-end gap-2">
-                      <div className="min-w-40 flex-1">
-                        <Field label="Nama varian">
-                          <Input
-                            value={v.namaVarian}
-                            onChange={(e) =>
-                              updateVariant(i, { namaVarian: e.target.value })
-                            }
-                            placeholder="mis. Sepatu Keren"
-                          />
-                        </Field>
-                      </div>
-                      <div className="w-28">
-                        <Field label="Harga (Rp)">
-                          <CurrencyInput
-                            value={v.harga}
-                            onValueChange={(raw) =>
-                              updateVariant(i, {
-                                harga: raw,
-                                perluTinjau: false,
-                              })
-                            }
-                            placeholder="150.000"
-                          />
-                        </Field>
-                      </div>
-                      <div className="w-24">
-                        <Field label="Kuota">
-                          <Input
-                            type="number"
-                            min={v.terisi ?? 1}
-                            value={v.kuotaMaks}
-                            onChange={(e) =>
-                              updateVariant(i, { kuotaMaks: e.target.value })
-                            }
-                            placeholder="20"
-                          />
-                        </Field>
-                      </div>
-                    </div>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      {selectedVendors.length > 0 && (
-                        <Field label="Vendor item" required>
-                          <Select
-                            value={v.vendorId}
-                            onChange={(e) => updateVariant(i, { vendorId: e.target.value })}
-                            required
-                          >
-                            <option value="">— pilih vendor —</option>
-                            {selectedVendors.map((vendor) => (
-                              <option key={vendor.id} value={vendor.id}>{vendor.nama}</option>
-                            ))}
-                          </Select>
-                        </Field>
+                      <span className="truncate text-sm font-semibold text-sand-900">
+                        {isFilled
+                          ? v.namaVarian
+                          : `Varian ${i + 1} (belum diisi)`}
+                      </span>
+                      {!isExpanded && isFilled && (
+                        <span className="truncate text-xs font-normal text-sand-500">
+                          {v.kategori && `${v.kategori} · `}
+                          {v.harga ? `${formatRupiah(v.harga)} · ` : ""}
+                          Kuota {v.kuotaMaks || 0}
+                        </span>
                       )}
-                      <Field label="Kategori" required>
-                        <Input
-                          value={v.kategori}
-                          onChange={(e) => updateVariant(i, { kategori: e.target.value })}
-                          list="kategori-umum"
-                          placeholder="mis. Tas"
-                          required
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => removeVariant(i)}
+                      className="shrink-0 text-rose-600"
+                      disabled={variants.length === 1}
+                      title="Hapus varian"
+                    >
+                      Hapus
+                    </Button>
+                  </div>
+                  {isExpanded && (
+                    <>
+                      <div className="mt-3 flex flex-wrap items-end gap-2">
+                        <div className="min-w-40 flex-1">
+                          <Field label="Nama varian">
+                            <Input
+                              value={v.namaVarian}
+                              onChange={(e) =>
+                                updateVariant(i, { namaVarian: e.target.value })
+                              }
+                              placeholder="mis. Sepatu Keren"
+                            />
+                          </Field>
+                        </div>
+                        <div className="w-28">
+                          <Field label="Harga (Rp)">
+                            <CurrencyInput
+                              value={v.harga}
+                              onValueChange={(raw) =>
+                                updateVariant(i, {
+                                  harga: raw,
+                                  perluTinjau: false,
+                                })
+                              }
+                              placeholder="150.000"
+                            />
+                          </Field>
+                        </div>
+                        <div className="w-24">
+                          <Field label="Kuota">
+                            <Input
+                              type="number"
+                              min={v.terisi ?? 1}
+                              value={v.kuotaMaks}
+                              onChange={(e) =>
+                                updateVariant(i, { kuotaMaks: e.target.value })
+                              }
+                              placeholder="20"
+                            />
+                          </Field>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        {selectedVendors.length > 0 && (
+                          <Field label="Vendor item" required>
+                            <Select
+                              value={v.vendorId}
+                              onChange={(e) =>
+                                updateVariant(i, { vendorId: e.target.value })
+                              }
+                              required
+                            >
+                              <option value="">— pilih vendor —</option>
+                              {selectedVendors.map((vendor) => (
+                                <option key={vendor.id} value={vendor.id}>
+                                  {vendor.nama}
+                                </option>
+                              ))}
+                            </Select>
+                          </Field>
+                        )}
+                        <Field label="Kategori" required>
+                          <Input
+                            value={v.kategori}
+                            onChange={(e) =>
+                              updateVariant(i, { kategori: e.target.value })
+                            }
+                            list="kategori-umum"
+                            placeholder="mis. Tas"
+                            required
+                          />
+                        </Field>
+                        <Field label="Label katalog (opsional)">
+                          <Input
+                            value={v.label}
+                            onChange={(e) =>
+                              updateVariant(i, { label: e.target.value })
+                            }
+                            placeholder="mis. New Arrival"
+                          />
+                        </Field>
+                        <Field label="Ukuran (opsional)">
+                          <Input
+                            value={v.ukuran}
+                            onChange={(e) =>
+                              updateVariant(i, { ukuran: e.target.value })
+                            }
+                            placeholder="mis. M atau 40 × 25 cm"
+                          />
+                        </Field>
+                        <Field label="Material (opsional)">
+                          <Input
+                            value={v.material}
+                            onChange={(e) =>
+                              updateVariant(i, { material: e.target.value })
+                            }
+                            placeholder="mis. Kanvas"
+                          />
+                        </Field>
+                        <Field label="SKU produk (opsional)">
+                          <Input
+                            value={v.sku}
+                            onChange={(e) =>
+                              updateVariant(i, { sku: e.target.value })
+                            }
+                            placeholder="mis. TAS-001"
+                          />
+                        </Field>
+                        <Field label="Deskripsi varian (opsional)">
+                          <Textarea
+                            value={v.deskripsi}
+                            onChange={(e) =>
+                              updateVariant(i, { deskripsi: e.target.value })
+                            }
+                            placeholder="Detail khusus varian ini"
+                            rows={2}
+                          />
+                        </Field>
+                        <VariantImagesInput
+                          value={v.images}
+                          onChange={(images) => updateVariant(i, { images })}
                         />
-                      </Field>
-                      <Field label="Label katalog (opsional)">
-                        <Input
-                          value={v.label}
-                          onChange={(e) => updateVariant(i, { label: e.target.value })}
-                          placeholder="mis. New Arrival"
-                        />
-                      </Field>
-                      <Field label="Ukuran (opsional)">
-                        <Input
-                          value={v.ukuran}
-                          onChange={(e) => updateVariant(i, { ukuran: e.target.value })}
-                          placeholder="mis. M atau 40 × 25 cm"
-                        />
-                      </Field>
-                      <Field label="Material (opsional)">
-                        <Input
-                          value={v.material}
-                          onChange={(e) => updateVariant(i, { material: e.target.value })}
-                          placeholder="mis. Kanvas"
-                        />
-                      </Field>
-                      <Field label="SKU produk (opsional)">
-                        <Input
-                          value={v.sku}
-                          onChange={(e) => updateVariant(i, { sku: e.target.value })}
-                          placeholder="mis. TAS-001"
-                        />
-                      </Field>
-                      <Field label="Deskripsi varian (opsional)">
-                        <Textarea
-                          value={v.deskripsi}
-                          onChange={(e) => updateVariant(i, { deskripsi: e.target.value })}
-                          placeholder="Detail khusus varian ini"
-                          rows={2}
-                        />
-                      </Field>
-                      <VariantImagesInput
-                        value={v.images}
-                        onChange={(images) => updateVariant(i, { images })}
-                      />
-                      <Field label="Opsi warna (opsional)">
-                        <VariantColorsInput
-                          value={v.warna}
-                          onChange={(warna) => updateVariant(i, { warna })}
-                        />
-                      </Field>
-                    </div>
-                    {v.perluTinjau && (
-                      <p className="mt-1 text-xs text-amber-600">
-                        ⚠ Harga hasil migrasi — mohon ditinjau/disesuaikan bila perlu.
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-3">
-          <Button type="button" variant="secondary" onClick={addVariant}>
-            + Tambah varian
-          </Button>
-        </div>
-        {variants.some((v) => v.terisi && v.terisi > 0) && (
-          <p className="mt-3 text-xs text-sand-500">
-            Kuota tidak dapat diturunkan di bawah jumlah pesanan yang sudah
-            terisi. Varian yang sudah punya pesanan tidak bisa dihapus.
-          </p>
-        )}
-      </Card>
+                        <Field label="Opsi warna (opsional)">
+                          <VariantColorsInput
+                            value={v.warna}
+                            onChange={(warna) => updateVariant(i, { warna })}
+                          />
+                        </Field>
+                      </div>
+                      {v.perluTinjau && (
+                        <p className="mt-1 text-xs text-amber-600">
+                          ⚠ Harga hasil migrasi — mohon ditinjau/disesuaikan
+                          bila perlu.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3">
+            <Button type="button" variant="secondary" onClick={addVariant}>
+              + Tambah varian
+            </Button>
+          </div>
+          {variants.some((v) => v.terisi && v.terisi > 0) && (
+            <p className="mt-3 text-xs text-sand-500">
+              Kuota tidak dapat diturunkan di bawah jumlah pesanan yang sudah
+              terisi. Varian yang sudah punya pesanan tidak bisa dihapus.
+            </p>
+          )}
+        </Card>
+      )}
 
       {/* Spacer supaya konten terakhir tidak tertutup tombol floating di mobile. */}
       <div className="h-20 lg:hidden" />

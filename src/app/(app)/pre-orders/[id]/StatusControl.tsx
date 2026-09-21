@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { Button, Select, Textarea } from "@/components/ui";
-import {
-  CAMPAIGN_STATUS_LABEL,
-  CAMPAIGN_STATUS_ORDER,
-} from "@/lib/domain";
+import { CAMPAIGN_STATUS_LABEL, CAMPAIGN_STATUS_ORDER } from "@/lib/domain";
 import { CampaignStatus } from "@/lib/types";
 import { changePreorderStatus } from "../actions";
 
@@ -17,13 +14,15 @@ export function StatusControl({
   current: CampaignStatus;
 }) {
   const [target, setTarget] = useState<CampaignStatus>(current);
+  const [error, setError] = useState<string>();
   const changed = target !== current;
   const action = changePreorderStatus.bind(null, campaignId);
 
   return (
     <form
       action={async (formData: FormData) => {
-        await action(formData);
+        const result = await action(formData);
+        setError(result?.error);
       }}
       className="space-y-3"
     >
@@ -55,6 +54,7 @@ export function StatusControl({
           placeholder="Catatan (opsional) — mis. alasan perubahan status. Akan tercatat di timeline."
         />
       )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <p className="text-xs text-sand-500">
         Perubahan status otomatis tercatat di timeline Batch PO.
       </p>

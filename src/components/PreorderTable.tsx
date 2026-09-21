@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card, DeleteIconButton, EmptyState, LinkButton } from "@/components/ui";
+import {
+  Card,
+  DeleteIconButton,
+  EmptyState,
+  LinkButton,
+} from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal, toNumber } from "@/lib/format";
 import { deletePreorder } from "@/app/(app)/pre-orders/actions";
@@ -10,11 +15,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { useNavLoading } from "@/hooks/useNavLoading";
 
 export type CampaignStatus =
-  | "OPEN"
-  | "CLOSED"
-  | "PRODUKSI"
-  | "SIAP_KIRIM"
-  | "SELESAI";
+  "OPEN" | "CLOSED" | "PRODUKSI" | "SIAP_KIRIM" | "SELESAI";
 
 export type CampaignRow = {
   id: string;
@@ -25,6 +26,7 @@ export type CampaignRow = {
   terisi: number;
   variants: { harga: string }[];
   _count: { orders: number };
+  needsProducts?: boolean;
 };
 
 const PAGE_SIZE = 10;
@@ -34,10 +36,16 @@ function rentangHarga(variants: { harga: string }[]): string {
   const hargas = variants.map((v) => toNumber(v.harga));
   const min = Math.min(...hargas);
   const max = Math.max(...hargas);
-  return min === max ? formatRupiah(min) : `${formatRupiah(min)} – ${formatRupiah(max)}`;
+  return min === max
+    ? formatRupiah(min)
+    : `${formatRupiah(min)} – ${formatRupiah(max)}`;
 }
 
-export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] }) {
+export default function PreorderTable({
+  campaigns,
+}: {
+  campaigns: CampaignRow[];
+}) {
   const [page, setPage] = useState(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { confirm, alert } = useConfirm();
@@ -76,7 +84,9 @@ export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] 
         <EmptyState
           title="Belum ada Batch PO"
           description="Mulai dengan membuat Batch PO pertama Anda."
-          action={<LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton>}
+          action={
+            <LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton>
+          }
         />
       ) : (
         <>
@@ -113,6 +123,11 @@ export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] 
                         {formatTanggal(c.tanggalTutup)}
                       </span>
                     </div>
+                    {c.needsProducts && (
+                      <p className="mt-2 text-xs font-bold text-amber-700">
+                        Perlu tambah Produk sebelum dibuka
+                      </p>
+                    )}
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-sand-100">
                       <div
                         className={`h-full rounded-full transition-all ${
@@ -187,6 +202,11 @@ export default function PreorderTable({ campaigns }: { campaigns: CampaignRow[] 
                     </td>
                     <td className="px-5 py-3">
                       <CampaignBadge status={c.status} />
+                      {c.needsProducts && (
+                        <p className="mt-1 text-xs font-bold text-amber-700">
+                          Perlu Produk
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-sand-700">
                       {rentangHarga(c.variants)}
