@@ -11,6 +11,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { SerahinLogo } from "@/components/brand";
 import { RichText } from "@/components/RichText";
 import { PortalPaymentForm } from "./PortalPaymentForm";
+import { PortalSettlementForm } from "./PortalSettlementForm";
 
 type PortalOrder = {
   status: OrderStatus;
@@ -24,11 +25,13 @@ type PortalOrder = {
     warna: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
+  settlement: { stage: boolean; unsettledItemIds: string[] };
   campaign: {
     namaProduk: string;
     paymentScheme: PaymentScheme;
     deskripsiPelunasan: string | null;
     linkCheckoutShopee: string | null;
+    nominalCheckoutShopee: number | null;
   };
   billing: Billing;
   paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
@@ -37,6 +40,14 @@ type PortalOrder = {
     accountNumber: string | null;
     accountHolderName: string | null;
   } | null;
+  manualTransfers?: {
+    id: string;
+    accountType: "BANK" | "EWALLET";
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+    isPrimary: boolean;
+  }[];
   // v2.1 — pembayaran otomatis (payment gateway)
   gatewayEnabled?: boolean;
   pendingGateway?: {
@@ -73,6 +84,8 @@ export default async function PortalPage({
 
   const { campaign, billing } = order;
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
+  const shopeePerUnit = campaign.nominalCheckoutShopee ?? 0;
+  const shopeeTotal = order.metodePengiriman === "SHOPEE" ? shopeePerUnit * totalQty : 0;
 
   const dibatalkan = order.status === "DIBATALKAN";
   const ditolak = order.status === "DITOLAK";
@@ -234,6 +247,12 @@ export default async function PortalPage({
               </dd>
             </div>
           </dl>
+          {shopeeTotal > 0 && (
+            <div className="border-t border-orange-100 bg-orange-50 px-5 py-3 text-sm text-orange-950">
+              <div className="flex flex-wrap justify-between gap-2"><span>Checkout Shopee ({formatRupiah(shopeePerUnit)} × {totalQty} barang)</span><strong>{formatRupiah(shopeeTotal)}</strong></div>
+              <p className="mt-1 text-xs text-orange-800">Nilai ini otomatis mengurangi sisa tagihan pelunasan.</p>
+            </div>
+          )}
           {billing.menungguVerifikasi > 0 && (
             <p className="border-t border-sand-100 px-5 py-2 text-center text-xs text-amber-700">
               {formatRupiah(billing.menungguVerifikasi)} sedang menunggu
@@ -305,23 +324,18 @@ export default async function PortalPage({
         )}
 
         {/* Pembayaran mandiri pembeli (pelunasan) */}
-        {bisaBayar && (
+        {bisaBayar && order.settlement.stage && order.settlement.unsettledItemIds.length > 0 && (
           <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
             <div className="border-b border-sand-100 px-5 py-3">
               <h2 className="text-sm font-semibold text-sand-900">
-                {isPelunasan ? "Lakukan pelunasan" : "Kirim pembayaran"}
+                Lakukan pelunasan
               </h2>
               <p className="text-xs text-sand-500">
-                {isPelunasan
-                  ? "Sisa pelunasan"
-                  : campaign.paymentScheme === "DP_PELUNASAN"
-                    ? "DP yang perlu dibayar"
-                    : "Tagihan"}{" "}
-                {formatRupiah(paymentDue)}.
+                Pilih produk yang mau dilunasi dulu — nominal menyesuaikan produk yang dipilih.
               </p>
             </div>
             <div className="px-5 py-4">
-              {isPelunasan && campaign.deskripsiPelunasan && (
+              {campaign.deskripsiPelunasan && (
                 <div className="mb-4 min-w-0 overflow-hidden rounded-lg bg-sand-50 p-4 ring-1 ring-inset ring-sand-200">
                   <RichText
                     html={campaign.deskripsiPelunasan}
@@ -329,14 +343,44 @@ export default async function PortalPage({
                   />
                 </div>
               )}
-              <PortalPaymentForm
+              <PortalSettlementForm
                 token={token}
-                amountDue={paymentDue}
-                isPelunasan={isPelunasan}
+                items={order.items}
+                unsettledItemIds={order.settlement.unsettledItemIds}
                 paymentChannel={order.paymentChannel}
                 gatewayAvailable={Boolean(order.gatewayEnabled)}
                 manualTransfer={order.manualTransfer}
+                manualTransfers={order.manualTransfers}
+                shopeeEnabled={Boolean(campaign.linkCheckoutShopee && campaign.nominalCheckoutShopee)}
                 linkCheckoutShopee={campaign.linkCheckoutShopee}
+              />
+            </div>
+          </div>
+        )}
+
+        {bisaBayar && !order.settlement.stage && (
+          <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+            <div className="border-b border-sand-100 px-5 py-3">
+              <h2 className="text-sm font-semibold text-sand-900">
+                Kirim pembayaran
+              </h2>
+              <p className="text-xs text-sand-500">
+                {campaign.paymentScheme === "DP_PELUNASAN" ? "DP yang perlu dibayar" : "Tagihan"}{" "}
+                {formatRupiah(paymentDue)}.
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <PortalPaymentForm
+                token={token}
+                amountDue={paymentDue}
+                isPelunasan={false}
+                paymentChannel={order.paymentChannel}
+                gatewayAvailable={Boolean(order.gatewayEnabled)}
+                manualTransfer={order.manualTransfer}
+                manualTransfers={order.manualTransfers}
+                linkCheckoutShopee={campaign.linkCheckoutShopee}
+                checkoutShopeeAmount={campaign.nominalCheckoutShopee}
+                totalQuantity={totalQty}
                 resumePayment={payment === "1"}
               />
             </div>

@@ -55,6 +55,7 @@ export type PreorderFormValues = {
   seoDescription?: string;
   deskripsiPelunasan?: string;
   linkCheckoutShopee?: string;
+  nominalCheckoutShopee?: number | string;
   tanggalBuka?: string;
   tanggalTutup?: string;
   estimasiProduksi?: string;
@@ -346,21 +347,35 @@ export function PreorderForm({
                 placeholder="Halo! Tas kamu sudah bisa dilunasi. Ada dua opsi pengiriman…"
               />
             </Field>
-            <div className="mt-4">
-              <Field
-                label="Link Checkout Shopee"
-                hint="Ditampilkan di portal saat pembeli memilih opsi Checkout Shopee."
-              >
-                <Input
-                  name="linkCheckoutShopee"
-                  type="url"
-                  defaultValue={initial?.linkCheckoutShopee}
-                  placeholder="https://shopee.co.id/..."
-                />
-              </Field>
-            </div>
           </div>
         )}
+        <div className="mt-4">
+          <Field
+            label="Link Checkout Shopee"
+            hint={
+              scheme === "DP_PELUNASAN"
+                ? "Ditampilkan di portal saat pembeli memilih opsi Checkout Shopee pada tahap pelunasan."
+                : "Ditampilkan di formulir pesanan saat pembeli memilih opsi Checkout Shopee (skema Lunas langsung)."
+            }
+          >
+            <Input
+              name="linkCheckoutShopee"
+              type="url"
+              defaultValue={initial?.linkCheckoutShopee}
+              placeholder="https://shopee.co.id/..."
+            />
+          </Field>
+          <Field
+            label="Nominal checkout Shopee per barang"
+            hint="Nominal yang diharapkan dari checkout Shopee. Setelah Seller memverifikasi, nominal ini mengurangi pelunasan/pembayaran Buyer."
+          >
+            <CurrencyInput
+              name="nominalCheckoutShopee"
+              defaultValue={initial?.nominalCheckoutShopee}
+              placeholder="Contoh: 100000"
+            />
+          </Field>
+        </div>
       </Card>
 
       <Card className="p-5">

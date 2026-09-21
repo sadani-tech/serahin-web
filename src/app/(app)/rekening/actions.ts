@@ -13,6 +13,7 @@ function resultUrl(error?: unknown) {
 export async function saveBankAccount(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   const body = {
+    accountType: String(formData.get("accountType") ?? "BANK"),
     bankName: String(formData.get("bankName") ?? ""),
     accountNumber: String(formData.get("accountNumber") ?? ""),
     accountHolderName: String(formData.get("accountHolderName") ?? ""),

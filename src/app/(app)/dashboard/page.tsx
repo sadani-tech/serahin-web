@@ -155,6 +155,15 @@ export default async function DashboardPage({
           }
         />
         <StatCard
+          className="col-span-2 sm:col-span-1"
+          label="Laba setelah HPP"
+          value={formatRupiah(data.labaKotor)}
+          note={data.hppBelumLengkap ? `${data.hppBelumLengkap} order HPP belum lengkap` : `HPP ${formatRupiah(data.totalHpp)}`}
+          tone="brand"
+          compact
+          icon={<><path d="M4 19V5M4 19h16" /><path d="m7 15 4-4 3 2 4-6" /></>}
+        />
+        <StatCard
           label="Perlu perhatian"
           value={data.perluPerhatian.length}
           note="mendekati deadline"

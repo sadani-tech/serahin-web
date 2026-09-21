@@ -144,6 +144,28 @@ export async function createPublicOrder(
     const bukti = formData.get("buktiPembayaran");
     if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
 
+    const includeShopee = formData.get("includeShopee") === "1";
+    if (includeShopee) {
+      const buktiShopee = formData.get("buktiShopee");
+      if (!(buktiShopee instanceof File) || buktiShopee.size === 0) {
+        return { error: "Bukti checkout Shopee wajib diunggah." };
+      }
+      fd.set("includeShopee", "1");
+      fd.set("buktiShopee", buktiShopee);
+    }
+
+    const metodePengiriman = String(formData.get("metodePengiriman") ?? "").trim();
+    if (metodePengiriman === "SHOPEE" || metodePengiriman === "EKSPEDISI") {
+      fd.set("metodePengiriman", metodePengiriman);
+      const alamatPengiriman = String(formData.get("alamatPengiriman") ?? "").trim();
+      if (metodePengiriman === "EKSPEDISI") {
+        if (!alamatPengiriman) {
+          return { error: "Alamat pengiriman lengkap wajib diisi untuk Manual by Ekspedisi." };
+        }
+        fd.set("alamatPengiriman", alamatPengiriman);
+      }
+    }
+
     try {
       result = await api.postForm<OrderResult>(
         `/public/form/${formToken}/order`,
