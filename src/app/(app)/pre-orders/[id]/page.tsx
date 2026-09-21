@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { CampaignBadge } from "@/components/badges";
@@ -63,6 +64,7 @@ type CampaignDetail = {
   namaProduk: string;
   status: CampaignStatus;
   harga: string;
+  hpp: string | null;
   paymentScheme: PaymentScheme;
   dpTipe: DpTipe | null;
   dpPercent: number | null;
@@ -77,7 +79,9 @@ type CampaignDetail = {
   formAktif: boolean;
   productCount: number;
   activeProductCount: number;
+  orderableProductCount: number;
   needsProducts: boolean;
+  productWarning: string;
   needsBankAccount: boolean;
   orderCount: number;
   variants: {
@@ -139,6 +143,7 @@ type ProductRow = {
   id: string;
   namaVarian: string;
   harga: string;
+  hpp?: string | null;
   kuotaMaks: number;
   terisi: number;
   gambarUrl: string | null;
@@ -301,8 +306,7 @@ export default async function CampaignDetailPage({
             </p>
             {campaign.needsProducts && (
               <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                Batch PO ini belum punya Produk aktif dengan kuota tersedia.
-                Tambahkan minimal satu Produk sebelum membuka pemesanan publik.
+                {campaign.productWarning} Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.
                 <Link
                   href={`/pre-orders/${id}?tab=produk`}
                   className="ml-2 underline"
@@ -605,8 +609,7 @@ export default async function CampaignDetailPage({
           />
           {campaign.needsProducts && (
             <p className="mx-5 mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Tambahkan Produk aktif dengan kuota tersedia sebelum membuka
-              pemesanan publik.
+              {campaign.productWarning}
             </p>
           )}
           <form className="flex flex-wrap items-end gap-3 border-b border-sand-100 px-5 py-4">
@@ -683,9 +686,11 @@ export default async function CampaignDetailPage({
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           {product.gambarUrl ? (
-                            <img
+                            <Image
                               src={product.gambarUrl}
                               alt=""
+                              width={40}
+                              height={40}
                               className="h-10 w-10 rounded-lg object-cover"
                             />
                           ) : (
@@ -708,6 +713,9 @@ export default async function CampaignDetailPage({
                       </td>
                       <td className="px-5 py-3 text-sand-700">
                         {formatRupiah(product.harga)}
+                        {product.hpp !== null && product.hpp !== undefined && (
+                          <span className="mt-1 block text-xs font-semibold text-sand-500">HPP {formatRupiah(product.hpp)}</span>
+                        )}
                       </td>
                       <td className="px-5 py-3 text-sand-700">
                         {product.terisi} / {product.kuotaMaks}
@@ -717,29 +725,35 @@ export default async function CampaignDetailPage({
                       </td>
                       <td className="px-5 py-3">
                         <span
-                          className={`rounded px-2 py-1 text-xs font-bold ${product.isActive ? "bg-emerald-50 text-emerald-700" : "bg-sand-100 text-sand-600"}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${product.isActive ? "bg-emerald-50 text-emerald-700" : "bg-sand-100 text-sand-600"}`}
                         >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${product.isActive ? "bg-emerald-500" : "bg-sand-400"}`}
+                            aria-hidden="true"
+                          />
                           {product.isActive ? "Aktif" : "Nonaktif"}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-right">
-                        <ProductModal
-                          campaignId={id}
-                          vendors={campaign.vendors}
-                          action={updatePreorderProduct.bind(
-                            null,
-                            id,
-                            product.id,
-                          )}
-                          initial={product}
-                          submitLabel="Simpan Produk"
-                          triggerLabel="Edit"
-                        />
-                        <ProductDeleteButton
-                          campaignId={id}
-                          productId={product.id}
-                          terisi={product.terisi}
-                        />
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <ProductModal
+                            campaignId={id}
+                            vendors={campaign.vendors}
+                            action={updatePreorderProduct.bind(
+                              null,
+                              id,
+                              product.id,
+                            )}
+                            initial={product}
+                            submitLabel="Simpan Produk"
+                            triggerLabel="Edit"
+                          />
+                          <ProductDeleteButton
+                            campaignId={id}
+                            productId={product.id}
+                            terisi={product.terisi}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}

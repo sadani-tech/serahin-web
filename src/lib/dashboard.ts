@@ -22,6 +22,9 @@ export type DashboardFilters = {
 export type DashboardData = {
   totalCashflow: number;
   totalNilaiPesanan: number;
+  totalHpp: number;
+  labaKotor: number;
+  hppBelumLengkap: number;
   jumlahKampanyeAktif: number;
   menungguVerifikasi: number;
   pesananBaru: number;

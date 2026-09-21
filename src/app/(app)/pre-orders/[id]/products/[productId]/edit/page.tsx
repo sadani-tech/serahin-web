@@ -40,6 +40,7 @@ export default async function EditProductPage({
         action={updatePreorderProduct.bind(null, id, productId)}
         initial={product}
         vendors={campaign.vendors}
+        campaignId={id}
         submitLabel="Simpan Produk"
       />
     </div>

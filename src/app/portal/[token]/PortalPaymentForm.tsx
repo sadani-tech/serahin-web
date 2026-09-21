@@ -5,6 +5,7 @@ import { Button, Field, FormError, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ToastFeedback } from "@/components/Toast";
+import { CopyButton } from "@/components/CopyButton";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -28,7 +29,10 @@ export function PortalPaymentForm({
   paymentChannel,
   gatewayAvailable = false,
   manualTransfer,
+  manualTransfers,
   linkCheckoutShopee,
+  checkoutShopeeAmount,
+  totalQuantity,
   resumePayment = false,
 }: {
   token: string;
@@ -41,7 +45,17 @@ export function PortalPaymentForm({
     accountNumber: string | null;
     accountHolderName: string | null;
   } | null;
+  manualTransfers?: {
+    id: string;
+    accountType: "BANK" | "EWALLET";
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+    isPrimary: boolean;
+  }[];
   linkCheckoutShopee?: string | null;
+  checkoutShopeeAmount?: number | null;
+  totalQuantity: number;
   resumePayment?: boolean;
 }) {
   const manualAction = submitPortalPayment.bind(null, token);
@@ -54,7 +68,6 @@ export function PortalPaymentForm({
     PortalPaymentState,
     FormData
   >(gatewayAction, undefined);
-
   const pending = manualPending || gwPending;
   const gateway = paymentChannel === "GATEWAY";
   const manualAccountReady = Boolean(
@@ -62,8 +75,23 @@ export function PortalPaymentForm({
       manualTransfer.accountNumber &&
       manualTransfer.accountHolderName,
   );
-  const jumlah = String(amountDue);
+  const displayedAccounts = manualTransfers?.length
+    ? manualTransfers
+    : manualTransfer?.bankName && manualTransfer.accountNumber && manualTransfer.accountHolderName
+      ? [{
+          id: manualTransfer.accountNumber,
+          accountType: "BANK" as const,
+          bankName: manualTransfer.bankName,
+          accountNumber: manualTransfer.accountNumber,
+          accountHolderName: manualTransfer.accountHolderName,
+          isPrimary: true,
+        }]
+      : [];
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
+  const shopeeTotal = isPelunasan && metode === "SHOPEE"
+    ? Math.max(0, Number(checkoutShopeeAmount ?? 0) * totalQuantity)
+    : 0;
+  const jumlah = String(Math.max(0, amountDue - shopeeTotal));
   const [alamat, setAlamat] = useState("");
   const [localError, setLocalError] = useState<string | undefined>();
   const paymentAttemptKey = useRef<string | null>(null);
@@ -113,8 +141,7 @@ export function PortalPaymentForm({
     return (
       <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">
         <ToastFeedback success="Pembayaran terkirim dan sedang menunggu verifikasi Admin." />
-        Pembayaran Anda terkirim dan sedang menunggu verifikasi Admin. Status
-        akan diperbarui setelah diverifikasi.
+        Pembayaran Anda terkirim dan sedang menunggu verifikasi Admin. Status akan diperbarui setelah diverifikasi.
       </div>
     );
   }
@@ -123,8 +150,8 @@ export function PortalPaymentForm({
     <form id="portal-payment-form" onSubmit={handleSubmit} className="scroll-mt-24 space-y-3">
       {errorMessage && <FormError message={errorMessage} />}
 
-      <div className={`rounded-xl px-4 py-3 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>
-        <p className="text-xs font-extrabold uppercase tracking-wider">
+      <div className={`rounded-xl px-3 py-2.5 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>
+        <p className="text-[11px] font-extrabold uppercase tracking-wider">
           {gateway ? "Pembayaran otomatis" : "Rekening tujuan Seller"}
         </p>
         {gateway ? (
@@ -134,11 +161,24 @@ export function PortalPaymentForm({
               : "Payment gateway sedang tidak tersedia. Coba lagi beberapa saat atau hubungi Seller."}
           </p>
         ) : manualAccountReady ? (
-          <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
-            <div><dt className="text-xs opacity-70">Bank</dt><dd className="font-extrabold">{manualTransfer!.bankName}</dd></div>
-            <div><dt className="text-xs opacity-70">Nomor rekening</dt><dd className="font-mono text-base font-extrabold tracking-wide">{manualTransfer!.accountNumber}</dd></div>
-            <div className="sm:col-span-2"><dt className="text-xs opacity-70">Atas nama</dt><dd className="font-extrabold">{manualTransfer!.accountHolderName}</dd></div>
-          </dl>
+          <div className="mt-1.5 space-y-1">
+            {displayedAccounts.map((account) => (
+              <div
+                key={account.id}
+                className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs"
+                title={`${account.bankName} ${account.accountNumber} a.n. ${account.accountHolderName}`}
+              >
+                <span className="shrink-0 rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold">
+                  {account.accountType === "EWALLET" ? "E-wallet" : "Bank"}
+                </span>
+                <span className="shrink-0 font-semibold">{account.bankName}</span>
+                <span className="shrink-0 font-mono font-bold tracking-tight">{account.accountNumber}</span>
+                <span className="min-w-0 flex-1 truncate text-[10px]">a.n. {account.accountHolderName}</span>
+                {account.isPrimary && <span className="shrink-0 text-[10px] opacity-70">utama</span>}
+                <CopyButton text={account.accountNumber} />
+              </div>
+            ))}
+          </div>
         ) : (
           <p className="mt-1 text-sm font-bold text-rose-700">Rekening Seller belum tersedia. Hubungi Seller sebelum melakukan transfer.</p>
         )}
@@ -199,10 +239,8 @@ export function PortalPaymentForm({
         <div className="rounded-lg bg-orange-50 px-4 py-3 text-sm ring-1 ring-inset ring-orange-200">
           {linkCheckoutShopee ? (
             <>
-              <p className="text-orange-800">
-                Lakukan checkout melalui Shopee, lalu{" "}
-                {gateway ? "selesaikan pembayaran di bawah" : "unggah bukti transfernya di bawah"}.
-              </p>
+              <p className="text-orange-800">Lakukan checkout melalui Shopee. Nominal yang diatur Seller sudah otomatis mengurangi tagihan ini.</p>
+              {shopeeTotal > 0 && <p className="mt-2 font-semibold text-orange-900">{formatRupiah(checkoutShopeeAmount ?? 0)} × {totalQuantity} barang = {formatRupiah(shopeeTotal)} dipotong dari pelunasan.</p>}
               <a
                 href={linkCheckoutShopee}
                 target="_blank"
@@ -214,8 +252,7 @@ export function PortalPaymentForm({
             </>
           ) : (
             <p className="text-orange-800">
-              Silakan lakukan checkout via Shopee sesuai instruksi penjual di
-              atas, lalu {gateway ? "selesaikan pembayaran" : "unggah bukti transfernya"} di bawah.
+              Nominal checkout Shopee sudah diperhitungkan otomatis. Hubungi Seller bila tautan belum tersedia.
             </p>
           )}
         </div>

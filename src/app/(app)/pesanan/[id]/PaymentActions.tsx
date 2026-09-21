@@ -29,7 +29,11 @@ export function PaymentActions({
       {status !== "DITOLAK" && (
         <button
           disabled={pending}
-          onClick={() => run(() => verifyPayment(paymentId, "DITOLAK"))}
+          onClick={() => {
+            const alasan = window.prompt("Masukkan alasan penolakan pembayaran:")?.trim();
+            if (!alasan) return;
+            run(() => verifyPayment(paymentId, "DITOLAK", undefined, alasan));
+          }}
           className="rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-400 disabled:opacity-50"
         >
           Tolak

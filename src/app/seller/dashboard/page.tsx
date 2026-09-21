@@ -18,9 +18,10 @@ export default async function SellerDashboardPage() {
         <div><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">Seller dashboard</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900 sm:text-3xl">{profile.businessName}</h1><p className="mt-1 text-sm text-sand-500">Ringkasan operasional Batch PO dan pembayaran toko Anda.</p></div>
         <div className="flex gap-2"><LinkButton href={`/catalog?seller=${encodeURIComponent(profile.slug)}`} variant="secondary">Lihat storefront</LinkButton><LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton></div>
       </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <Metric label="Batch PO aktif" value={data.jumlahKampanyeAktif} note="sedang berjalan" />
         <Metric label="Dana masuk" value={formatRupiah(data.totalCashflow)} note={`dari ${formatRupiah(data.totalNilaiPesanan)}`} />
+        <Metric label="Laba setelah HPP" value={formatRupiah(data.labaKotor)} note={data.hppBelumLengkap ? `${data.hppBelumLengkap} order HPP belum lengkap` : `HPP ${formatRupiah(data.totalHpp)}`} />
         <Metric label="Pesanan baru" value={data.pesananBaru} note="perlu dikonfirmasi" href="/verifikasi?tab=orders" warning={data.pesananBaru > 0} />
         <Metric label="Pembayaran menunggu" value={data.pembayaranMenunggu} note="perlu diverifikasi" href="/verifikasi?tab=payments" warning={data.pembayaranMenunggu > 0} />
         <Metric label="Pelunasan jatuh tempo" value={data.pelunasanJatuhTempo} note="perlu ditindaklanjuti" warning={data.pelunasanJatuhTempo > 0} />
@@ -39,6 +40,6 @@ export default async function SellerDashboardPage() {
 }
 
 function Metric({ label, value, note, warning = false, href }: { label: string; value: React.ReactNode; note: string; warning?: boolean; href?: string }) {
-  const body = <Card className={`h-full p-4 ${href ? "transition hover:border-brand-300 hover:shadow-md" : ""}`}><p className="text-xs font-extrabold uppercase tracking-wide text-sand-500">{label}</p><p className={`mt-2 text-2xl font-extrabold ${warning ? "text-accent-700" : "text-brand-700"}`}>{value}</p><p className="mt-1 text-xs text-sand-500">{note}</p></Card>;
+  const body = <Card className={`h-full p-3 sm:p-4 ${href ? "transition hover:border-brand-300 hover:shadow-md" : ""}`}><p className="text-[10px] font-extrabold uppercase tracking-wide text-sand-500 sm:text-xs">{label}</p><p className={`mt-1.5 whitespace-nowrap text-lg font-extrabold leading-tight tracking-tight sm:mt-2 sm:text-xl lg:text-2xl ${warning ? "text-accent-700" : "text-brand-700"}`}>{value}</p><p className="mt-1 text-[11px] leading-tight text-sand-500 sm:text-xs">{note}</p></Card>;
   return href ? <Link href={href}>{body}</Link> : body;
 }

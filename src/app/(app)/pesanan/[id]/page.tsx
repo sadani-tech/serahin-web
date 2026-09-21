@@ -26,6 +26,7 @@ import { PaymentActions } from "./PaymentActions";
 import { CopyPortalLink } from "./CopyPortalLink";
 import { getSession } from "@/lib/session";
 import { reconcileGatewayPayment } from "../actions";
+import { ShopeeCheckoutActions } from "./ShopeeCheckoutActions";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,16 @@ type OrderDetail = {
     gatewayReference?: string | null;
     gatewayStatus?: string | null;
     attemptNumber?: number;
+  }[];
+  shopeeCheckouts: {
+    id: string;
+    submittedAmount: string;
+    verifiedAmount: string | null;
+    externalReference: string;
+    proofFile: string | null;
+    status: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
+    rejectionReason: string | null;
+    submittedAt: string;
   }[];
   statusLogs?: {
     id: string;
@@ -102,7 +113,10 @@ export default async function OrderDetailPage({
     dpTipe: order.campaign.dpTipe,
     dpPercent: order.campaign.dpPercent,
     dpNominal: order.campaign.dpNominal,
-    payments: order.payments,
+    payments: [...order.payments, ...order.shopeeCheckouts.map((credit) => ({
+      jumlah: credit.status === "VERIFIED" ? credit.verifiedAmount ?? credit.submittedAmount : credit.submittedAmount,
+      statusVerifikasi: (credit.status === "VERIFIED" ? "TERVERIFIKASI" : credit.status === "REJECTED" ? "DITOLAK" : "MENUNGGU_VERIFIKASI") as PaymentVerification,
+    }))],
   });
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
 
@@ -276,7 +290,7 @@ export default async function OrderDetailPage({
               title="Pembayaran"
               subtitle="Hanya pembayaran terverifikasi yang mengurangi sisa tagihan."
             />
-            {order.payments.length === 0 ? (
+            {order.payments.length === 0 && order.shopeeCheckouts.length === 0 ? (
               <EmptyState title="Belum ada pembayaran tercatat" />
             ) : (
               <div className="divide-y divide-sand-100">
@@ -318,6 +332,7 @@ export default async function OrderDetailPage({
                 ))}
               </div>
             )}
+            {order.shopeeCheckouts.length > 0 && <div className="border-t border-sand-100 px-5 py-4"><p className="text-sm font-extrabold text-sand-900">Checkout Shopee</p><div className="mt-2 space-y-2">{order.shopeeCheckouts.map((credit) => <div key={credit.id} className="rounded-xl bg-orange-50 p-3 text-sm text-orange-950"><div className="flex flex-wrap items-center justify-between gap-2"><p><strong>{formatRupiah(credit.verifiedAmount ?? credit.submittedAmount)}</strong> · transaksi <span className="font-mono">{credit.externalReference}</span></p><span className="rounded bg-white px-2 py-1 text-xs font-bold">{credit.status === "VERIFIED" ? "Terverifikasi" : credit.status === "REJECTED" ? "Ditolak" : "Menunggu verifikasi"}</span></div>{credit.proofFile && <a href={credit.proofFile} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-semibold underline">Lihat bukti</a>}{credit.rejectionReason && <p className="mt-1 text-xs font-semibold text-rose-700">Alasan: {credit.rejectionReason}</p>}{credit.status === "PENDING_VERIFICATION" && <ShopeeCheckoutActions orderId={id} creditId={credit.id} submittedAmount={credit.submittedAmount} />}</div>)}</div></div>}
 
             {!dibatalkan && (
               <div className="border-t border-sand-100 bg-sand-50/50 px-5 py-4">

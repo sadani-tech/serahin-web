@@ -14,8 +14,9 @@ type BuyerOrder = {
     };
   }>;
   payments: Array<{ id: string; type: string; amount: string; verificationStatus: string; rejectionReason: string | null; occurredAt: string }>;
+  shopeeCredits: Array<{ id: string; submittedAmount: string; verifiedAmount: string | null; externalReference: string; status: string; rejectionReason: string | null; submittedAt: string }>;
   shipment: { method: string; status: string; trackingNumber: string | null; courier: string | null; address: string | null } | null;
-  billing: { total: number; downPaymentRequired: number; downPaymentVerified: number; settlement: number; paid: number; pending: number; rejected: number; remaining: number };
+  billing: { total: number; downPaymentRequired: number; downPaymentVerified: number; settlement: number; paid: number; shopeeCheckoutPerUnit?: number; shopeeCheckoutTotal?: number; pending: number; rejected: number; remaining: number };
   nextAction: string;
   rejectionReason: string | null;
 };
@@ -107,7 +108,9 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
         <Summary label="Ditolak" value={order.billing.rejected} />
         <Summary label="Sisa tagihan" value={order.billing.remaining} strong />
       </dl>
+      {(order.billing.shopeeCheckoutTotal ?? 0) > 0 && <div className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-orange-950"><div className="flex flex-wrap justify-between gap-2"><span>Checkout Shopee ({formatRupiah(order.billing.shopeeCheckoutPerUnit ?? 0)} × jumlah barang)</span><strong>{formatRupiah(order.billing.shopeeCheckoutTotal ?? 0)}</strong></div><p className="mt-1 text-xs text-orange-800">Otomatis mengurangi sisa tagihan pelunasan.</p></div>}
       <div className="mt-3 space-y-2">{order.payments.length ? order.payments.map((payment) => <div key={payment.id} className="rounded-xl bg-cream-soft p-3 text-sm"><strong>{PAYMENT_TYPE_LABEL[payment.type] ?? "Pembayaran"}</strong> · {formatRupiah(Number(payment.amount))} · {PAYMENT_STATUS_LABEL[payment.verificationStatus] ?? "Diproses"}{payment.rejectionReason && <p className="mt-1 font-semibold text-rose-700">Alasan: {payment.rejectionReason}</p>}</div>) : <p className="text-sm text-sand-500">Belum ada pembayaran.</p>}</div>
+      {order.shopeeCredits.length > 0 && <div className="mt-3 space-y-2"><p className="text-sm font-extrabold text-sand-800">Checkout Shopee</p>{order.shopeeCredits.map((credit) => <div key={credit.id} className="rounded-xl bg-orange-50 p-3 text-sm text-orange-950"><strong>{formatRupiah(Number(credit.verifiedAmount ?? credit.submittedAmount))}</strong> · transaksi {credit.externalReference} · {credit.status === "VERIFIED" ? "Terverifikasi" : credit.status === "REJECTED" ? "Ditolak" : "Menunggu verifikasi"}{credit.rejectionReason && <p className="mt-1 font-semibold text-rose-700">Alasan: {credit.rejectionReason}</p>}</div>)}</div>}
       <h2 className="mt-6 font-extrabold">Pengiriman</h2>
       {order.shipment ? <div className="mt-2 rounded-xl bg-sand-50 p-3 text-sm text-sand-700"><p>{SHIPMENT_METHOD_LABEL[order.shipment.method] ?? "Pengiriman"} · {SHIPMENT_STATUS_LABEL[order.shipment.status] ?? "Diproses"}</p>{order.shipment.courier && <p>{order.shipment.courier}{order.shipment.trackingNumber ? ` · ${order.shipment.trackingNumber}` : ""}</p>}{order.shipment.address && <p>{order.shipment.address}</p>}</div> : <p className="mt-2 text-sm text-sand-500">Metode pengiriman belum dipilih.</p>}
       <h2 className="mt-6 font-extrabold">Progres pesanan</h2>
