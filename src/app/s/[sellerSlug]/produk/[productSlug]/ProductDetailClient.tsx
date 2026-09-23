@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { useCart } from "@/components/CartProvider";
+import { Select } from "@/components/ui";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import type { PublicProduct } from "@/lib/public-product";
 
@@ -82,16 +83,16 @@ export function ProductDetailClient({
     <section className="order-3 rounded-3xl border border-sand-200 bg-white p-6 shadow-sm sm:p-8 lg:order-3">
       <div className="mt-6">
         <label className="text-sm font-extrabold text-sand-700">Pilihan produk
-          <select value={variantId} onChange={(event) => { setVariantId(event.target.value); setSalesEventId(""); setColor(""); setImageIndex(0); }} className="mt-2 min-h-12 w-full rounded-xl border border-sand-300 bg-white px-3">
+          <Select value={variantId} onChange={(event) => { setVariantId(event.target.value); setSalesEventId(""); setColor(""); setImageIndex(0); }} className="mt-2 min-h-12 w-full">
             {product.variants.map((item) => <option key={item.id} value={item.id}>{item.name}{item.offering ? ` — ${formatRupiah(item.offering.price)}` : " — arsip"}</option>)}
-          </select>
+          </Select>
         </label>
       </div>
 
       {offerings.length > 1 && <label className="mt-5 block text-sm font-extrabold text-sand-700">Pilih Batch PO
-        <select value={offering?.salesEventId ?? ""} onChange={(event) => setSalesEventId(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-brand-300 bg-brand-50 px-3">
+        <Select value={offering?.salesEventId ?? ""} onChange={(event) => setSalesEventId(event.target.value)} className="mt-2 min-h-12 w-full !bg-brand-50">
           {offerings.map((item) => <option key={item.salesEventId} value={item.salesEventId}>{item.eventTitle} — {formatRupiah(item.price)} — tutup {formatTanggal(item.endsAt)}</option>)}
-        </select>
+        </Select>
         <span className="mt-1 block text-xs font-normal text-sand-500">Produk tersedia di beberapa Batch PO. Pilihan Anda menentukan harga, kuota, dan skema pembayaran.</span>
       </label>}
 

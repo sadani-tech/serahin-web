@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
+import { withWibOffset } from "@/lib/format";
 
 export type PreorderFormState = { error?: string } | undefined;
 
@@ -81,15 +82,17 @@ export async function createPreorder(
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       linkCheckoutShopee: getFormDataValue(formData, "linkCheckoutShopee"),
       nominalCheckoutShopee: getFormDataNumber(formData, "nominalCheckoutShopee"),
-      tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
-      tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
+      tanggalBuka: withWibOffset(getFormDataValue(formData, "tanggalBuka")) ?? "",
+      tanggalTutup: withWibOffset(getFormDataValue(formData, "tanggalTutup")) ?? "",
+      estimasiProduksi: withWibOffset(getFormDataValue(formData, "estimasiProduksi")),
+      estimasiKirim: withWibOffset(getFormDataValue(formData, "estimasiKirim")),
       paymentScheme: getFormDataValue(formData, "paymentScheme") as
         "DP_PELUNASAN" | "LUNAS",
       dpTipe: getFormDataValue(formData, "dpTipe") as
         "PERSEN" | "NOMINAL" | undefined,
       dpPercent: getFormDataNumber(formData, "dpPercent"),
       dpNominal: getFormDataNumber(formData, "dpNominal"),
-      deadlinePelunasan: getFormDataValue(formData, "deadlinePelunasan"),
+      deadlinePelunasan: withWibOffset(getFormDataValue(formData, "deadlinePelunasan")),
       vendorIds: formData.getAll("vendorIds").map(String),
     });
     revalidatePath("/pre-orders");
@@ -116,15 +119,17 @@ export async function updatePreorder(
       deskripsiPelunasan: getFormDataValue(formData, "deskripsiPelunasan"),
       linkCheckoutShopee: getFormDataValue(formData, "linkCheckoutShopee"),
       nominalCheckoutShopee: getFormDataNumber(formData, "nominalCheckoutShopee"),
-      tanggalBuka: getFormDataValue(formData, "tanggalBuka") ?? "",
-      tanggalTutup: getFormDataValue(formData, "tanggalTutup") ?? "",
+      tanggalBuka: withWibOffset(getFormDataValue(formData, "tanggalBuka")) ?? "",
+      tanggalTutup: withWibOffset(getFormDataValue(formData, "tanggalTutup")) ?? "",
+      estimasiProduksi: withWibOffset(getFormDataValue(formData, "estimasiProduksi")),
+      estimasiKirim: withWibOffset(getFormDataValue(formData, "estimasiKirim")),
       paymentScheme: getFormDataValue(formData, "paymentScheme") as
         "DP_PELUNASAN" | "LUNAS",
       dpTipe: getFormDataValue(formData, "dpTipe") as
         "PERSEN" | "NOMINAL" | undefined,
       dpPercent: getFormDataNumber(formData, "dpPercent"),
       dpNominal: getFormDataNumber(formData, "dpNominal"),
-      deadlinePelunasan: getFormDataValue(formData, "deadlinePelunasan"),
+      deadlinePelunasan: withWibOffset(getFormDataValue(formData, "deadlinePelunasan")),
       vendorIds: formData.getAll("vendorIds").map(String),
     });
   } catch (e) {

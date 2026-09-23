@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { deleteBankAccount, saveBankAccount } from "./actions";
 import { DeleteBankAccountButton } from "./DeleteBankAccountButton";
+import { Select } from "@/components/ui";
 
 type BankAccount = {
   id: string;
@@ -23,10 +24,10 @@ function EditForm({ account, onCancel }: { account: BankAccount; onCancel: () =>
       <input type="hidden" name="id" value={account.id} />
       <label className="text-xs font-bold text-sand-700">
         Jenis tujuan
-        <select name="accountType" defaultValue={account.accountType} className={inputClass}>
+        <Select name="accountType" defaultValue={account.accountType} className={inputClass}>
           <option value="BANK">Bank</option>
           <option value="EWALLET">E-wallet</option>
-        </select>
+        </Select>
       </label>
       <label className="text-xs font-bold text-sand-700">
         Nama bank
@@ -43,6 +44,10 @@ function EditForm({ account, onCancel }: { account: BankAccount; onCancel: () =>
       <label className="flex items-center gap-2 text-xs font-bold text-sand-700 sm:col-span-2">
         <input type="checkbox" name="isPrimary" value="1" defaultChecked={account.isPrimary} disabled={account.isPrimary} />
         {account.isPrimary ? "Rekening utama (pilih rekening lain untuk mengganti)" : "Jadikan rekening utama"}
+      </label>
+      <label className="flex items-center gap-2 text-xs font-bold text-sand-700 sm:col-span-2">
+        <input type="checkbox" name="isActive" value="1" defaultChecked={account.isActive} />
+        Tampilkan ke Buyer (aktif)
       </label>
       <div className="flex justify-end gap-2 sm:col-span-2">
         <button type="button" onClick={onCancel} className="min-h-10 rounded-xl px-4 text-sm font-bold text-sand-600 hover:bg-sand-100">
@@ -61,6 +66,13 @@ function Badges({ account }: { account: BankAccount }) {
       {account.isPrimary && (
         <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-extrabold text-brand-800">Utama</span>
       )}
+      <span
+        className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+          account.isActive ? "bg-emerald-50 text-emerald-700" : "bg-sand-100 text-sand-500"
+        }`}
+      >
+        {account.isActive ? "Aktif" : "Nonaktif"}
+      </span>
     </span>
   );
 }

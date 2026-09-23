@@ -5,6 +5,7 @@ import { PublicFooter } from "@/components/PublicFooter";
 import { ProductImage } from "@/components/ProductImage";
 import { getPublicCatalog } from "@/lib/public-catalog";
 import { getSession } from "@/lib/session";
+import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -26,13 +27,14 @@ export default async function ArchivePage({
     getPublicCatalog({ archive: true, page, limit }),
     getSession(),
   ]);
+  const avatarUrl = await getBuyerAvatarUrl(session);
   const items = catalog.campaigns.flatMap((campaign) =>
     campaign.variants.map((variant) => ({ campaign, variant })),
   );
 
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} />
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">
           Close PO

@@ -8,6 +8,7 @@ type HeaderUser = {
   name?: string | null;
   email?: string | null;
   role: UserRole;
+  avatarUrl?: string | null;
 };
 
 export function SiteHeader({ user }: { user: HeaderUser | null }) {

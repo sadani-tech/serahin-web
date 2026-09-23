@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ToastFeedback, useToast } from "@/components/Toast";
+import { Select } from "@/components/ui";
 import { createBroadcast, loadBroadcastOptions, previewBroadcast, type BroadcastOptions, type BroadcastPayload, type BroadcastPreview } from "./actions";
 
 type SellerOption = { id: string; name: string };
@@ -70,12 +71,12 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
   return <div className="grid gap-5 lg:grid-cols-[1fr_.8fr]">
     <div className="space-y-4 rounded-2xl border border-sand-200 bg-white p-5">
       <div><h2 className="text-lg font-extrabold text-sand-900">Buat broadcast</h2><p className="mt-1 text-sm text-sand-500">Khusus pemberitahuan operasional kepada Buyer yang benar-benar membeli produk terkait.</p></div>
-      {sellers.length > 0 && <Field label="Seller"><select value={sellerId} onChange={(event) => changeSeller(event.target.value)} className="input"><option value="">Pilih Seller</option>{sellers.map((seller) => <option value={seller.id} key={seller.id}>{seller.name}</option>)}</select></Field>}
+      {sellers.length > 0 && <Field label="Seller"><Select value={sellerId} onChange={(event) => changeSeller(event.target.value)}><option value="">Pilih Seller</option>{sellers.map((seller) => <option value={seller.id} key={seller.id}>{seller.name}</option>)}</Select></Field>}
       <div className="grid gap-3 md:grid-cols-2">
-        <Field label="Batch PO"><select value={campaignId} onChange={(event) => { setCampaignId(event.target.value); setPreview(undefined); }} className="input" disabled={!options}><option value="">Semua Batch PO produk terpilih</option>{options?.campaigns.map((campaign) => <option value={campaign.id} key={campaign.id}>{campaign.name}</option>)}</select></Field>
-        <Field label="Produk"><select value={productId} onChange={(event) => { setProductId(event.target.value); setVariantId(""); setPreview(undefined); }} className="input" disabled={!options}><option value="">Pilih produk</option>{options?.products.map((product) => <option value={product.id} key={product.id}>{product.name}</option>)}</select></Field>
+        <Field label="Batch PO"><Select value={campaignId} onChange={(event) => { setCampaignId(event.target.value); setPreview(undefined); }} disabled={!options}><option value="">Semua Batch PO produk terpilih</option>{options?.campaigns.map((campaign) => <option value={campaign.id} key={campaign.id}>{campaign.name}</option>)}</Select></Field>
+        <Field label="Produk"><Select value={productId} onChange={(event) => { setProductId(event.target.value); setVariantId(""); setPreview(undefined); }} disabled={!options}><option value="">Pilih produk</option>{options?.products.map((product) => <option value={product.id} key={product.id}>{product.name}</option>)}</Select></Field>
       </div>
-      {selectedProduct && <Field label="Varian (opsional)"><select value={variantId} onChange={(event) => { setVariantId(event.target.value); setPreview(undefined); }} className="input"><option value="">Semua varian</option>{selectedProduct.variants.map((variant) => <option value={variant.id} key={variant.id}>{variant.name}</option>)}</select></Field>}
+      {selectedProduct && <Field label="Varian (opsional)"><Select value={variantId} onChange={(event) => { setVariantId(event.target.value); setPreview(undefined); }}><option value="">Semua varian</option>{selectedProduct.variants.map((variant) => <option value={variant.id} key={variant.id}>{variant.name}</option>)}</Select></Field>}
       <Field label="Nama internal"><input value={name} onChange={(event) => { setName(event.target.value); setPreview(undefined); }} className="input" placeholder="Pelunasan Produk A — September" /></Field>
       <Field label="Subjek email"><input value={subject} onChange={(event) => { setSubject(event.target.value); setPreview(undefined); }} className="input" placeholder="Produkmu sudah siap dilunasi" /></Field>
       <Field label="Pesan singkat"><textarea value={body} onChange={(event) => { setBody(event.target.value); setPreview(undefined); }} className="input min-h-28 py-3" placeholder="Kabar baik! Produk pesananmu sudah masuk tahap pelunasan." /></Field>
@@ -97,4 +98,4 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block text-sm font-bold text-sand-700">{label}{children}</label>; }
-const excludedLabel: Record<string, string> = { invalidEmail: "Email tidak valid", noOutstandingBalance: "Tidak ada sisa", pendingPayment: "Pembayaran pending", duplicate: "Recipient duplikat" };
+const excludedLabel: Record<string, string> = { noEmail: "Tidak ada email tercatat", malformedEmail: "Format email tidak valid", noOutstandingBalance: "Tidak ada sisa", pendingPayment: "Pembayaran pending", duplicate: "Recipient duplikat" };
