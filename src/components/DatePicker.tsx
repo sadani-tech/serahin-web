@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Dropdown } from "@/components/Dropdown";
 
 type Mode = "date" | "datetime";
@@ -83,16 +84,42 @@ export function DatePicker({
     const base = initial ?? today();
     return { year: base.year, month: base.month };
   });
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<{ top: number; left: number; openUp: boolean } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function onClickOutside(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    function onViewportChange() {
+      setOpen(false);
     }
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    window.addEventListener("scroll", onViewportChange, true);
+    window.addEventListener("resize", onViewportChange);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener("scroll", onViewportChange, true);
+      window.removeEventListener("resize", onViewportChange);
+    };
   }, [open]);
+
+  function openPanel() {
+    const el = triggerRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const PANEL_HEIGHT = mode === "datetime" ? 400 : 340;
+      const spaceBelow = window.innerHeight - r.bottom;
+      const openUp = spaceBelow < PANEL_HEIGHT && r.top > spaceBelow;
+      setRect({ top: openUp ? r.top : r.bottom, left: r.left, openUp });
+    }
+    setOpen(true);
+  }
 
   const value = selected ? formatValue(selected, mode) : "";
 
@@ -160,13 +187,14 @@ export function DatePicker({
   const t = today();
 
   return (
-    <div ref={rootRef} className="relative">
+    <div className="relative">
       {name && <input type="hidden" name={name} value={value} required={required} onChange={() => {}} />}
       <button
+        ref={triggerRef}
         type="button"
         id={id}
         disabled={disabled}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? setOpen(false) : openPanel())}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={ariaLabel}
@@ -183,8 +211,19 @@ export function DatePicker({
         </svg>
       </button>
 
-      {open && (
-        <div role="dialog" aria-label="Pilih tanggal" className="absolute z-30 mt-1 w-72 rounded-xl border border-sand-200 bg-white p-3 shadow-lg">
+      {open && rect && createPortal(
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label="Pilih tanggal"
+          style={{
+            position: "fixed",
+            top: rect.openUp ? undefined : rect.top + 4,
+            bottom: rect.openUp ? window.innerHeight - rect.top + 4 : undefined,
+            left: rect.left,
+          }}
+          className="z-[200] w-72 rounded-xl border border-sand-200 bg-white p-3 shadow-lg"
+        >
           <div className="flex items-center justify-between">
             <button type="button" onClick={() => shiftMonth(-1)} aria-label="Bulan sebelumnya" className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-500 hover:bg-sand-100">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="15 18 9 12 15 6" /></svg>
@@ -254,7 +293,8 @@ export function DatePicker({
               <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700">Selesai</button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
