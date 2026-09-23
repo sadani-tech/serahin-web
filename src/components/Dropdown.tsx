@@ -9,6 +9,7 @@ import {
   type ComponentProps,
   type ReactElement,
 } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Dropdown bertema Serahin — pengganti `<select>` native yang popup-nya
@@ -22,6 +23,13 @@ import {
  * biasa (bisa diberi warna brand), sementara `<input type="hidden">`
  * membawa nilai terpilih supaya form action / server action yang sudah ada
  * (form submission tanpa JS tambahan) tetap berfungsi tanpa perubahan.
+ *
+ * Daftar pilihan di-render lewat React portal ke `document.body`, BUKAN
+ * sebagai anak `position:absolute` di dalam trigger. Banyak container di
+ * design system ini (`Card`, dll) memakai `overflow-hidden` untuk merapikan
+ * sudut membulat — itu aman untuk popup native (di-render OS, di luar DOM),
+ * tapi memotong popup berbasis CSS biasa. Portal menghindari masalah itu
+ * sepenuhnya, di semua tempat sekaligus (v2.3.7, perbaikan pasca-rilis).
  */
 export function Dropdown(props: ComponentProps<"select">) {
   const {
@@ -47,16 +55,29 @@ export function Dropdown(props: ComponentProps<"select">) {
   const current = controlled ? String(value) : internal;
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<{ top: number; left: number; width: number; openUp: boolean } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function onClickOutside(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (listRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    function onViewportChange() {
+      setOpen(false);
     }
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    window.addEventListener("scroll", onViewportChange, true);
+    window.addEventListener("resize", onViewportChange);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener("scroll", onViewportChange, true);
+      window.removeEventListener("resize", onViewportChange);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -66,6 +87,13 @@ export function Dropdown(props: ComponentProps<"select">) {
   function openList() {
     const idx = options.findIndex((o) => String(o.props.value ?? "") === current);
     setHighlight(idx >= 0 ? idx : 0);
+    const el = triggerRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - r.bottom;
+      const openUp = spaceBelow < 260 && r.top > spaceBelow;
+      setRect({ top: openUp ? r.top : r.bottom, left: r.left, width: r.width, openUp });
+    }
     setOpen(true);
   }
 
@@ -104,43 +132,21 @@ export function Dropdown(props: ComponentProps<"select">) {
     }
   }
 
-  return (
-    <div ref={rootRef} className="relative">
-      {name && (
-        <input type="hidden" name={name} value={current} onChange={() => {}} />
-      )}
-      <button
-        type="button"
-        id={id}
-        disabled={disabled}
-        onClick={() => (open ? setOpen(false) : openList())}
-        onKeyDown={onTriggerKeyDown}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={ariaLabel}
-        className={`flex items-center justify-between gap-2 rounded-xl border border-sand-300 bg-white px-3.5 py-2.5 text-left text-sm text-sand-900 transition hover:border-sand-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-      >
-        <span className="truncate">{selectedOption?.props.children ?? "Pilih"}</span>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`h-4 w-4 shrink-0 text-sand-500 transition-transform ${open ? "rotate-180" : ""}`}
-          aria-hidden="true"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
+  const panel = open && rect
+    ? createPortal(
         <ul
           ref={listRef}
           role="listbox"
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className="absolute z-30 mt-1 max-h-64 w-full min-w-max overflow-auto rounded-xl border border-sand-200 bg-white py-1 shadow-lg focus:outline-none"
+          style={{
+            position: "fixed",
+            top: rect.openUp ? undefined : rect.top + 4,
+            bottom: rect.openUp ? window.innerHeight - rect.top + 4 : undefined,
+            left: rect.left,
+            width: rect.width,
+          }}
+          className="z-[200] max-h-64 min-w-max overflow-auto rounded-xl border border-sand-200 bg-white py-1 shadow-lg focus:outline-none"
         >
           {options.map((o, i) => {
             const v = String(o.props.value ?? "");
@@ -167,8 +173,43 @@ export function Dropdown(props: ComponentProps<"select">) {
               </li>
             );
           })}
-        </ul>
+        </ul>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <div className="relative">
+      {name && (
+        <input type="hidden" name={name} value={current} onChange={() => {}} />
       )}
+      <button
+        ref={triggerRef}
+        type="button"
+        id={id}
+        disabled={disabled}
+        onClick={() => (open ? setOpen(false) : openList())}
+        onKeyDown={onTriggerKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        className={`flex items-center justify-between gap-2 rounded-xl border border-sand-300 bg-white px-3.5 py-2.5 text-left text-sm text-sand-900 transition hover:border-sand-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      >
+        <span className="truncate">{selectedOption?.props.children ?? "Pilih"}</span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`h-4 w-4 shrink-0 text-sand-500 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {panel}
     </div>
   );
 }
