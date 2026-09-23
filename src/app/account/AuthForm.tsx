@@ -11,7 +11,22 @@ type Field = { name: string; label: string; type?: string; autoComplete?: string
 
 export function AuthForm({ action, fields, hidden, submit, footer, success, social }: { action: Action; fields: Field[]; hidden?: Record<string, string>; submit: string; footer?: { href: string; label: string }; success?: { title: string; copy: string }; social?: ReactNode }) {
   const [state, formAction, pending] = useActionState(action, undefined);
-  if (state?.message && success) return <div role="status" className="space-y-5 text-center"><ToastFeedback success={state.message} /><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-2xl text-brand-700">✓</div><div><h2 className="text-lg font-extrabold text-sand-900">{success.title}</h2><p className="mt-2 text-sm leading-6 text-sand-600">{success.copy}</p></div><Link href="/account/login" className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white">Kembali ke halaman masuk</Link></div>;
+  if (state?.message && success) return <div role="status" className="space-y-5 text-center">
+    <ToastFeedback success={state.message} />
+    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-2xl text-brand-700">✓</div>
+    <div><h2 className="text-lg font-extrabold text-sand-900">{success.title}</h2></div>
+    <div className="rounded-2xl border-2 border-accent-300 bg-accent-50 p-4 text-left">
+      <div className="flex items-center gap-2 text-accent-800">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">
+          <path d="M4 4h16v16H4z" /><path d="m22 6-10 7L2 6" />
+        </svg>
+        <p className="text-xs font-extrabold uppercase tracking-wide">Langkah berikutnya: buka email Anda</p>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-sand-700">{success.copy}</p>
+      <p className="mt-2 text-xs leading-5 text-sand-500">Tidak masuk dalam beberapa menit? Cek folder Spam/Promosi. Masuk baru bisa dilakukan setelah email ini diaktifkan.</p>
+    </div>
+    <Link href="/account/login" className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-sand-300 bg-white px-4 text-sm font-extrabold text-sand-700 hover:bg-sand-50">Sudah aktivasi? Masuk di sini</Link>
+  </div>;
   return <><form action={formAction} className="space-y-4">
     {hidden && Object.entries(hidden).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
     <ToastFeedback error={state?.error} success={state?.message} />

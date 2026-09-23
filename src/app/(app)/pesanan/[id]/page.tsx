@@ -19,6 +19,7 @@ import type {
   MetodePengiriman,
 } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
+import { ProofViewerButton } from "@/components/ProofViewerButton";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { CancelOrderForm } from "./CancelOrderForm";
 import { PaymentForm } from "./PaymentForm";
@@ -314,14 +315,7 @@ export default async function OrderDetailPage({
                         {p.buktiFile && (
                           <>
                             {" · "}
-                            <a
-                              href={p.buktiFile}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-sand-700 underline"
-                            >
-                              Lihat bukti
-                            </a>
+                            <ProofViewerButton url={p.buktiFile} className="text-sand-700 underline" />
                           </>
                         )}
                       </p>
@@ -332,7 +326,7 @@ export default async function OrderDetailPage({
                 ))}
               </div>
             )}
-            {order.shopeeCheckouts.length > 0 && <div className="border-t border-sand-100 px-5 py-4"><p className="text-sm font-extrabold text-sand-900">Checkout Shopee</p><div className="mt-2 space-y-2">{order.shopeeCheckouts.map((credit) => <div key={credit.id} className="rounded-xl bg-orange-50 p-3 text-sm text-orange-950"><div className="flex flex-wrap items-center justify-between gap-2"><p><strong>{formatRupiah(credit.verifiedAmount ?? credit.submittedAmount)}</strong> · transaksi <span className="font-mono">{credit.externalReference}</span></p><span className="rounded bg-white px-2 py-1 text-xs font-bold">{credit.status === "VERIFIED" ? "Terverifikasi" : credit.status === "REJECTED" ? "Ditolak" : "Menunggu verifikasi"}</span></div>{credit.proofFile && <a href={credit.proofFile} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs font-semibold underline">Lihat bukti</a>}{credit.rejectionReason && <p className="mt-1 text-xs font-semibold text-rose-700">Alasan: {credit.rejectionReason}</p>}{credit.status === "PENDING_VERIFICATION" && <ShopeeCheckoutActions orderId={id} creditId={credit.id} submittedAmount={credit.submittedAmount} />}</div>)}</div></div>}
+            {order.shopeeCheckouts.length > 0 && <div className="border-t border-sand-100 px-5 py-4"><p className="text-sm font-extrabold text-sand-900">Checkout Shopee</p><div className="mt-2 space-y-2">{order.shopeeCheckouts.map((credit) => <div key={credit.id} className="rounded-xl bg-orange-50 p-3 text-sm text-orange-950"><div className="flex flex-wrap items-center justify-between gap-2"><p><strong>{formatRupiah(credit.verifiedAmount ?? credit.submittedAmount)}</strong> · transaksi <span className="font-mono">{credit.externalReference}</span></p><span className="rounded bg-white px-2 py-1 text-xs font-bold">{credit.status === "VERIFIED" ? "Terverifikasi" : credit.status === "REJECTED" ? "Ditolak" : "Menunggu verifikasi"}</span></div>{credit.proofFile && <ProofViewerButton url={credit.proofFile} className="mt-1 inline-block text-xs font-semibold underline" />}{credit.rejectionReason && <p className="mt-1 text-xs font-semibold text-rose-700">Alasan: {credit.rejectionReason}</p>}{credit.status === "PENDING_VERIFICATION" && <ShopeeCheckoutActions orderId={id} creditId={credit.id} submittedAmount={credit.submittedAmount} />}</div>)}</div></div>}
 
             {!dibatalkan && (
               <div className="border-t border-sand-100 bg-sand-50/50 px-5 py-4">

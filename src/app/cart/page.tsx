@@ -11,7 +11,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   const session = await getSession();
   const { checkout } = await searchParams;
   const buyerProfile = session?.role === "BUYER"
-    ? await api.get<{ name: string; email: string | null; phone: string | null }>("/auth/buyer/profile").catch(() => ({ name: session.name, email: session.email, phone: null }))
+    ? await api.get<{ name: string; email: string | null; phone: string | null; avatarUrl: string | null }>("/auth/buyer/profile").catch(() => ({ name: session.name, email: session.email, phone: null, avatarUrl: null }))
     : null;
-  return <div className="bg-serahin-dots min-h-full"><PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6"><CartPageClient resumeCheckout={checkout === "1"} switchingAccount={Boolean(session && session.role !== "BUYER")} buyerProfile={buyerProfile} /></main><PublicFooter /></div>;
+  return <div className="bg-serahin-dots min-h-full"><PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={buyerProfile?.avatarUrl} /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6"><CartPageClient resumeCheckout={checkout === "1"} switchingAccount={Boolean(session && session.role !== "BUYER")} buyerProfile={buyerProfile} /></main><PublicFooter /></div>;
 }

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { PreorderForm, type VendorOption } from "../../PreorderForm";
 import { updatePreorder } from "../../actions";
-import { toDateInput, toNumber } from "@/lib/format";
+import { toDateTimeInput, toNumber } from "@/lib/format";
 import { computeVendorStats, type EvalInput } from "@/lib/vendor";
 import type { CampaignStatus, DpTipe, PaymentScheme } from "@/lib/types";
 
@@ -95,15 +95,15 @@ export default async function EditCampaignPage({
           deskripsiPelunasan: campaign.deskripsiPelunasan ?? undefined,
           linkCheckoutShopee: campaign.linkCheckoutShopee ?? undefined,
           nominalCheckoutShopee: campaign.nominalCheckoutShopee ?? undefined,
-          tanggalBuka: toDateInput(campaign.tanggalBuka),
-          tanggalTutup: toDateInput(campaign.tanggalTutup),
-          estimasiProduksi: toDateInput(campaign.estimasiProduksi),
-          estimasiKirim: toDateInput(campaign.estimasiKirim),
+          tanggalBuka: toDateTimeInput(campaign.tanggalBuka),
+          tanggalTutup: toDateTimeInput(campaign.tanggalTutup),
+          estimasiProduksi: toDateTimeInput(campaign.estimasiProduksi),
+          estimasiKirim: toDateTimeInput(campaign.estimasiKirim),
           paymentScheme: campaign.paymentScheme,
           dpTipe: campaign.dpTipe ?? undefined,
           dpPercent: campaign.dpPercent ?? undefined,
           dpNominal: campaign.dpNominal ? toNumber(campaign.dpNominal) : undefined,
-          deadlinePelunasan: toDateInput(campaign.deadlinePelunasan),
+          deadlinePelunasan: toDateTimeInput(campaign.deadlinePelunasan),
         }}
       />
     </div>

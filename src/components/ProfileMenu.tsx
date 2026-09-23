@@ -9,6 +9,8 @@ type ProfileUser = {
   name?: string | null;
   email?: string | null;
   role: UserRole;
+  /** Avatar Buyer (v2.3.7) — belum ada untuk Admin/Seller, jatuh ke inisial. */
+  avatarUrl?: string | null;
 };
 
 const roleLabel: Record<UserRole, string> = {
@@ -62,9 +64,18 @@ export function ProfileMenu({ user, align = "right" }: { user: ProfileUser; alig
         onClick={() => setOpen((value) => !value)}
         className="flex min-h-11 items-center gap-2 rounded-xl border border-sand-200 bg-white px-2 py-1.5 text-left shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-extrabold text-white">
-          {initial}
-        </span>
+        {user.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- avatar Buyer dari S3/CDN eksternal
+          <img
+            src={user.avatarUrl}
+            alt=""
+            className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-sand-200"
+          />
+        ) : (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-extrabold text-white">
+            {initial}
+          </span>
+        )}
         <span className="hidden min-w-0 sm:block">
           <span className="block max-w-36 truncate text-xs font-extrabold text-sand-900">{user.name ?? user.email ?? roleLabel[user.role]}</span>
           <span className="block text-[10px] font-bold uppercase tracking-wide text-sand-400">{roleLabel[user.role]}</span>
@@ -79,9 +90,19 @@ export function ProfileMenu({ user, align = "right" }: { user: ProfileUser; alig
           role="menu"
           className={`absolute top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-xl ${align === "right" ? "right-0" : "left-0"}`}
         >
-          <div className="border-b border-sand-100 bg-cream-soft px-4 py-3">
-            <p className="truncate text-sm font-extrabold text-sand-900">{user.name ?? roleLabel[user.role]}</p>
-            {user.email && <p className="truncate text-xs text-sand-500">{user.email}</p>}
+          <div className="flex items-center gap-3 border-b border-sand-100 bg-cream-soft px-4 py-3">
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- avatar Buyer dari S3/CDN eksternal
+              <img src={user.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-sand-200" />
+            ) : (
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-extrabold text-white">
+                {initial}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-extrabold text-sand-900">{user.name ?? roleLabel[user.role]}</p>
+              {user.email && <p className="truncate text-xs text-sand-500">{user.email}</p>}
+            </div>
           </div>
           <div className="p-2">
             {roleLinks[user.role].map((item) => (

@@ -12,6 +12,8 @@ import { publicSite } from "@/lib/public-site";
 import { toPublicSlug } from "@/lib/slug";
 import { CatalogQuickAdd } from "@/components/CatalogQuickAdd";
 import { ToastFeedback } from "@/components/Toast";
+import { Select } from "@/components/ui";
+import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +81,7 @@ export default async function CatalogPage({
     ),
     getPublicTestimonials().catch(() => []),
   ]);
+  const avatarUrl = await getBuyerAvatarUrl(session);
   const catalog = catalogResult.data;
 
   const organizationJsonLd = {
@@ -94,7 +97,7 @@ export default async function CatalogPage({
 
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -129,17 +132,17 @@ export default async function CatalogPage({
           >
             <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Seller
-              <select name="seller" defaultValue={params.seller ?? ""} className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">
+              <Select name="seller" defaultValue={params.seller ?? ""} className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">
                 <option value="">Semua Seller</option>
                 {catalog?.filters.sellers.map((seller) => <option key={seller.slug} value={seller.slug}>{seller.label}</option>)}
-              </select>
+              </Select>
             </label>
             <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Batch PO
-              <select
+              <Select
                 name="campaign"
                 defaultValue={params.campaign ?? ""}
-                className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
+                className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
               >
                 <option value="">Semua Batch PO</option>
                 {catalog?.filters.campaigns.map((campaign) => (
@@ -147,14 +150,14 @@ export default async function CatalogPage({
                     {campaign.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Kategori
-              <select
+              <Select
                 name="category"
                 defaultValue={params.category ?? ""}
-                className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
+                className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
               >
                 <option value="">Semua Kategori</option>
                 {catalog?.filters.categories.map((category) => (
@@ -162,7 +165,7 @@ export default async function CatalogPage({
                     {category}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Cari produk

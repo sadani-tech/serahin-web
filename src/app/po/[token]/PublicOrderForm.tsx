@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Button, Field, FormError, Input, Textarea } from "@/components/ui";
+import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ProductImage } from "@/components/ProductImage";
@@ -131,7 +131,10 @@ export function PublicOrderForm({
         }]
       : [];
   const [qty, setQty] = useState<Record<string, number>>({});
-  const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
+  // Kuantitas per varian+warna — satu varian dengan beberapa warna kini bisa
+  // punya beberapa baris sekaligus dalam satu pesanan (v2.3.7 FR-37.14/37.15),
+  // mis. Merah 2 + Kuning 1. Varian tanpa opsi warna tetap memakai `qty`.
+  const [colorQty, setColorQty] = useState<Record<string, Record<string, number>>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("Semua");
@@ -142,19 +145,38 @@ export function PublicOrderForm({
     start: number;
   } | null>(null);
   const [showAccessModal, setShowAccessModal] = useState(false);
+  // Produk berwarna dipilih lewat modal (bukan inline di card) supaya
+  // steppernya lega di layar mobile yang sempit — card cuma tampilkan
+  // ringkasan + tombol "Pilih warna".
+  const [colorModalFor, setColorModalFor] = useState<string | null>(null);
+  const colorModalVariant = variants.find((v) => v.id === colorModalFor) ?? null;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
         const raw = localStorage.getItem(`serahin:checkout:${formToken}`);
         if (!raw) return;
-        const draft = JSON.parse(raw) as { expiresAt?: number; qty?: Record<string, number>; colors?: Record<string, string> };
+        const draft = JSON.parse(raw) as {
+          expiresAt?: number;
+          qty?: Record<string, number>;
+          colorQty?: Record<string, Record<string, number>>;
+          colors?: Record<string, string>; // draft lama (satu warna per varian)
+        };
         if (draftIsExpired(draft.expiresAt)) {
           localStorage.removeItem(`serahin:checkout:${formToken}`);
           return;
         }
         if (draft.qty) setQty(draft.qty);
-        if (draft.colors) setWarnaSel(draft.colors);
+        if (draft.colorQty) setColorQty(draft.colorQty);
+        else if (draft.colors) {
+          // Migrasi draft lama: satu warna+qty per varian → colorQty.
+          const migrated: Record<string, Record<string, number>> = {};
+          for (const [variantId, warna] of Object.entries(draft.colors)) {
+            const q = draft.qty?.[variantId];
+            if (warna && q) migrated[variantId] = { [warna]: q };
+          }
+          setColorQty(migrated);
+        }
       } catch { localStorage.removeItem(`serahin:checkout:${formToken}`); }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -184,26 +206,81 @@ export function PublicOrderForm({
 
   const setQ = (id: string, value: number) =>
     setQty((current) => ({ ...current, [id]: Math.max(0, value) }));
-  const selectedVariants = variants.filter((v) => (qty[v.id] ?? 0) > 0);
-  const items = selectedVariants.map((v) => ({
-    variantId: v.id,
-    jumlah: qty[v.id] ?? 0,
-    expectedHarga: v.harga,
-    warna: warnaSel[v.id] || undefined,
+  /** Total kuantitas suatu varian, gabungan seluruh baris warna bila ada. */
+  const variantTotalQty = (v: PublicVariantOption) =>
+    v.warna?.length
+      ? Object.values(colorQty[v.id] ?? {}).reduce((sum, n) => sum + n, 0)
+      : qty[v.id] ?? 0;
+  const setColorQ = (v: PublicVariantOption, warna: string, value: number) =>
+    setColorQty((current) => {
+      const forVariant = { ...(current[v.id] ?? {}) };
+      const othersTotal = Object.entries(forVariant).reduce(
+        (sum, [c, q]) => (c === warna ? sum : sum + q),
+        0,
+      );
+      const max = Math.max(0, v.sisa - othersTotal);
+      forVariant[warna] = Math.max(0, Math.min(value, max));
+      return { ...current, [v.id]: forVariant };
+    });
+  /** Daftar stepper per warna — dipakai di dalam modal "Pilih warna". */
+  function renderColorRows(v: PublicVariantOption, disabled: boolean) {
+    if (!v.warna?.length) return null;
+    return (
+      <div className="space-y-2">
+        {v.warna.map((warna) => {
+          const warnaJumlah = colorQty[v.id]?.[warna] ?? 0;
+          const othersTotal = variantTotalQty(v) - warnaJumlah;
+          const maxForColor = Math.max(0, v.sisa - othersTotal);
+          return (
+            <div key={warna} className="flex items-center justify-between gap-3 rounded-xl border border-sand-200 px-3 py-2.5">
+              <span className="truncate text-sm font-bold text-sand-800">{warna}</span>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button type="button" onClick={() => setColorQ(v, warna, warnaJumlah - 1)} disabled={disabled || warnaJumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian} warna ${warna}`} className="flex h-10 w-10 items-center justify-center rounded-lg bg-sand-100 text-lg font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
+                <output className="flex h-10 w-10 items-center justify-center rounded-lg bg-sand-50 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian} warna ${warna}`}>{warnaJumlah}</output>
+                <button
+                  type="button"
+                  onClick={() => setColorQ(v, warna, warnaJumlah + 1)}
+                  disabled={disabled || warnaJumlah >= maxForColor}
+                  aria-label={`Tambah jumlah ${v.namaVarian} warna ${warna}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-lg font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  // Baris keranjang — satu baris per varian (tanpa warna) atau per
+  // kombinasi varian+warna (v2.3.7 FR-37.14/37.15), sumber kebenaran untuk
+  // ringkasan, payload `items`, dan total harga.
+  const rows = variants.flatMap((v) => {
+    if (v.warna?.length) {
+      return Object.entries(colorQty[v.id] ?? {})
+        .filter(([, q]) => q > 0)
+        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: warna as string | undefined }));
+    }
+    const q = qty[v.id] ?? 0;
+    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: undefined as string | undefined }] : [];
+  });
+  const items = rows.map((r) => ({
+    variantId: r.variantId,
+    jumlah: r.jumlah,
+    expectedHarga: r.harga,
+    warna: r.warna,
   }));
-  const total = variants.reduce((sum, v) => sum + v.harga * (qty[v.id] ?? 0), 0);
+  const total = rows.reduce((sum, r) => sum + r.harga * r.jumlah, 0);
   const dpTarget = paymentScheme === "DP_PELUNASAN"
     ? computeDownPaymentTarget(
-        selectedVariants.map((variant) => ({
-          hargaSaatPesan: variant.harga,
-          jumlah: qty[variant.id] ?? 0,
-        })),
+        rows.map((r) => ({ hargaSaatPesan: r.harga, jumlah: r.jumlah })),
         dpTipe,
         dpPercent,
         dpNominal,
       )
     : total;
-  const jumlahItem = items.reduce((sum, item) => sum + item.jumlah, 0);
+  const jumlahItem = rows.reduce((sum, r) => sum + r.jumlah, 0);
   const shopeeAmount =
     includeShopee && !gateway
       ? Math.min(dpTarget, Math.round((nominalCheckoutShopee ?? 0) * jumlahItem))
@@ -214,13 +291,6 @@ export function PublicOrderForm({
   // berubah (bankAmount === dpTarget karena shopeeAmount 0).
   const jumlahBayar = String(bankAmount);
   const adaItem = items.length > 0;
-  const warnaBelumLengkap = variants.some(
-    (v) =>
-      (qty[v.id] ?? 0) > 0 &&
-      v.warna &&
-      v.warna.length > 0 &&
-      !warnaSel[v.id],
-  );
   const paymentRule = paymentScheme === "LUNAS"
     ? includeShopee && shopeeAmount > 0
       ? `Total ${formatRupiah(dpTarget)} dikurangi ${formatRupiah(shopeeAmount)} via Shopee.`
@@ -314,7 +384,7 @@ export function PublicOrderForm({
   }
 
   function persistDraft() {
-    localStorage.setItem(`serahin:checkout:${formToken}`, JSON.stringify({ qty, colors: warnaSel, expiresAt: draftExpiresAt() }));
+    localStorage.setItem(`serahin:checkout:${formToken}`, JSON.stringify({ qty, colorQty, expiresAt: draftExpiresAt() }));
   }
 
   function scrollToCheckout() {
@@ -377,17 +447,17 @@ export function PublicOrderForm({
             </label>
             <label className="block">
               <span className="mb-1.5 block text-xs font-bold text-sand-600">Kategori</span>
-              <select
+              <Select
                 value={catalogCategory}
                 onChange={(event) => changeCatalogCategory(event.target.value)}
                 aria-label="Filter kategori produk"
-                className="h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-semibold text-sand-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                className="h-11 w-full text-sm font-semibold text-sand-800"
               >
                 <option value="Semua">Semua kategori</option>
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
           <p className="mt-3 text-xs font-semibold text-sand-500" aria-live="polite">
@@ -511,45 +581,42 @@ export function PublicOrderForm({
                   )}
 
                   {v.warna?.length ? (
-                    <fieldset disabled={disabled}>
-                      <legend className="mb-1.5 text-xs font-bold text-sand-600">Pilih warna{jumlah > 0 && !warnaSel[v.id] ? " *" : ""}</legend>
-                      <div className="flex flex-wrap gap-1.5">
-                        {v.warna.map((warna) => {
-                          const selected = warnaSel[v.id] === warna;
-                          return (
-                            <button
-                              key={warna}
-                              type="button"
-                              onClick={() => setWarnaSel((current) => ({ ...current, [v.id]: warna }))}
-                              aria-pressed={selected}
-                              className={`min-h-9 rounded-lg border px-2 text-[0.7rem] font-bold transition sm:px-2.5 sm:text-xs ${
-                                selected ? "border-brand-600 bg-brand-600 text-white" : "border-sand-300 bg-white text-sand-700 hover:border-brand-400"
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              {warna}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </fieldset>
-                  ) : null}
-
-                  <div className="mt-auto border-t border-sand-100 pt-2.5">
-                    <span className="mb-1.5 block text-[0.7rem] font-bold text-sand-600 sm:text-xs">Jumlah</span>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <button type="button" onClick={() => setQ(v.id, jumlah - 1)} disabled={disabled || jumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian}`} className="flex h-11 items-center justify-center rounded-xl bg-sand-100 text-xl font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
-                      <output className="flex h-11 items-center justify-center rounded-xl bg-sand-50 px-1 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian}`}>{jumlah}</output>
+                    <div className="mt-auto border-t border-sand-100 pt-2.5">
                       <button
                         type="button"
-                        onClick={() => setQ(v.id, Math.min(v.sisa, jumlah + 1))}
-                        disabled={disabled || jumlah >= v.sisa}
-                        aria-label={`Tambah jumlah ${v.namaVarian}`}
-                        className="flex h-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                        onClick={() => setColorModalFor(v.id)}
+                        disabled={disabled}
+                        className="flex w-full items-center justify-between gap-2 rounded-xl border border-sand-300 bg-white px-3 py-2.5 text-left transition hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        +
+                        <span className="min-w-0">
+                          <span className="block text-[0.65rem] font-bold uppercase tracking-wide text-sand-500">Pilih warna</span>
+                          <span className="block truncate text-sm font-extrabold text-sand-900">
+                            {variantTotalQty(v) > 0 ? `${variantTotalQty(v)} dipilih` : "Belum dipilih"}
+                          </span>
+                        </span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-sand-400" aria-hidden="true">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
                       </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="mt-auto border-t border-sand-100 pt-2.5">
+                      <span className="mb-1.5 block text-[0.7rem] font-bold text-sand-600 sm:text-xs">Jumlah</span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button type="button" onClick={() => setQ(v.id, jumlah - 1)} disabled={disabled || jumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian}`} className="flex h-11 items-center justify-center rounded-xl bg-sand-100 text-xl font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
+                        <output className="flex h-11 items-center justify-center rounded-xl bg-sand-50 px-1 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian}`}>{jumlah}</output>
+                        <button
+                          type="button"
+                          onClick={() => setQ(v.id, Math.min(v.sisa, jumlah + 1))}
+                          disabled={disabled || jumlah >= v.sisa}
+                          aria-label={`Tambah jumlah ${v.namaVarian}`}
+                          className="flex h-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </article>
               );
@@ -604,15 +671,15 @@ export function PublicOrderForm({
           <h2 id="summary-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
           {adaItem ? (
             <ul className="mt-4 space-y-3 border-y border-sand-100 py-4">
-              {selectedVariants.map((v) => (
-                <li key={v.id} className="flex justify-between gap-3 text-sm">
+              {rows.map((r) => (
+                <li key={`${r.variantId}:${r.warna ?? ""}`} className="flex justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="truncate font-bold text-sand-800">{v.namaVarian}</p>
+                    <p className="truncate font-bold text-sand-800">{r.namaVarian}</p>
                     <p className="text-xs text-sand-500">
-                      {qty[v.id]} × {formatRupiah(v.harga)}{warnaSel[v.id] ? ` · ${warnaSel[v.id]}` : ""}
+                      {r.jumlah} × {formatRupiah(r.harga)}{r.warna ? ` · ${r.warna}` : ""}
                     </p>
                   </div>
-                  <span className="shrink-0 font-bold text-sand-800">{formatRupiah(v.harga * (qty[v.id] ?? 0))}</span>
+                  <span className="shrink-0 font-bold text-sand-800">{formatRupiah(r.harga * r.jumlah)}</span>
                 </li>
               ))}
             </ul>
@@ -623,10 +690,10 @@ export function PublicOrderForm({
             <span className="text-sm font-bold text-sand-600">Total</span>
             <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
           </div>
-          <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem || warnaBelumLengkap}>
+          <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem}>
             {buyerAuthenticated ? "Konfirmasi & Bayar" : "Lanjutkan Pesanan"}
           </Button>
-          {adaItem && <button type="button" onClick={() => { setQty({}); setWarnaSel({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
+          {adaItem && <button type="button" onClick={() => { setQty({}); setColorQty({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
         </div>
       </section>
 
@@ -826,7 +893,6 @@ export function PublicOrderForm({
               </span>
             </label>
           </div>
-          {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
           <Button
             type="submit"
             className="w-full"
@@ -834,7 +900,6 @@ export function PublicOrderForm({
             disabled={
               orderingDisabled ||
               !adaItem ||
-              warnaBelumLengkap ||
               paymentUnavailable ||
               (!gateway &&
                 paymentScheme === "LUNAS" &&
@@ -853,6 +918,43 @@ export function PublicOrderForm({
 
       {preview && <ImagePreviewModal images={preview.images} startIndex={preview.start} title={preview.title} onClose={() => setPreview(null)} />}
       {showAccessModal && <BuyerAccessModal callbackUrl={`/po/${formToken}?checkout=1`} switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
+      {colorModalVariant && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-sand-950/50 sm:items-center sm:px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="color-modal-heading"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setColorModalFor(null);
+          }}
+        >
+          <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-lg sm:max-w-sm sm:rounded-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 id="color-modal-heading" className="truncate text-base font-extrabold text-sand-900">{colorModalVariant.namaVarian}</h2>
+                <p className="mt-0.5 text-xs font-semibold text-sand-500">
+                  {formatRupiah(colorModalVariant.harga)} · sisa {colorModalVariant.sisa} unit
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setColorModalFor(null)}
+                aria-label="Tutup"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            {renderColorRows(colorModalVariant, orderingDisabled || colorModalVariant.sisa <= 0)}
+            <Button type="button" variant="accent" className="mt-5 w-full" onClick={() => setColorModalFor(null)}>
+              Selesai
+            </Button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

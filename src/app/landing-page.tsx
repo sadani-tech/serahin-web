@@ -29,6 +29,7 @@ import { SiteHeader } from "@/components/landing/site-header";
 import { AuthChoiceModal } from "@/components/landing/AuthChoiceModal";
 import { faqs, roadmap, steps } from "@/lib/landing-content";
 import { getSession } from "@/lib/session";
+import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
 
 function HeroDashboard() {
   return (
@@ -236,8 +237,9 @@ function TestimonialsSection() {
 
 export default async function LandingPage() {
   const session = await getSession();
+  const avatarUrl = await getBuyerAvatarUrl(session);
   const headerUser = session
-    ? { name: session.name, email: session.email, role: session.role }
+    ? { name: session.name, email: session.email, role: session.role, avatarUrl }
     : null;
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui";
+import { Button, IconButton } from "@/components/ui";
 import {
   ProductEditor,
   type ProductEditorValues,
@@ -32,20 +32,18 @@ export function ProductModal({
 
   return (
     <>
-      <Button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={initial ? "h-8 w-8 p-0" : ""}
-        title={initial ? "Edit Produk" : triggerLabel}
-        aria-label={initial ? "Edit Produk" : undefined}
-      >
-        {initial ? (
+      {initial ? (
+        <IconButton onClick={() => setOpen(true)} title="Edit Produk">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
           </svg>
-        ) : triggerLabel}
-      </Button>
+        </IconButton>
+      ) : (
+        <Button type="button" onClick={() => setOpen(true)}>
+          {triggerLabel}
+        </Button>
+      )}
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-sand-950/50 px-4 py-6 sm:py-10"

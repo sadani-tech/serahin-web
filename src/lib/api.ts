@@ -96,6 +96,28 @@ export const api = {
     return res.data;
   },
 
+  /**
+   * Ambil SELURUH baris dari endpoint berpaginasi, bukan hanya halaman
+   * pertama (default backend `limit=20`, maksimum 100/request). Dipakai
+   * untuk sumber dropdown/filter yang wajib menampilkan semua opsi, mis.
+   * daftar Batch PO pada filter dashboard (v2.3.7 FR-37.26) — bukan untuk
+   * tabel besar yang memang seharusnya dipaginasi di UI.
+   */
+  async listAll<T>(path: string, query?: Query): Promise<T[]> {
+    const limit = 100;
+    const first = await api.get<{ data: T[]; meta: { totalPages: number } }>(
+      path,
+      { ...query, page: 1, limit },
+    );
+    const all = [...first.data];
+    const totalPages = Math.min(first.meta.totalPages ?? 1, 50); // batas aman
+    for (let page = 2; page <= totalPages; page += 1) {
+      const next = await api.get<{ data: T[] }>(path, { ...query, page, limit });
+      all.push(...next.data);
+    }
+    return all;
+  },
+
   async post<T>(path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${API_URL}${apiPath(path)}`, {
       method: "POST",

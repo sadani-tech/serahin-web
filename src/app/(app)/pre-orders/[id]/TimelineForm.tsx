@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button, Input, Textarea } from "@/components/ui";
+import { Button, Input, Select, Textarea } from "@/components/ui";
 import { addTimelineEntry } from "../actions";
 
 export function TimelineForm({ campaignId }: { campaignId: string }) {
@@ -25,7 +25,7 @@ export function TimelineForm({ campaignId }: { campaignId: string }) {
     >
       <label className="block text-xs font-bold uppercase tracking-wide text-sand-500">
         Milestone
-        <select name="milestoneCode" defaultValue="" required className="mt-1 block min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-medium normal-case tracking-normal text-sand-800">
+        <Select name="milestoneCode" defaultValue="" required className="mt-1 min-h-11 w-full text-sm font-medium normal-case tracking-normal text-sand-800">
           <option value="" disabled>Pilih progres</option>
           <option value="OPEN">Open</option>
           <option value="CLOSED">Closed</option>
@@ -34,7 +34,7 @@ export function TimelineForm({ campaignId }: { campaignId: string }) {
           <option value="PACKING">Packing</option>
           <option value="DELIVERED">Deliver</option>
           <option value="COMPLETED">Selesai</option>
-        </select>
+        </Select>
       </label>
       <Input
         name="judulUpdate"

@@ -3,21 +3,83 @@ import { api } from "@/lib/api";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { getDashboardData, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard";
 import { ActiveCampaignsCard, DashboardSection } from "@/components/DashboardSection";
-import { Card, LinkButton } from "@/components/ui";
+import { Card, LinkButton, Select, Input } from "@/components/ui";
+import { CAMPAIGN_STATUS_LABEL } from "@/lib/domain";
+import type { CampaignStatus } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 
 type SellerProfile = { businessName: string; slug: string; status: string };
 
-export default async function SellerDashboardPage() {
-  const [profile, data] = await Promise.all([
+export default async function SellerDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; dateFrom?: string; dateTo?: string; campaignId?: string }>;
+}) {
+  const sp = await searchParams;
+  const status =
+    sp.status && sp.status in CAMPAIGN_STATUS_LABEL
+      ? (sp.status as CampaignStatus)
+      : undefined;
+
+  const [profile, data, campaignList] = await Promise.all([
     api.get<SellerProfile>("/seller/profile"),
-    getDashboardData({}),
+    getDashboardData({ status, dateFrom: sp.dateFrom, dateTo: sp.dateTo, campaignId: sp.campaignId }),
+    // v2.3.7 FR-37.26: dropdown filter wajib menampilkan seluruh Batch PO
+    // milik Seller ini, bukan 20 pertama (default paginasi `/pre-orders`).
+    api.listAll<{ id: string; namaProduk: string }>("/pre-orders", { sort: "namaProduk", order: "asc" }),
   ]);
+  const adaFilter = !!(status || sp.dateFrom || sp.dateTo || sp.campaignId);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">Seller dashboard</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900 sm:text-3xl">{profile.businessName}</h1><p className="mt-1 text-sm text-sand-500">Ringkasan operasional Batch PO dan pembayaran toko Anda.</p></div>
         <div className="flex gap-2"><LinkButton href={`/catalog?seller=${encodeURIComponent(profile.slug)}`} variant="secondary">Lihat storefront</LinkButton><LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton></div>
       </div>
+
+      {/* Filter (v2.3.7 — sebelumnya cuma ada di dashboard Admin) */}
+      <Card className="p-4">
+        <form className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="col-span-2 sm:col-auto">
+            <label className="mb-1 block text-xs font-medium text-sand-500">Status Batch PO</label>
+            <Select name="status" defaultValue={status ?? ""} className="w-full py-1.5 sm:w-auto">
+              <option value="">Semua</option>
+              {Object.entries(CAMPAIGN_STATUS_LABEL).map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </Select>
+          </div>
+          <div className="col-span-2 sm:col-auto">
+            <label className="mb-1 block text-xs font-medium text-sand-500">Batch PO</label>
+            <Select name="campaignId" defaultValue={sp.campaignId ?? ""} className="w-full py-1.5 sm:w-auto">
+              <option value="">Semua</option>
+              {campaignList.map((c) => (
+                <option key={c.id} value={c.id}>{c.namaProduk}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-sand-500">Buka PO dari</label>
+            <Input type="date" name="dateFrom" defaultValue={sp.dateFrom ?? ""} className="w-full py-1.5 sm:w-auto" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-sand-500">sampai</label>
+            <Input type="date" name="dateTo" defaultValue={sp.dateTo ?? ""} className="w-full py-1.5 sm:w-auto" />
+          </div>
+          <div className="col-span-2 flex items-center gap-3 sm:col-auto">
+            <button type="submit" className="flex-1 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all hover:bg-brand-700 active:translate-y-px sm:flex-none">
+              Terapkan
+            </button>
+            {adaFilter && (
+              <Link href="/seller/dashboard" className="text-sm font-medium text-sand-500 hover:text-sand-700">
+                Reset
+              </Link>
+            )}
+          </div>
+        </form>
+      </Card>
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <Metric label="Batch PO aktif" value={data.jumlahKampanyeAktif} note="sedang berjalan" />
         <Metric label="Dana masuk" value={formatRupiah(data.totalCashflow)} note={`dari ${formatRupiah(data.totalNilaiPesanan)}`} />

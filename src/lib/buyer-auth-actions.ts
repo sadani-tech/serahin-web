@@ -85,6 +85,19 @@ export async function updateBuyerProfileAction(_prev: BuyerActionState, form: Fo
   return { message: "Profil berhasil diperbarui." };
 }
 
+/** Upload avatar profil Buyer (v2.3.7 FR-37.39/37.40). */
+export async function uploadBuyerAvatarAction(_prev: BuyerActionState, form: FormData): Promise<BuyerActionState> {
+  const file = form.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Pilih file gambar terlebih dahulu." };
+  const fd = new FormData();
+  fd.set("file", file);
+  try {
+    await api.postForm("/auth/buyer/profile/avatar", fd);
+    revalidatePath("/account"); revalidatePath("/account/profile");
+  } catch (error) { return { error: error instanceof Error ? error.message : "Avatar gagal diunggah." }; }
+  return { message: "Avatar berhasil diperbarui." };
+}
+
 export async function changeBuyerPasswordAction(_prev: BuyerActionState, form: FormData): Promise<BuyerActionState> {
   try {
     const result = await api.post<{ accessToken: string }>("/auth/buyer/change-password", { currentPassword: form.get("currentPassword"), newPassword: form.get("newPassword"), confirmPassword: form.get("confirmPassword") });
