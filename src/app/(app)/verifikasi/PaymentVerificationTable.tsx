@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
+import { ProofViewerButton } from "@/components/ProofViewerButton";
 import { ToastFeedback, useToast } from "@/components/Toast";
 import { reviewPayments } from "./actions";
 
@@ -80,7 +81,7 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
           <td className="px-4 py-3"><div className="font-medium">{row.order.campaign.namaProduk}</div><div className="text-xs text-sand-500">{row.order.items.map((item) => `${item.variantNameSnapshot} × ${item.quantity}`).join(", ")}</div></td>
           <td className="px-4 py-3"><span className="rounded-full bg-brand-50 px-2 py-1 text-xs font-bold text-brand-700">{row.jenis}</span></td>
           <td className="px-4 py-3 font-extrabold text-sand-900">{rupiah(Number(row.jumlah))}</td>
-          <td className="px-4 py-3">{row.buktiFile ? <a href={row.buktiFile} target="_blank" rel="noreferrer" className="font-bold text-brand-700 hover:underline">Lihat bukti</a> : <span className="text-rose-600">Tidak ada</span>}</td>
+          <td className="px-4 py-3">{row.buktiFile ? <ProofViewerButton url={row.buktiFile} className="font-bold text-brand-700 hover:underline" /> : <span className="text-rose-600">Tidak ada</span>}</td>
           <td className="px-4 py-3 text-xs text-sand-600">{waitingSince(row.createdAt)}</td>
           <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => { setSelected(new Set([row.id])); setError("Isi alasan, lalu pilih Tolak."); }} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
         </tr>)}</tbody>

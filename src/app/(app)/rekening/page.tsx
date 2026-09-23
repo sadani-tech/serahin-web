@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { saveBankAccount } from "./actions";
 import { BankAccountsTable } from "./BankAccountsTable";
+import { Select } from "@/components/ui";
 
 type BankAccount = {
   id: string;
@@ -42,7 +43,7 @@ export default async function BankAccountsPage({
       <section className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
         <h2 className="font-extrabold text-brand-900">Tambah rekening</h2>
         <form action={saveBankAccount} className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="text-sm font-bold text-sand-700">Jenis tujuan<select name="accountType" defaultValue="BANK" className={inputClass}><option value="BANK">Bank</option><option value="EWALLET">E-wallet</option></select></label>
+          <label className="text-sm font-bold text-sand-700">Jenis tujuan<Select name="accountType" defaultValue="BANK" className={inputClass}><option value="BANK">Bank</option><option value="EWALLET">E-wallet</option></Select></label>
           <label className="text-sm font-bold text-sand-700">Nama bank<input name="bankName" required minLength={2} maxLength={80} placeholder="BCA" className={inputClass}/></label>
           <label className="text-sm font-bold text-sand-700">Nomor rekening<input name="accountNumber" required inputMode="numeric" pattern="[0-9 .-]{5,40}" placeholder="1234567890" className={inputClass}/></label>
           <label className="text-sm font-bold text-sand-700 sm:col-span-2">Nama pemilik rekening<input name="accountHolderName" required minLength={2} maxLength={120} placeholder="Nama sesuai rekening" className={inputClass}/></label>

@@ -18,6 +18,9 @@ export async function saveBankAccount(formData: FormData) {
     accountNumber: String(formData.get("accountNumber") ?? ""),
     accountHolderName: String(formData.get("accountHolderName") ?? ""),
     isPrimary: formData.get("isPrimary") === "1",
+    // isActive hanya relevan untuk rekening yang sudah ada (form tambah
+    // rekening baru selalu aktif secara default) — v2.3.7 FR-37.35/37.36.
+    ...(id ? { isActive: formData.get("isActive") === "1" } : {}),
   };
   let error: unknown;
   try {

@@ -17,6 +17,7 @@ export default function SellerPage() {
       eyebrow="Untuk Seller"
       title="Kelola pre-order dengan lebih rapi bersama Serahin"
       intro="Serahin membantu Seller menampilkan produk, mengatur Batch PO, memantau pesanan, dan menjaga pembeli tetap mendapat informasi yang jelas."
+      minimalHeader
     >
       <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>

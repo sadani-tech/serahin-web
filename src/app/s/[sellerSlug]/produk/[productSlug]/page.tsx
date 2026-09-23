@@ -5,6 +5,7 @@ import { PublicHeader } from "@/components/PublicHeader";
 import { PublicFooter } from "@/components/PublicFooter";
 import { getPublicProduct } from "@/lib/public-product";
 import { getSession } from "@/lib/session";
+import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
 import { ApiError } from "@/lib/api";
 import { ProductDetailClient } from "./ProductDetailClient";
 import { toPublicSlug } from "@/lib/slug";
@@ -45,6 +46,7 @@ export default async function ProductPage({
     getSession(),
     searchParams,
   ]);
+  const avatarUrl = await getBuyerAvatarUrl(session);
   const requested = (await params).productSlug;
   if (product.redirected && product.canonicalSlug !== requested) permanentRedirect(`/s/${product.seller.slug}/produk/${product.canonicalSlug}`);
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/s/${product.seller.slug}/produk/${product.canonicalSlug}`;
@@ -63,7 +65,7 @@ export default async function ProductPage({
     }))),
   };
   return <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} />
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12"><nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-sm font-bold text-sand-500"><Link href="/catalog" className="hover:text-brand-700">Katalog</Link><span>/</span><Link href={`/catalog/${toPublicSlug(product.variants[0]?.category ?? "Others")}`} className="hover:text-brand-700">{product.variants[0]?.category ?? "Produk"}</Link><span>/</span><span className="text-sand-800">{product.name}</span></nav><ProductDetailClient product={product} initialVariantId={query.variant} /></main>
     <PublicFooter />

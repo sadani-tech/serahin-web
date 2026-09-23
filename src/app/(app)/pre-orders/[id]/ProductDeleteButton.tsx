@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
+import { IconButton } from "@/components/ui";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { deletePreorderProduct } from "../actions";
 
@@ -59,14 +59,11 @@ export function ProductDeleteButton({
     router.refresh();
   }
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      className="h-8 w-8 p-0 text-sand-500 hover:bg-rose-50 hover:text-rose-600"
+    <IconButton
+      variant="danger"
       onClick={remove}
       disabled={pending}
       title={terisi ? "Nonaktifkan Produk" : "Hapus Produk"}
-      aria-label={terisi ? "Nonaktifkan Produk" : "Hapus Produk"}
     >
       {pending ? (
         <span className="text-xs">…</span>
@@ -75,6 +72,6 @@ export function ProductDeleteButton({
       ) : (
         <TrashIcon />
       )}
-    </Button>
+    </IconButton>
   );
 }

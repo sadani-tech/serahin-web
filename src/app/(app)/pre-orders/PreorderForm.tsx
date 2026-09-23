@@ -231,33 +231,33 @@ export function PreorderForm({
       <Card className="p-5">
         <h3 className="mb-4 text-sm font-semibold text-sand-900">Jadwal PO</h3>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tanggal buka PO" required>
+          <Field label="Buka PO" required hint="Tanggal dan jam (WIB)">
             <Input
               name="tanggalBuka"
-              type="date"
+              type="datetime-local"
               defaultValue={initial?.tanggalBuka}
               required
             />
           </Field>
-          <Field label="Tanggal tutup PO (deadline)" required>
+          <Field label="Tutup PO (deadline)" required hint="Tanggal dan jam (WIB)">
             <Input
               name="tanggalTutup"
-              type="date"
+              type="datetime-local"
               defaultValue={initial?.tanggalTutup}
               required
             />
           </Field>
-          <Field label="Estimasi produksi selesai">
+          <Field label="Estimasi produksi selesai" hint="Tanggal dan jam (WIB)">
             <Input
               name="estimasiProduksi"
-              type="date"
+              type="datetime-local"
               defaultValue={initial?.estimasiProduksi}
             />
           </Field>
-          <Field label="Estimasi kirim">
+          <Field label="Estimasi kirim" hint="Tanggal dan jam (WIB)">
             <Input
               name="estimasiKirim"
-              type="date"
+              type="datetime-local"
               defaultValue={initial?.estimasiKirim}
             />
           </Field>
@@ -326,11 +326,11 @@ export function PreorderForm({
           )}
           <Field
             label="Deadline pelunasan"
-            hint="Pesanan yang mendekati/melewati deadline akan disorot."
+            hint="Tanggal dan jam (WIB). Pesanan yang mendekati/melewati deadline akan disorot."
           >
             <Input
               name="deadlinePelunasan"
-              type="date"
+              type="datetime-local"
               defaultValue={initial?.deadlinePelunasan}
             />
           </Field>

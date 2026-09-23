@@ -5,13 +5,31 @@ import { CartIcon, SerahinLogo } from "@/components/brand";
 import { useCart } from "@/components/CartProvider";
 import { ProfileMenu } from "@/components/ProfileMenu";
 
-export function PublicHeader({ loggedIn = false, role, name, email }: { loggedIn?: boolean; role?: "ADMIN" | "BUYER" | "SELLER"; name?: string | null; email?: string | null }) {
+export function PublicHeader({
+  loggedIn = false,
+  role,
+  name,
+  email,
+  avatarUrl,
+  minimal = false,
+}: {
+  loggedIn?: boolean;
+  role?: "ADMIN" | "BUYER" | "SELLER";
+  name?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
+  /** Sembunyikan nav Buyer (Katalog/FAQ/Arsip/Kontak/keranjang/Masuk Buyer) —
+   * dipakai di halaman pendaftaran/aktivasi Seller agar navigasi tidak
+   * membingungkan calon Seller (v2.3.7). */
+  minimal?: boolean;
+}) {
   const { count } = useCart();
   return (
     <header className="sticky top-0 z-40 border-b border-sand-200 bg-white/95 backdrop-blur-md">
       <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6">
         <SerahinLogo href="/" size="sm" />
+        {!minimal && (
         <nav
           aria-label="Navigasi publik"
           className="flex items-center gap-1 sm:gap-2"
@@ -45,13 +63,14 @@ export function PublicHeader({ loggedIn = false, role, name, email }: { loggedIn
             {count > 0 && <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5 text-[11px] text-white">{count > 99 ? "99+" : count}</span>}
           </Link>
           {loggedIn && role ? (
-            <ProfileMenu user={{ name, email, role }} />
+            <ProfileMenu user={{ name, email, role, avatarUrl }} />
           ) : (
             <Link href="/account/login" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700">
               Masuk Buyer
             </Link>
           )}
         </nav>
+        )}
       </div>
     </header>
   );

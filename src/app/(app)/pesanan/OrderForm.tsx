@@ -10,6 +10,7 @@ import {
   FormError,
   Input,
   ScrollList,
+  Select,
   Textarea,
 } from "@/components/ui";
 import { FileUploadField } from "@/components/FileUploadField";
@@ -27,6 +28,15 @@ export type VariantOption = {
 };
 
 type Row = { variantId: string; jumlah: number; warna?: string };
+/** Baris keranjang internal — `rowId` membedakan beberapa baris warna untuk
+ * varian yang sama (v2.3.7 FR-37.18), karena `variantId` saja tidak lagi unik. */
+type CartRow = Row & { rowId: string };
+
+let rowIdCounter = 0;
+function nextRowId(): string {
+  rowIdCounter += 1;
+  return `row-${rowIdCounter}`;
+}
 
 /** Pisahkan kontak gabungan "wa, email" menjadi field terpisah. */
 function splitKontak(kontak?: string): { wa: string; email: string } {
@@ -66,8 +76,11 @@ export function OrderForm({
 
   const { wa: initialWa, email: initialEmail } = splitKontak(initial?.kontak);
 
-  const [cart, setCart] = useState<Row[]>(
-    initial?.items?.filter((it) => it.variantId) ?? [],
+  const [cart, setCart] = useState<CartRow[]>(
+    (initial?.items?.filter((it) => it.variantId) ?? []).map((it) => ({
+      ...it,
+      rowId: nextRowId(),
+    })),
   );
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -75,23 +88,23 @@ export function OrderForm({
   const inCart = new Set(cart.map((r) => r.variantId));
 
   const addToCart = (variantId: string) =>
+    setCart((c) => {
+      const variant = varById.get(variantId);
+      // Varian tanpa opsi warna tetap satu baris per varian (perilaku lama).
+      // Varian dengan opsi warna boleh punya beberapa baris sekaligus, mis.
+      // Merah 2 + Kuning 1 dalam satu pesanan (v2.3.7 FR-37.18).
+      if (!variant?.warna?.length && c.some((r) => r.variantId === variantId))
+        return c;
+      return [...c, { rowId: nextRowId(), variantId, jumlah: 1 }];
+    });
+  const setQty = (rowId: string, jumlah: number) =>
     setCart((c) =>
-      c.some((r) => r.variantId === variantId)
-        ? c
-        : [...c, { variantId, jumlah: 1 }],
+      c.map((r) => (r.rowId === rowId ? { ...r, jumlah: Math.max(1, jumlah) } : r)),
     );
-  const setQty = (variantId: string, jumlah: number) =>
-    setCart((c) =>
-      c.map((r) =>
-        r.variantId === variantId ? { ...r, jumlah: Math.max(1, jumlah) } : r,
-      ),
-    );
-  const removeItem = (variantId: string) =>
-    setCart((c) => c.filter((r) => r.variantId !== variantId));
-  const setWarna = (variantId: string, warna: string) =>
-    setCart((c) =>
-      c.map((r) => (r.variantId === variantId ? { ...r, warna } : r)),
-    );
+  const removeItem = (rowId: string) =>
+    setCart((c) => c.filter((r) => r.rowId !== rowId));
+  const setWarna = (rowId: string, warna: string) =>
+    setCart((c) => c.map((r) => (r.rowId === rowId ? { ...r, warna } : r)));
 
   const total = cart.reduce((s, r) => {
     const v = varById.get(r.variantId);
@@ -176,11 +189,20 @@ export function OrderForm({
           <ScrollList maxRows={6} rowHeight={4.5} className="space-y-2 pr-1">
             {cart.map((r) => {
               const v = varById.get(r.variantId);
-              const maxQty = v ? Math.max(1, v.sisa) : undefined;
+              // Baris lain untuk varian yang sama juga menguras kuota yang
+              // sama (v2.3.7 FR-37.18) — kurangi dari batas maksimal baris ini.
+              const othersTotal = cart.reduce(
+                (sum, other) =>
+                  other.rowId !== r.rowId && other.variantId === r.variantId
+                    ? sum + other.jumlah
+                    : sum,
+                0,
+              );
+              const maxQty = v ? Math.max(1, v.sisa - othersTotal) : undefined;
               const atMax = maxQty !== undefined && r.jumlah >= maxQty;
               return (
                 <div
-                  key={r.variantId}
+                  key={r.rowId}
                   className="flex items-center gap-3 rounded-lg border border-sand-200 p-3"
                 >
                   <input type="hidden" name="itemVariantId" value={r.variantId} />
@@ -196,11 +218,11 @@ export function OrderForm({
                       {v ? ` · sisa ${Math.max(0, v.sisa)}` : ""}
                     </p>
                     {v?.warna && v.warna.length > 0 && (
-                      <select
+                      <Select
                         value={r.warna ?? ""}
-                        onChange={(e) => setWarna(r.variantId, e.target.value)}
-                        className={`mt-1.5 rounded-lg border px-2 py-1 text-xs ${
-                          r.warna ? "border-sand-300" : "border-rose-300"
+                        onChange={(e) => setWarna(r.rowId, e.target.value)}
+                        className={`mt-1.5 !py-1 text-xs ${
+                          r.warna ? "" : "!border-rose-300"
                         }`}
                       >
                         <option value="">— pilih warna —</option>
@@ -209,14 +231,14 @@ export function OrderForm({
                             {w}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
                   </div>
 
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setQty(r.variantId, r.jumlah - 1)}
+                      onClick={() => setQty(r.rowId, r.jumlah - 1)}
                       disabled={r.jumlah <= 1}
                       className="flex h-7 w-7 items-center justify-center rounded-md bg-sand-100 text-sand-700 hover:bg-sand-200 disabled:opacity-40"
                       aria-label="Kurangi"
@@ -228,7 +250,7 @@ export function OrderForm({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setQty(r.variantId, r.jumlah + 1)}
+                      onClick={() => setQty(r.rowId, r.jumlah + 1)}
                       disabled={atMax}
                       className="flex h-7 w-7 items-center justify-center rounded-md bg-sand-100 text-sand-700 hover:bg-sand-200 disabled:opacity-40"
                       aria-label="Tambah"
@@ -243,7 +265,7 @@ export function OrderForm({
 
                   <button
                     type="button"
-                    onClick={() => removeItem(r.variantId)}
+                    onClick={() => removeItem(r.rowId)}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sand-400 transition hover:bg-rose-50 hover:text-rose-600"
                     aria-label="Hapus item"
                     title="Hapus item"

@@ -7,15 +7,18 @@ export function PublicPageShell({
   eyebrow,
   intro,
   children,
+  minimalHeader = false,
 }: {
   title: string;
   eyebrow: string;
   intro: string;
   children: React.ReactNode;
+  /** Sembunyikan nav Buyer di header — dipakai halaman pendaftaran/aktivasi Seller. */
+  minimalHeader?: boolean;
 }) {
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader />
+      <PublicHeader minimal={minimalHeader} />
       <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
         <Link
           href="/"

@@ -10,8 +10,9 @@ import {
   EmptyState,
   LinkButton,
   ScrollList,
+  Select,
 } from "@/components/ui";
-import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
+import { formatRupiah, formatWaktu } from "@/lib/format";
 import {
   CAMPAIGN_STATUS_LABEL,
   ORDER_STATUS_LABEL,
@@ -383,20 +384,20 @@ export default async function CampaignDetailPage({
                   }
                 />
                 <Info
-                  label="Tanggal buka"
-                  value={formatTanggal(campaign.tanggalBuka)}
+                  label="Buka PO"
+                  value={formatWaktu(campaign.tanggalBuka)}
                 />
                 <Info
-                  label="Tanggal tutup"
-                  value={formatTanggal(campaign.tanggalTutup)}
+                  label="Tutup PO"
+                  value={formatWaktu(campaign.tanggalTutup)}
                 />
                 <Info
                   label="Estimasi produksi"
-                  value={formatTanggal(campaign.estimasiProduksi)}
+                  value={formatWaktu(campaign.estimasiProduksi)}
                 />
                 <Info
                   label="Estimasi kirim"
-                  value={formatTanggal(campaign.estimasiKirim)}
+                  value={formatWaktu(campaign.estimasiKirim)}
                 />
                 <Info
                   label="Deadline pelunasan"
@@ -406,7 +407,7 @@ export default async function CampaignDetailPage({
                         deadlineLewat ? "font-medium text-rose-600" : ""
                       }
                     >
-                      {formatTanggal(campaign.deadlinePelunasan)}
+                      {formatWaktu(campaign.deadlinePelunasan)}
                       {deadlineLewat && " (terlewat)"}
                     </span>
                   }
@@ -625,15 +626,15 @@ export default async function CampaignDetailPage({
             </label>
             <label className="text-xs font-medium text-sand-500">
               Status
-              <select
+              <Select
                 name="productStatus"
                 defaultValue={sp.productStatus ?? ""}
-                className="mt-1 block rounded-lg border border-sand-300 px-3 py-2 text-sm text-sand-900"
+                className="mt-1 rounded-lg px-3 py-2 text-sm text-sand-900"
               >
                 <option value="">Semua</option>
                 <option value="ACTIVE">Aktif</option>
                 <option value="INACTIVE">Nonaktif</option>
-              </select>
+              </Select>
             </label>
             <button
               type="submit"
@@ -818,10 +819,10 @@ export default async function CampaignDetailPage({
               <label className="mb-1 block text-xs font-medium text-sand-500">
                 Status
               </label>
-              <select
+              <Select
                 name="status"
                 defaultValue={sp.status ?? ""}
-                className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm"
+                className="min-h-9 w-full text-xs sm:min-h-0 sm:text-sm"
               >
                 <option value="">Semua status</option>
                 {ORDER_FILTERS.map(([v, l]) => (
@@ -829,16 +830,16 @@ export default async function CampaignDetailPage({
                     {l}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-sand-500">
                 Varian
               </label>
-              <select
+              <Select
                 name="variant"
                 defaultValue={sp.variant ?? ""}
-                className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm"
+                className="min-h-9 w-full text-xs sm:min-h-0 sm:text-sm"
               >
                 <option value="">Semua varian</option>
                 {campaign.variants.map((v) => (
@@ -846,16 +847,16 @@ export default async function CampaignDetailPage({
                     {v.namaVarian}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-sand-500">
                 Pembayaran
               </label>
-              <select
+              <Select
                 name="payment"
                 defaultValue={sp.payment ?? ""}
-                className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm"
+                className="min-h-9 w-full text-xs sm:min-h-0 sm:text-sm"
               >
                 <option value="">Semua pembayaran</option>
                 <option value="PENDING_VERIFICATION">
@@ -863,22 +864,22 @@ export default async function CampaignDetailPage({
                 </option>
                 <option value="VERIFIED">Terverifikasi</option>
                 <option value="REJECTED">Ditolak</option>
-              </select>
+              </Select>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-sand-500">
                 Pengiriman
               </label>
-              <select
+              <Select
                 name="shipping"
                 defaultValue={sp.shipping ?? ""}
-                className="min-h-9 w-full rounded-lg border border-sand-300 px-2.5 text-xs sm:min-h-0 sm:px-3 sm:py-2 sm:text-sm"
+                className="min-h-9 w-full text-xs sm:min-h-0 sm:text-sm"
               >
                 <option value="">Semua pengiriman</option>
                 <option value="SHOPEE">Shopee</option>
                 <option value="COURIER">Manual/Ekspedisi</option>
                 <option value="NONE">Belum dipilih</option>
-              </select>
+              </Select>
             </div>
             <div className="col-span-2 flex items-end gap-2 md:col-span-3 xl:col-span-6">
               <button

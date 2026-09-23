@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { api, ApiError } from "@/lib/api";
-import { formatRupiah, formatTanggal } from "@/lib/format";
+import { formatRupiah, formatWaktu } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import type { PaymentScheme } from "@/lib/types";
 import { RichText } from "@/components/RichText";
@@ -138,7 +138,7 @@ export default async function PublicFormPage({
                 <circle cx="12" cy="12" r="9" />
                 <polyline points="12 7 12 12 15 14" />
               </svg>
-              PO ditutup {formatTanggal(data.tanggalTutup)}
+              PO ditutup {formatWaktu(data.tanggalTutup)}
             </p>
           )}
         </section>

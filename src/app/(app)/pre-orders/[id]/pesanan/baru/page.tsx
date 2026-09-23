@@ -4,7 +4,7 @@ import { api, ApiError } from "@/lib/api";
 import { OrderForm } from "@/app/(app)/pesanan/OrderForm";
 import { createOrder } from "@/app/(app)/pesanan/actions";
 import { campaignMenerimaPesanan } from "@/lib/domain";
-import { formatTanggal, toNumber } from "@/lib/format";
+import { formatWaktu, toNumber } from "@/lib/format";
 import { richTextToPlain } from "@/lib/sanitize";
 import type { CampaignStatus } from "@/lib/types";
 import { Card } from "@/components/ui";
@@ -77,7 +77,7 @@ export default async function TambahPesananPage({
         <p className="text-sm text-sand-700">
           Batch PO tutup:{" "}
           <span className="font-medium text-sand-900">
-            {formatTanggal(campaign.tanggalTutup)}
+            {formatWaktu(campaign.tanggalTutup)}
           </span>
         </p>
         {deskripsiPlain && (

@@ -26,7 +26,9 @@ export default async function DashboardPage({
   try {
     [data, campaignList] = await Promise.all([
       getDashboardData({ status, dateFrom: sp.dateFrom, dateTo: sp.dateTo, campaignId: sp.campaignId }),
-      api.list<{ id: string; namaProduk: string }>("/pre-orders"),
+      // FR-37.26: dropdown filter wajib menampilkan seluruh Batch PO, bukan
+      // 20 pertama (default paginasi `/pre-orders`).
+      api.listAll<{ id: string; namaProduk: string }>("/pre-orders", { sort: "namaProduk", order: "asc" }),
     ]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
