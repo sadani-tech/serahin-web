@@ -14,6 +14,8 @@ import { deletePreorder } from "@/app/(app)/pre-orders/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 
 export type CampaignStatus =
   "OPEN" | "CLOSED" | "PRODUKSI" | "SIAP_KIRIM" | "SELESAI";
@@ -53,10 +55,21 @@ export default function PreorderTable({
   const { confirm } = useConfirm();
   const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
-  const totalPages = Math.max(1, Math.ceil(campaigns.length / PAGE_SIZE));
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(campaigns, (c, key) => {
+    switch (key) {
+      case "produk": return c.namaProduk;
+      case "status": return c.status;
+      case "harga": return c.variants.length ? Math.min(...c.variants.map((v) => toNumber(v.harga))) : null;
+      case "kuota": return c.kuotaTotal ? Math.round((c.terisi / c.kuotaTotal) * 100) : 0;
+      case "pesanan": return c._count.orders;
+      case "tutup": return c.tanggalTutup;
+      default: return null;
+    }
+  });
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const pageCampaigns = campaigns.slice(start, end);
+  const pageCampaigns = sorted.slice(start, end);
 
   async function handleDelete(id: string, namaProduk: string) {
     const ok = await confirm({
@@ -188,12 +201,12 @@ export default function PreorderTable({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                  <th className="px-5 py-3 font-medium">Produk</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Harga</th>
-                  <th className="px-5 py-3 font-medium">Kuota</th>
-                  <th className="px-5 py-3 font-medium">Pesanan</th>
-                  <th className="px-5 py-3 font-medium">Tutup PO</th>
+                  <SortableTh label="Produk" sortKey="produk" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                  <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                  <SortableTh label="Harga" sortKey="harga" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                  <SortableTh label="Kuota" sortKey="kuota" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                  <SortableTh label="Pesanan" sortKey="pesanan" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                  <SortableTh label="Tutup PO" sortKey="tutup" activeKey={sortKey} direction={direction} onSort={toggleSort} />
                   <th className="px-5 py-3 font-medium"></th>
                 </tr>
               </thead>

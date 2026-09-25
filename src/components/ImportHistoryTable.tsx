@@ -7,6 +7,8 @@ import { formatWaktu } from "@/lib/format";
 import { IMPORT_MODE_LABEL, IMPORT_STATUS_LABEL } from "@/lib/import-labels";
 import type { ImportMode, ImportStatus } from "@/lib/types";
 import { RollbackButton } from "@/app/(app)/import/riwayat/RollbackButton";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 
 type CampaignRef = { id: string; namaProduk: string };
 type ImportLogRow = {
@@ -29,10 +31,21 @@ export default function ImportHistoryTable({ logs }: Props) {
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(logs.length / PAGE_SIZE);
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(logs, (l, key) => {
+    switch (key) {
+      case "waktu": return l.createdAt;
+      case "mode": return IMPORT_MODE_LABEL[l.mode];
+      case "file": return l.namaFile;
+      case "batchPo": return (l.createdCampaigns[0] ?? l.targetCampaign)?.namaProduk ?? null;
+      case "sukses": return l.jumlahSukses;
+      case "status": return IMPORT_STATUS_LABEL[l.status];
+      default: return null;
+    }
+  });
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const pageLogs = logs.slice(start, end);
+  const pageLogs = sorted.slice(start, end);
 
   return (
     <Card>
@@ -46,12 +59,12 @@ export default function ImportHistoryTable({ logs }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                <th className="px-5 py-3 font-medium">Waktu</th>
-                <th className="px-5 py-3 font-medium">Mode</th>
-                <th className="px-5 py-3 font-medium">File</th>
-                <th className="px-5 py-3 font-medium">Batch PO</th>
-                <th className="px-5 py-3 font-medium">Sukses / Lewat</th>
-                <th className="px-5 py-3 font-medium">Status</th>
+                <SortableTh label="Waktu" sortKey="waktu" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Mode" sortKey="mode" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="File" sortKey="file" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Batch PO" sortKey="batchPo" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Sukses / Lewat" sortKey="sukses" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} />
                 <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>

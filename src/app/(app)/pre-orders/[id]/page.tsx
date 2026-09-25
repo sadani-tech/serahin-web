@@ -39,10 +39,10 @@ import { TimelineForm } from "./TimelineForm";
 import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
 import { OrderBulkTable, type OrderRow } from "@/components/OrderBulkTable";
-import { DestructiveActionForm } from "@/components/DestructiveActionForm";
 import { getSession } from "@/lib/session";
 import { removeInvalidOrder } from "../../management-actions";
 import { ProductDeleteButton } from "./ProductDeleteButton";
+import { DeleteOrderButton } from "./DeleteOrderButton";
 import { TimelineDeleteButton } from "./TimelineDeleteButton";
 import { ProductModal } from "./ProductModal";
 import { createPreorderProduct, updatePreorderProduct } from "../actions";
@@ -158,6 +158,16 @@ type ProductRow = {
   material?: string | null;
   sku?: string | null;
   deskripsi?: string | null;
+  // DP kustom Produk (v2.3.7 §3.18) — null berarti ikuti DP Batch PO.
+  dpTipe: DpTipe | null;
+  dpPercent: number | null;
+  dpNominal: string | null;
+  dpEfektif: {
+    sumber: "PRODUK" | "PREORDER";
+    tipe: DpTipe;
+    percent: number | null;
+    nominal: string | null;
+  };
 };
 
 type ProductPage = {
@@ -223,6 +233,15 @@ export default async function CampaignDetailPage({
           status: sp.productStatus,
         })
       : null;
+
+  // DP Batch PO — dipakai sebagai referensi "ikuti Batch PO" pada form dan
+  // badge DP kustom Produk (v2.3.7 §3.18).
+  const campaignDp = {
+    paymentScheme: campaign.paymentScheme,
+    dpTipe: campaign.dpTipe,
+    dpPercent: campaign.dpPercent,
+    dpNominal: campaign.dpNominal,
+  };
 
   // Kuota terisi per varian (item pesanan aktif) — v1.5.
   const kuotaTotal = campaign.variants.reduce((s, v) => s + v.kuotaMaks, 0);
@@ -605,6 +624,7 @@ export default async function CampaignDetailPage({
                 action={createPreorderProduct.bind(null, id)}
                 submitLabel="Tambah Produk"
                 triggerLabel="+ Tambah Produk"
+                campaignDp={campaignDp}
               />
             }
           />
@@ -663,6 +683,7 @@ export default async function CampaignDetailPage({
                     action={createPreorderProduct.bind(null, id)}
                     submitLabel="Tambah Produk"
                     triggerLabel="+ Tambah Produk pertama"
+                    campaignDp={campaignDp}
                   />
                 ) : undefined
               }
@@ -675,6 +696,9 @@ export default async function CampaignDetailPage({
                     <th className="px-5 py-3">Produk</th>
                     <th className="px-5 py-3">Kategori</th>
                     <th className="px-5 py-3">Harga</th>
+                    {campaign.paymentScheme === "DP_PELUNASAN" && (
+                      <th className="px-5 py-3">DP</th>
+                    )}
                     <th className="px-5 py-3">Kuota</th>
                     <th className="px-5 py-3">Vendor</th>
                     <th className="px-5 py-3">Status</th>
@@ -718,6 +742,26 @@ export default async function CampaignDetailPage({
                           <span className="mt-1 block text-xs font-semibold text-sand-500">HPP {formatRupiah(product.hpp)}</span>
                         )}
                       </td>
+                      {campaign.paymentScheme === "DP_PELUNASAN" && (
+                        <td className="px-5 py-3">
+                          {product.dpEfektif.sumber === "PRODUK" ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
+                              Kustom:{" "}
+                              {product.dpEfektif.tipe === "NOMINAL"
+                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
+                                : `${product.dpEfektif.percent ?? 50}%`}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-2.5 py-1 text-xs font-bold text-sand-600">
+                              Ikuti Batch PO (
+                              {product.dpEfektif.tipe === "NOMINAL"
+                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
+                                : `${product.dpEfektif.percent ?? 50}%`}
+                              )
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-5 py-3 text-sand-700">
                         {product.terisi} / {product.kuotaMaks}
                       </td>
@@ -748,6 +792,7 @@ export default async function CampaignDetailPage({
                             initial={product}
                             submitLabel="Simpan Produk"
                             triggerLabel="Edit"
+                            campaignDp={campaignDp}
                           />
                           <ProductDeleteButton
                             campaignId={id}
@@ -939,11 +984,9 @@ export default async function CampaignDetailPage({
                             {ORDER_STATUS_LABEL[order.status]}
                           </span>
                         </div>
-                        <DestructiveActionForm
+                        <DeleteOrderButton
                           action={removeInvalidOrder.bind(null, id, order.id)}
-                          target={order.id}
-                          label="Bersihkan pesanan"
-                          compact
+                          orderId={order.id}
                         />
                       </div>
                     ))}

@@ -36,6 +36,7 @@ export function getPublicCatalog(query: {
   seller?: string;
   category?: string;
   q?: string;
+  sort?: "default" | "name" | "price_asc" | "price_desc";
   page?: number;
   limit?: number;
   archive?: boolean;

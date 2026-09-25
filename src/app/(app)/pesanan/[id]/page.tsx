@@ -47,6 +47,11 @@ type OrderDetail = {
     jumlah: number;
     hargaSaatPesan: string;
     warna: string | null;
+    // DP kustom Produk (v2.3.7 §3.18) — snapshot DP efektif saat pesanan
+    // dibuat; null berarti mengikuti DP Batch PO (order.campaign.dp...).
+    dpTipe: DpTipe | null;
+    dpPercent: number | null;
+    dpNominal: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
   payments: {
@@ -227,9 +232,14 @@ export default async function OrderDetailPage({
               <div className="px-5 py-4">
                 <p className="text-xs uppercase tracking-wide text-sand-500">
                   {order.campaign.paymentScheme === "DP_PELUNASAN"
-                    ? order.campaign.dpTipe === "NOMINAL"
-                      ? "Target DP (nominal)"
-                      : `Target DP (${order.campaign.dpPercent ?? 50}%)`
+                    ? // DP kustom per Produk (v2.3.7 §3.18) — bila ada item yang
+                      // memakai DP sendiri, target DP tidak lagi satu persen/
+                      // nominal seragam untuk seluruh pesanan.
+                      order.items.some((item) => item.dpTipe !== null)
+                      ? "Target DP (kustom per Produk)"
+                      : order.campaign.dpTipe === "NOMINAL"
+                        ? "Target DP (nominal)"
+                        : `Target DP (${order.campaign.dpPercent ?? 50}%)`
                     : "Menunggu verifikasi"}
                 </p>
                 <p className="mt-1 text-lg font-semibold text-sand-700">

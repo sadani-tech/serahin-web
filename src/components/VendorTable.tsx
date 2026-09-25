@@ -8,6 +8,8 @@ import { deleteVendor } from "@/app/(app)/vendor/actions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 
 type VendorRow = {
   id: string;
@@ -34,10 +36,21 @@ export default function VendorTable({ vendors }: Props) {
   const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
 
-  const totalPages = Math.ceil(vendors.length / PAGE_SIZE);
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(vendors, (v, key) => {
+    const stats = computeVendorStats(v.evaluations);
+    switch (key) {
+      case "vendor": return v.nama;
+      case "spesialisasi": return v.spesialisasi;
+      case "batchPo": return v._count.campaigns;
+      case "rating": return stats.avgRating;
+      case "telat": return stats.jumlahTelat;
+      default: return null;
+    }
+  });
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const pageVendors = vendors.slice(start, end);
+  const pageVendors = sorted.slice(start, end);
 
   async function handleDelete(id: string, nama: string) {
     const ok = await confirm({
@@ -79,11 +92,11 @@ export default function VendorTable({ vendors }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                <th className="px-5 py-3 font-medium">Vendor</th>
-                <th className="px-5 py-3 font-medium">Spesialisasi</th>
-                <th className="px-5 py-3 font-medium">Batch PO</th>
-                <th className="px-5 py-3 font-medium">Rating</th>
-                <th className="px-5 py-3 font-medium">Telat</th>
+                <SortableTh label="Vendor" sortKey="vendor" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Spesialisasi" sortKey="spesialisasi" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Batch PO" sortKey="batchPo" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Rating" sortKey="rating" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+                <SortableTh label="Telat" sortKey="telat" activeKey={sortKey} direction={direction} onSort={toggleSort} />
                 <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>

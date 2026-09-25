@@ -12,11 +12,17 @@ export default async function EditProductPage({
   params: Promise<{ id: string; productId: string }>;
 }) {
   const { id, productId } = await params;
-  let campaign: { vendors: { id: string; nama: string }[] };
+  let campaign: {
+    vendors: { id: string; nama: string }[];
+    paymentScheme?: "DP_PELUNASAN" | "LUNAS";
+    dpTipe?: "PERSEN" | "NOMINAL" | null;
+    dpPercent?: number | null;
+    dpNominal?: string | number | null;
+  };
   let product: ProductEditorValues;
   try {
     [campaign, product] = await Promise.all([
-      api.get<{ vendors: { id: string; nama: string }[] }>(`/pre-orders/${id}`),
+      api.get<typeof campaign>(`/pre-orders/${id}`),
       api.get<ProductEditorValues>(`/pre-orders/${id}/products/${productId}`),
     ]);
   } catch (error) {
@@ -42,6 +48,7 @@ export default async function EditProductPage({
         vendors={campaign.vendors}
         campaignId={id}
         submitLabel="Simpan Produk"
+        campaignDp={campaign}
       />
     </div>
   );

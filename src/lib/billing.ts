@@ -13,6 +13,15 @@ export type Billing = {
 export type BillingItem = {
   hargaSaatPesan: number | string;
   jumlah: number;
+  /**
+   * DP kustom per Produk/Varian (v2.3.7 §3.18) — bila terisi, dipakai apa
+   * adanya untuk baris ini, mengesampingkan dpTipe/dpPercent/dpNominal level
+   * Batch PO yang diteruskan terpisah ke computeDownPaymentTarget/
+   * computeBilling. Bila kosong, baris ini mengikuti nilai Batch PO tersebut.
+   */
+  dpTipe?: "PERSEN" | "NOMINAL" | null;
+  dpPercent?: number | null;
+  dpNominal?: number | string | null;
 };
 
 /** Total nilai pesanan dari seluruh item (price snapshot). */
@@ -28,7 +37,14 @@ export function computeOrderQty(items: { jumlah: number }[]): number {
   return items.reduce((s, it) => s + it.jumlah, 0);
 }
 
-/** DP nominal maupun persen dihitung untuk setiap unit produk. */
+/**
+ * DP nominal maupun persen dihitung untuk setiap unit produk.
+ *
+ * DP kustom per Produk/Varian (v2.3.7 §3.18): tiap baris `items` boleh
+ * membawa `dpTipe`/`dpPercent`/`dpNominal` sendiri (override Produk). Baris
+ * tanpa itu jatuh ke `dpTipe`/`dpPercent`/`dpNominal` Batch PO (parameter
+ * fungsi ini) — perilaku identik dengan sebelum v2.3.7.
+ */
 export function computeDownPaymentTarget(
   items: BillingItem[],
   dpTipe: "PERSEN" | "NOMINAL" | null | undefined,
@@ -38,17 +54,23 @@ export function computeDownPaymentTarget(
   const total = computeOrderTotal(items);
   if (total <= 0) return 0;
 
-  const target = dpTipe === "NOMINAL"
-    ? items.reduce((sum, item) => {
-        const unitPrice = Math.max(0, toNumber(item.hargaSaatPesan));
-        const unitDp = Math.max(0, toNumber(dpNominal ?? 0));
-        return sum + Math.min(unitPrice, unitDp) * item.jumlah;
-      }, 0)
-    : items.reduce((sum, item) => {
-        const unitPrice = Math.max(0, toNumber(item.hargaSaatPesan));
-        const percent = Math.min(100, Math.max(0, dpPercent ?? 50));
-        return sum + Math.round((unitPrice * percent) / 100) * item.jumlah;
-      }, 0);
+  const target = items.reduce((sum, item) => {
+    const effectiveTipe = item.dpTipe ?? dpTipe;
+    const effectivePercent = item.dpTipe ? item.dpPercent : dpPercent;
+    const effectiveNominal = item.dpTipe ? item.dpNominal : dpNominal;
+    const unitPrice = Math.max(0, toNumber(item.hargaSaatPesan));
+    if (effectiveTipe === "NOMINAL") {
+      const unitDp = Math.max(0, toNumber(effectiveNominal ?? 0));
+      // Produk yang harganya di bawah DP nominal tetap otomatis jatuh ke DP
+      // 50% dari harga produk itu sendiri (v2.3.7 §3.20).
+      const perUnitDp = unitPrice < unitDp
+        ? Math.round(unitPrice * 0.5)
+        : Math.min(unitPrice, unitDp);
+      return sum + perUnitDp * item.jumlah;
+    }
+    const percent = Math.min(100, Math.max(0, effectivePercent ?? 50));
+    return sum + Math.round((unitPrice * percent) / 100) * item.jumlah;
+  }, 0);
 
   return Math.min(total, Math.round(target));
 }

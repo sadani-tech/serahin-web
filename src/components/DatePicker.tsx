@@ -94,6 +94,12 @@ export function DatePicker({
       const target = e.target as Node;
       if (triggerRef.current?.contains(target)) return;
       if (panelRef.current?.contains(target)) return;
+      // Dropdown jam/menit (mode datetime) portal ke document.body juga —
+      // secara DOM ia BUKAN anak panelRef meski tampil menyatu secara
+      // visual. Tanpa pengecualian ini, memilih jam/menit dibaca sebagai
+      // klik "di luar" kalender dan langsung menutup seluruh panel sebelum
+      // sempat memilih (v2.3.7 §3.20).
+      if (target instanceof Element && target.closest("[data-dropdown-list]")) return;
       setOpen(false);
     }
     function onViewportChange() {
