@@ -139,6 +139,7 @@ export function Dropdown(props: ComponentProps<"select">) {
           role="listbox"
           tabIndex={-1}
           onKeyDown={onListKeyDown}
+          data-dropdown-list
           style={{
             position: "fixed",
             top: rect.openUp ? undefined : rect.top + 4,

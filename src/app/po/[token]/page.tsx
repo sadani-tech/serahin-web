@@ -61,6 +61,12 @@ type FormInfo = {
     material: string | null;
     sku: string | null;
     deskripsi: string | null;
+    // DP kustom Produk (v2.3.7 §3.18) — null berarti ikuti DP Batch PO
+    // (dpTipe/dpPercent/dpNominal di level campaign di atas).
+    dpTipe: "PERSEN" | "NOMINAL" | null;
+    dpPercent: number | null;
+    dpNominal: number | null;
+    terjual?: number;
   }[];
 };
 

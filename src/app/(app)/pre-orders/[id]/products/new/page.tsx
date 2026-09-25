@@ -12,11 +12,15 @@ export default async function NewProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  let campaign: { vendors: { id: string; nama: string }[] };
+  let campaign: {
+    vendors: { id: string; nama: string }[];
+    paymentScheme?: "DP_PELUNASAN" | "LUNAS";
+    dpTipe?: "PERSEN" | "NOMINAL" | null;
+    dpPercent?: number | null;
+    dpNominal?: string | number | null;
+  };
   try {
-    campaign = await api.get<{ vendors: { id: string; nama: string }[] }>(
-      `/pre-orders/${id}`,
-    );
+    campaign = await api.get<typeof campaign>(`/pre-orders/${id}`);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) notFound();
     throw error;
@@ -42,6 +46,7 @@ export default async function NewProductPage({
         vendors={campaign.vendors}
         campaignId={id}
         submitLabel="Tambah Produk"
+        campaignDp={campaign}
       />
     </div>
   );

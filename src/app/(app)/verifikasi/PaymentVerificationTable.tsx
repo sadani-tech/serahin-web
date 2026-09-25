@@ -7,6 +7,8 @@ import { Button } from "@/components/ui";
 import { ProofViewerButton } from "@/components/ProofViewerButton";
 import { ToastFeedback, useToast } from "@/components/Toast";
 import { reviewPayments } from "./actions";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 
 export type PaymentVerificationRow = {
   id: string;
@@ -34,6 +36,16 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
   const headRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const router = useRouter();
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(rows, (row, key) => {
+    switch (key) {
+      case "buyer": return row.order.namaPembeli;
+      case "batchPo": return row.order.campaign.namaProduk;
+      case "jenis": return row.jenis;
+      case "nominal": return Number(row.jumlah);
+      case "menunggu": return row.createdAt;
+      default: return null;
+    }
+  });
   const allChecked = rows.length > 0 && selected.size === rows.length;
 
   useEffect(() => {
@@ -73,9 +85,15 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
       <table className="w-full min-w-[1050px] text-sm">
         <thead><tr className="border-b text-left text-xs uppercase text-sand-500">
           <th className="px-4 py-3"><input ref={headRef} type="checkbox" checked={allChecked} onChange={() => setSelected(allChecked ? new Set() : new Set(rows.map((row) => row.id)))} /></th>
-          <th className="px-4 py-3">Buyer</th><th className="px-4 py-3">Batch PO</th><th className="px-4 py-3">Jenis</th><th className="px-4 py-3">Nominal</th><th className="px-4 py-3">Bukti</th><th className="px-4 py-3">Menunggu</th><th className="px-4 py-3">Aksi</th>
+          <SortableTh label="Buyer" sortKey="buyer" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+          <SortableTh label="Batch PO" sortKey="batchPo" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+          <SortableTh label="Jenis" sortKey="jenis" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+          <SortableTh label="Nominal" sortKey="nominal" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+          <th className="px-4 py-3">Bukti</th>
+          <SortableTh label="Menunggu" sortKey="menunggu" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+          <th className="px-4 py-3">Aksi</th>
         </tr></thead>
-        <tbody className="divide-y divide-sand-100">{rows.map((row) => <tr key={row.id} className="hover:bg-sand-50">
+        <tbody className="divide-y divide-sand-100">{sorted.map((row) => <tr key={row.id} className="hover:bg-sand-50">
           <td className="px-4 py-3"><input type="checkbox" checked={selected.has(row.id)} onChange={() => setSelected((current) => { const next = new Set(current); if (next.has(row.id)) next.delete(row.id); else next.add(row.id); return next; })} /></td>
           <td className="px-4 py-3"><Link href={`/pesanan/${row.order.id}`} className="font-bold text-sand-900 hover:underline">{row.order.namaPembeli}</Link><div className="text-xs text-sand-500">{row.order.kontak}</div></td>
           <td className="px-4 py-3"><div className="font-medium">{row.order.campaign.namaProduk}</div><div className="text-xs text-sand-500">{row.order.items.map((item) => `${item.variantNameSnapshot} × ${item.quantity}`).join(", ")}</div></td>

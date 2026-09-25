@@ -5,6 +5,7 @@ import { Button, IconButton } from "@/components/ui";
 import {
   ProductEditor,
   type ProductEditorValues,
+  type CampaignDpDefault,
 } from "./products/ProductEditor";
 import type { PreorderFormState } from "../actions";
 
@@ -17,6 +18,7 @@ export function ProductModal({
   initial,
   submitLabel,
   triggerLabel,
+  campaignDp,
 }: {
   campaignId: string;
   vendors: Vendor[];
@@ -27,6 +29,7 @@ export function ProductModal({
   initial?: ProductEditorValues;
   submitLabel: string;
   triggerLabel: string;
+  campaignDp?: CampaignDpDefault;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -46,7 +49,7 @@ export function ProductModal({
       )}
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-sand-950/50 px-4 py-6 sm:py-10"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-sand-950/50 px-4 py-6 backdrop-blur-sm sm:py-10"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`product-modal-${campaignId}`}
@@ -82,6 +85,7 @@ export function ProductModal({
               vendors={vendors}
               campaignId={campaignId}
               submitLabel={submitLabel}
+              campaignDp={campaignDp}
             />
           </div>
         </div>

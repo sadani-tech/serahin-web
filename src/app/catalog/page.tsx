@@ -45,6 +45,7 @@ type HomeSearchParams = {
   seller?: string;
   category?: string;
   q?: string;
+  sort?: string;
   page?: string;
 };
 
@@ -54,6 +55,7 @@ function pageHref(params: HomeSearchParams, page: number) {
   if (params.seller) query.set("seller", params.seller);
   if (params.category) query.set("category", params.category);
   if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
   if (page > 1) query.set("page", String(page));
   const value = query.toString();
   return value ? `/catalog?${value}#catalog` : "/catalog#catalog";
@@ -73,6 +75,7 @@ export default async function CatalogPage({
       seller: params.seller,
       category: params.category,
       q: params.q,
+      sort: params.sort as "default" | "name" | "price_asc" | "price_desc" | undefined,
       page: requestedPage,
       limit: 8,
     }).then(
@@ -128,7 +131,7 @@ export default async function CatalogPage({
           <form
             action="/catalog"
             method="get"
-            className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-brand-100 bg-white/95 p-3.5 shadow-[0_18px_50px_rgba(38,76,39,.09)] sm:mt-7 sm:gap-4 sm:rounded-3xl sm:p-5 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.3fr_auto] lg:items-end"
+            className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-brand-100 bg-white/95 p-3.5 shadow-[0_18px_50px_rgba(38,76,39,.09)] sm:mt-7 sm:gap-4 sm:rounded-3xl sm:p-5 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_1.3fr_auto] lg:items-end"
           >
             <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Seller
@@ -168,6 +171,19 @@ export default async function CatalogPage({
               </Select>
             </label>
             <label className="block text-xs font-bold text-sand-700 sm:text-sm">
+              Urutkan
+              <Select
+                name="sort"
+                defaultValue={params.sort ?? "default"}
+                className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
+              >
+                <option value="default">Rekomendasi</option>
+                <option value="name">Nama (A-Z)</option>
+                <option value="price_asc">Harga: Termurah</option>
+                <option value="price_desc">Harga: Termahal</option>
+              </Select>
+            </label>
+            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
               Cari produk
               <input
                 type="search"
@@ -183,7 +199,7 @@ export default async function CatalogPage({
             </button>
           </form>
 
-          {(params.campaign || params.seller || params.category || params.q) && (
+          {(params.campaign || params.seller || params.category || params.q || (params.sort && params.sort !== "default")) && (
             <div className="mt-3 text-right">
               <Link href="/catalog#catalog" className="text-sm font-bold text-brand-700 hover:underline">
                 Reset semua filter

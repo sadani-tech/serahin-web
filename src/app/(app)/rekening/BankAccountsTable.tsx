@@ -4,6 +4,8 @@ import { Fragment, useState } from "react";
 import { deleteBankAccount, saveBankAccount } from "./actions";
 import { DeleteBankAccountButton } from "./DeleteBankAccountButton";
 import { Select } from "@/components/ui";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 
 type BankAccount = {
   id: string;
@@ -79,6 +81,15 @@ function Badges({ account }: { account: BankAccount }) {
 
 export function BankAccountsTable({ accounts }: { accounts: BankAccount[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(accounts, (a, key) => {
+    switch (key) {
+      case "bank": return a.bankName;
+      case "nomor": return a.accountNumber;
+      case "nama": return a.accountHolderName;
+      case "status": return a.isActive ? 1 : 0;
+      default: return null;
+    }
+  });
 
   return (
     <>
@@ -115,15 +126,15 @@ export function BankAccountsTable({ accounts }: { accounts: BankAccount[] }) {
       <table className="hidden w-full text-sm md:table">
         <thead>
           <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-            <th className="py-2 pr-3 font-medium">Bank / E-wallet</th>
-            <th className="py-2 pr-3 font-medium">Nomor</th>
-            <th className="py-2 pr-3 font-medium">Atas nama</th>
-            <th className="py-2 pr-3 font-medium">Status</th>
+            <SortableTh label="Bank / E-wallet" sortKey="bank" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
+            <SortableTh label="Nomor" sortKey="nomor" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
+            <SortableTh label="Atas nama" sortKey="nama" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
+            <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
             <th className="py-2 pr-3 font-medium" />
           </tr>
         </thead>
         <tbody className="divide-y divide-sand-100">
-          {accounts.map((account) => (
+          {sorted.map((account) => (
             <Fragment key={account.id}>
               <tr className="align-top">
                 <td className="py-3 pr-3 font-bold text-sand-900">{account.bankName}</td>

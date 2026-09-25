@@ -33,7 +33,16 @@ export type PublicVariantOption = {
   material?: string | null;
   sku?: string | null;
   deskripsi?: string | null;
+  // DP kustom Produk (v2.3.7 §3.18) — null berarti ikuti DP Batch PO (props
+  // dpTipe/dpPercent/dpNominal di bawah).
+  dpTipe?: "PERSEN" | "NOMINAL" | null;
+  dpPercent?: number | null;
+  dpNominal?: number | null;
+  /** Jumlah unit terjual — dasar urutan default "populer duluan" (v2.3.7 §3.20). */
+  terjual?: number;
 };
+
+type CatalogSortMode = "default" | "name" | "price_asc" | "price_desc";
 
 const CATALOG_PAGE_SIZE = 8;
 const draftExpiresAt = () => Date.now() + 24 * 60 * 60 * 1000;
@@ -138,6 +147,7 @@ export function PublicOrderForm({
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("Semua");
+  const [catalogSort, setCatalogSort] = useState<CatalogSortMode>("default");
   const [catalogPage, setCatalogPage] = useState(1);
   const [preview, setPreview] = useState<{
     images: string[];
@@ -260,10 +270,10 @@ export function PublicOrderForm({
     if (v.warna?.length) {
       return Object.entries(colorQty[v.id] ?? {})
         .filter(([, q]) => q > 0)
-        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: warna as string | undefined }));
+        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: warna as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }));
     }
     const q = qty[v.id] ?? 0;
-    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: undefined as string | undefined }] : [];
+    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }] : [];
   });
   const items = rows.map((r) => ({
     variantId: r.variantId,
@@ -274,7 +284,7 @@ export function PublicOrderForm({
   const total = rows.reduce((sum, r) => sum + r.harga * r.jumlah, 0);
   const dpTarget = paymentScheme === "DP_PELUNASAN"
     ? computeDownPaymentTarget(
-        rows.map((r) => ({ hargaSaatPesan: r.harga, jumlah: r.jumlah })),
+        rows.map((r) => ({ hargaSaatPesan: r.harga, jumlah: r.jumlah, dpTipe: r.dpTipe, dpPercent: r.dpPercent, dpNominal: r.dpNominal })),
         dpTipe,
         dpPercent,
         dpNominal,
@@ -291,13 +301,19 @@ export function PublicOrderForm({
   // berubah (bankAmount === dpTarget karena shopeeAmount 0).
   const jumlahBayar = String(bankAmount);
   const adaItem = items.length > 0;
+  // DP kustom per Produk (v2.3.7 §3.18) — bila ada baris yang memakai DP
+  // sendiri (beda dari DP Batch PO), aturan singkat tidak lagi satu
+  // persen/nominal seragam untuk seluruh keranjang.
+  const adaDpKustom = rows.some((r) => r.dpTipe != null);
   const paymentRule = paymentScheme === "LUNAS"
     ? includeShopee && shopeeAmount > 0
       ? `Total ${formatRupiah(dpTarget)} dikurangi ${formatRupiah(shopeeAmount)} via Shopee.`
       : "Pembayaran lunas sesuai total pesanan."
-    : dpTipe === "NOMINAL"
-      ? `${formatRupiah(dpNominal ?? 0)} per unit × ${jumlahItem} unit.`
-      : `${dpPercent ?? 50}% dari harga setiap unit produk.`;
+    : adaDpKustom
+      ? "Sebagian produk memakai DP khusus — lihat rincian per produk di atas."
+      : dpTipe === "NOMINAL"
+        ? `${formatRupiah(dpNominal ?? 0)} per unit × ${jumlahItem} unit.`
+        : `${dpPercent ?? 50}% dari harga setiap unit produk.`;
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, string>();
     variants.forEach((variant) => {
@@ -328,15 +344,31 @@ export function PublicOrderForm({
       return variant.namaVarian.toLocaleLowerCase("id-ID").includes(query);
     });
   }, [catalogCategory, catalogSearch, variants]);
-  const totalCatalogPages = Math.max(1, Math.ceil(filteredVariants.length / CATALOG_PAGE_SIZE));
+  // "Default" mempertahankan urutan dari backend (populer-duluan bila tidak
+  // ada Produk berlabel di Batch PO ini, lihat FR-37.70); Nama/Harga
+  // mengurutkan ulang di klien karena seluruh data sudah dimuat penuh.
+  const sortedVariants = useMemo(() => {
+    if (catalogSort === "default") return filteredVariants;
+    const copy = [...filteredVariants];
+    if (catalogSort === "name") copy.sort((a, b) => a.namaVarian.localeCompare(b.namaVarian, "id-ID"));
+    else if (catalogSort === "price_asc") copy.sort((a, b) => a.harga - b.harga);
+    else if (catalogSort === "price_desc") copy.sort((a, b) => b.harga - a.harga);
+    return copy;
+  }, [filteredVariants, catalogSort]);
+  const totalCatalogPages = Math.max(1, Math.ceil(sortedVariants.length / CATALOG_PAGE_SIZE));
   const currentCatalogPage = Math.min(catalogPage, totalCatalogPages);
-  const visibleVariants = filteredVariants.slice(
+  const visibleVariants = sortedVariants.slice(
     (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
     currentCatalogPage * CATALOG_PAGE_SIZE,
   );
 
   function changeCatalogSearch(value: string) {
     setCatalogSearch(value);
+    setCatalogPage(1);
+  }
+
+  function changeCatalogSort(value: CatalogSortMode) {
+    setCatalogSort(value);
     setCatalogPage(1);
   }
 
@@ -434,7 +466,7 @@ export function PublicOrderForm({
         </div>
 
         <div className="mb-4 rounded-2xl border border-sand-200 bg-white p-3 shadow-sm sm:p-4">
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem]">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem_11rem]">
             <label className="block">
               <span className="mb-1.5 block text-xs font-bold text-sand-600">Cari produk</span>
               <Input
@@ -457,6 +489,20 @@ export function PublicOrderForm({
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
+              </Select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-bold text-sand-600">Urutkan</span>
+              <Select
+                value={catalogSort}
+                onChange={(event) => changeCatalogSort(event.target.value as CatalogSortMode)}
+                aria-label="Urutkan produk"
+                className="h-11 w-full text-sm font-semibold text-sand-800"
+              >
+                <option value="default">Rekomendasi</option>
+                <option value="name">Nama (A-Z)</option>
+                <option value="price_asc">Harga: Termurah</option>
+                <option value="price_desc">Harga: Termahal</option>
               </Select>
             </label>
           </div>
@@ -559,6 +605,11 @@ export function PublicOrderForm({
                       )}
                     </div>
                     <p className="mt-1 text-base font-extrabold text-brand-700 sm:text-lg">{formatRupiah(v.harga)}</p>
+                    {paymentScheme === "DP_PELUNASAN" && v.dpTipe != null && (
+                      <p className="mt-0.5 text-[0.65rem] font-bold text-accent-700">
+                        DP khusus: {v.dpTipe === "NOMINAL" ? formatRupiah(v.dpNominal ?? 0) : `${v.dpPercent ?? 50}%`}
+                      </p>
+                    )}
                     <p className={`mt-1 text-xs font-bold ${habis ? "text-rose-700" : "text-sand-500"}`}>
                       {habis ? "Kuota sudah penuh" : `Sisa ${v.sisa} unit`}
                     </p>
@@ -920,7 +971,7 @@ export function PublicOrderForm({
       {showAccessModal && <BuyerAccessModal callbackUrl={`/po/${formToken}?checkout=1`} switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
       {colorModalVariant && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-sand-950/50 sm:items-center sm:px-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-sand-950/50 backdrop-blur-sm sm:items-center sm:px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="color-modal-heading"

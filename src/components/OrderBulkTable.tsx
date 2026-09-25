@@ -10,6 +10,8 @@ import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 import { bulkUpdateOrderStatus } from "@/app/(app)/pesanan/actions";
 import type { OrderStatus } from "@/lib/types";
 
@@ -66,6 +68,18 @@ export function OrderBulkTable({
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [storageKey]);
+
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(rows, (row, key) => {
+    switch (key) {
+      case "pembeli": return row.namaPembeli;
+      case "varian": return row.varianLabel;
+      case "qty": return row.totalQty;
+      case "status": return row.status;
+      case "pembayaran": return row.paymentStatus;
+      case "sisa": return row.sisa;
+      default: return null;
+    }
+  });
 
   const allChecked = rows.length > 0 && selected.size === rows.length;
   const someChecked = selected.size > 0 && !allChecked;
@@ -175,17 +189,17 @@ export function OrderBulkTable({
                   aria-label="Pilih semua"
                 />
               </th>
-              <th className="px-5 py-3 font-medium">Pembeli</th>
-              <th className="px-5 py-3 font-medium">Varian</th>
-              <th className="px-5 py-3 font-medium">Qty</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Pembayaran</th>
+              <SortableTh label="Pembeli" sortKey="pembeli" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Varian" sortKey="varian" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Qty" sortKey="qty" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Pembayaran" sortKey="pembayaran" activeKey={sortKey} direction={direction} onSort={toggleSort} />
               <th className="px-5 py-3 font-medium">Jenis Pengiriman</th>
-              <th className="px-5 py-3 font-medium">Sisa tagihan</th>
+              <SortableTh label="Sisa tagihan" sortKey="sisa" activeKey={sortKey} direction={direction} onSort={toggleSort} />
             </tr>
           </thead>
           <tbody className="divide-y divide-sand-100">
-            {rows.map((o) => {
+            {sorted.map((o) => {
               const checked = selected.has(o.id);
               return (
                 <tr

@@ -72,8 +72,9 @@ export async function createPreorder(
   _prev: PreorderFormState,
   formData: FormData,
 ): Promise<PreorderFormState> {
+  let created: { id: string };
   try {
-    const created = await api.post<{ id: string }>("/pre-orders", {
+    created = await api.post<{ id: string }>("/pre-orders", {
       namaProduk: getFormDataValue(formData, "namaProduk") ?? "",
       deskripsi: getFormDataValue(formData, "deskripsi"),
       productSlug: getFormDataValue(formData, "productSlug"),
@@ -95,13 +96,17 @@ export async function createPreorder(
       deadlinePelunasan: withWibOffset(getFormDataValue(formData, "deadlinePelunasan")),
       vendorIds: formData.getAll("vendorIds").map(String),
     });
-    revalidatePath("/pre-orders");
-    redirect(`/pre-orders/${created.id}?tab=produk&created=1`);
   } catch (e) {
     return {
       error: e instanceof ApiError ? e.message : "Gagal membuat Batch PO",
     };
   }
+  // `redirect()` HARUS di luar try/catch — Next.js melempar error khusus
+  // (NEXT_REDIRECT) untuk redirect, dan catch generik di atas akan
+  // menangkapnya sebagai "Gagal membuat Batch PO" walau backend sukses
+  // (v2.3.7 §3.20, bug yang sama dengan FR-38.49 draft v2.3.8).
+  revalidatePath("/pre-orders");
+  redirect(`/pre-orders/${created.id}?tab=produk&created=1`);
 }
 
 export async function updatePreorder(
@@ -168,6 +173,11 @@ function productPayload(formData: FormData) {
     deskripsi: String(formData.get("deskripsi") ?? "").trim(),
     images: array("imagesJson"),
     warna: array("warnaJson"),
+    // DP kustom Produk (v2.3.7 §3.18) — kosong = ikuti DP Batch PO.
+    dpTipe: getFormDataValue(formData, "dpTipe") as
+      "PERSEN" | "NOMINAL" | undefined,
+    dpPercent: getFormDataNumber(formData, "dpPercent"),
+    dpNominal: getFormDataNumber(formData, "dpNominal"),
   };
 }
 

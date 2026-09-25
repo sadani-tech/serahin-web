@@ -30,9 +30,28 @@ export type ProductEditorValues = {
   deskripsi?: string | null;
   images?: string[];
   warna?: string[];
+  dpTipe?: "PERSEN" | "NOMINAL" | null;
+  dpPercent?: number | null;
+  dpNominal?: string | number | null;
+};
+
+/** DP Batch PO — ditampilkan sebagai referensi "ikuti Batch PO" pada form Produk. */
+export type CampaignDpDefault = {
+  paymentScheme?: "DP_PELUNASAN" | "LUNAS";
+  dpTipe?: "PERSEN" | "NOMINAL" | null;
+  dpPercent?: number | null;
+  dpNominal?: string | number | null;
 };
 
 type Vendor = { id: string; nama: string };
+
+function formatDpDefaultLabel(campaignDp?: CampaignDpDefault): string {
+  if (!campaignDp || campaignDp.paymentScheme !== "DP_PELUNASAN")
+    return "Batch PO ini memakai skema Lunas — DP kustom tidak berlaku.";
+  return campaignDp.dpTipe === "NOMINAL"
+    ? `Rp${Number(campaignDp.dpNominal ?? 0).toLocaleString("id-ID")} per unit`
+    : `${campaignDp.dpPercent ?? 50}% dari harga per unit`;
+}
 
 export function ProductEditor({
   action,
@@ -40,6 +59,7 @@ export function ProductEditor({
   vendors,
   campaignId,
   submitLabel,
+  campaignDp,
 }: {
   action: (
     prev: PreorderFormState,
@@ -49,10 +69,16 @@ export function ProductEditor({
   vendors: Vendor[];
   campaignId: string;
   submitLabel: string;
+  campaignDp?: CampaignDpDefault;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [images, setImages] = useState(initial?.images ?? []);
   const [warna, setWarna] = useState(initial?.warna ?? []);
+  const [dpKustom, setDpKustom] = useState(Boolean(initial?.dpTipe));
+  const [dpTipe, setDpTipe] = useState<"PERSEN" | "NOMINAL">(
+    initial?.dpTipe ?? "PERSEN",
+  );
+  const dpEnabled = campaignDp?.paymentScheme === "DP_PELUNASAN";
   useOverlayWhilePending(pending);
 
   return (
@@ -163,6 +189,56 @@ export function ProductEditor({
               />
             </Field>
           </div>
+          {dpEnabled && (
+            <div className="sm:col-span-2 rounded-xl border border-sand-200 bg-sand-50 p-4">
+              <label className="flex items-center gap-2 text-sm font-semibold text-sand-800">
+                <input
+                  type="checkbox"
+                  checked={dpKustom}
+                  onChange={(e) => setDpKustom(e.target.checked)}
+                  className="h-4 w-4 accent-brand-600"
+                />
+                DP khusus Produk ini
+              </label>
+              <p className="mt-1 text-xs text-sand-500">
+                Kosongkan bila Produk ini mengikuti DP Batch PO ({formatDpDefaultLabel(campaignDp)}).
+              </p>
+              {dpKustom && (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Field label="Tipe DP">
+                    <Select
+                      name="dpTipe"
+                      value={dpTipe}
+                      onChange={(e) => setDpTipe(e.target.value as "PERSEN" | "NOMINAL")}
+                    >
+                      <option value="PERSEN">Persen</option>
+                      <option value="NOMINAL">Nominal per unit</option>
+                    </Select>
+                  </Field>
+                  {dpTipe === "NOMINAL" ? (
+                    <Field label="DP Nominal (Rp)">
+                      <CurrencyInput
+                        name="dpNominal"
+                        defaultValue={initial?.dpNominal ?? ""}
+                        placeholder="mis. 50.000"
+                      />
+                    </Field>
+                  ) : (
+                    <Field label="DP Persen (%)">
+                      <Input
+                        name="dpPercent"
+                        type="number"
+                        min={1}
+                        max={100}
+                        defaultValue={initial?.dpPercent ?? ""}
+                        placeholder="mis. 70"
+                      />
+                    </Field>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="sm:col-span-2">
             <VariantImagesInput value={images} onChange={setImages} campaignId={campaignId} />
           </div>
