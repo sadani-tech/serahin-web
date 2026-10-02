@@ -104,7 +104,7 @@ export async function createPreorder(
   // `redirect()` HARUS di luar try/catch — Next.js melempar error khusus
   // (NEXT_REDIRECT) untuk redirect, dan catch generik di atas akan
   // menangkapnya sebagai "Gagal membuat Batch PO" walau backend sukses
-  // (v2.3.7 §3.20, bug yang sama dengan FR-38.49 draft v2.3.8).
+  // (v2.3.7 §3.20, bug yang sama dengan FR-38.49 draft v2.4.2, dahulu v2.3.8/v2.4.1).
   revalidatePath("/pre-orders");
   redirect(`/pre-orders/${created.id}?tab=produk&created=1`);
 }

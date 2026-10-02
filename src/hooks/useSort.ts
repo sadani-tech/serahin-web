@@ -6,7 +6,7 @@ export type SortDirection = "asc" | "desc";
 
 /**
  * Sort generik untuk tabel data yang sudah dimuat penuh di klien (v2.3.7
- * §3.19 — audit sortable table, PRD v2.3.8 FR-38.50). Klik header kolom
+ * §3.19 — audit sortable table, PRD v2.4.2 FR-38.50, dahulu v2.3.8/v2.4.1). Klik header kolom
  * mengurutkan naik, klik lagi membalik ke turun; klik kolom lain reset ke
  * naik. `accessor` mengembalikan nilai pembanding (string/number/null) untuk
  * kunci kolom yang diberikan — null/undefined selalu didorong ke bawah.

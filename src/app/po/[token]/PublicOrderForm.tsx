@@ -772,7 +772,7 @@ export function PublicOrderForm({
               <div className="grid gap-2 sm:grid-cols-2">
                 {(
                   [
-                    ["GATEWAY", "Bayar otomatis", "QRIS / VA / e-wallet / kartu — verifikasi instan"],
+                    ["GATEWAY", "Bayar otomatis", "Verifikasi instan, tanpa perlu unggah bukti"],
                     ["MANUAL", "Transfer manual", "Transfer bank lalu unggah bukti — diverifikasi Admin"],
                   ] as const
                 ).map(([value, judul, sub]) => (

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { api, ApiError } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
 import type { Billing } from "@/lib/billing";
@@ -53,6 +54,7 @@ type PortalOrder = {
   pendingGateway?: {
     paymentUrl: string | null;
     vaNumber: string | null;
+    qrString: string | null;
     expiresAt: string | null;
   } | null;
 };
@@ -92,10 +94,20 @@ export default async function PortalPage({
   const baruMasuk = order.status === "BARU_MASUK";
 
   // v2.1 — link pembayaran gateway yang masih hidup (belum lunas/kedaluwarsa).
+  // QRIS charges biasanya tidak punya paymentUrl (GDC qrUrl/redirectUrl kosong
+  // di praktiknya) — cek ketiga field, jangan cuma paymentUrl, supaya kartu
+  // "lanjutkan pembayaran" tidak hilang untuk QRIS.
   const lanjutGateway =
-    !dibatalkan && !ditolak && order.pendingGateway?.paymentUrl
+    !dibatalkan &&
+    !ditolak &&
+    (order.pendingGateway?.paymentUrl ||
+      order.pendingGateway?.vaNumber ||
+      order.pendingGateway?.qrString)
       ? order.pendingGateway
       : null;
+  const qrCodeDataUrl = lanjutGateway?.qrString
+    ? await QRCode.toDataURL(lanjutGateway.qrString, { margin: 1, width: 240 }).catch(() => null)
+    : null;
 
   const isPelunasan =
     campaign.paymentScheme === "DP_PELUNASAN" &&
@@ -299,6 +311,21 @@ export default async function PortalPage({
               </p>
             </div>
             <div className="space-y-3 px-5 py-4">
+              {qrCodeDataUrl && (
+                <div className="flex flex-col items-center gap-2 rounded-lg bg-sand-50 px-4 py-4 ring-1 ring-inset ring-sand-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- generated data URI, not an optimizable remote asset */}
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="QRIS untuk pembayaran"
+                    width={240}
+                    height={240}
+                    className="h-60 w-60"
+                  />
+                  <p className="text-xs text-sand-500">
+                    Pindai dengan aplikasi e-wallet atau m-banking apa pun yang mendukung QRIS.
+                  </p>
+                </div>
+              )}
               {lanjutGateway.vaNumber && (
                 <p className="rounded-lg bg-sand-50 px-4 py-2 text-sm ring-1 ring-inset ring-sand-200">
                   Nomor Virtual Account:{" "}
