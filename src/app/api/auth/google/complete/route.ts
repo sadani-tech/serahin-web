@@ -7,36 +7,28 @@ function safeCallbackUrl(value: unknown): string {
     : "/account";
 }
 
+// v2.3.9 FR-42.1: lengkapi nomor HP/WhatsApp setelah /api/auth/google
+// membalas requiresPhone, lalu baru terbitkan sesi (set cookie token).
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null) as { credential?: unknown; callbackUrl?: unknown } | null;
-  if (typeof body?.credential !== "string") {
-    return NextResponse.json({ message: "Credential Google tidak ditemukan." }, { status: 400 });
+  const body = await request.json().catch(() => null) as { pendingToken?: unknown; phone?: unknown; callbackUrl?: unknown } | null;
+  if (typeof body?.pendingToken !== "string" || typeof body?.phone !== "string") {
+    return NextResponse.json({ message: "Nomor HP/WhatsApp wajib diisi." }, { status: 400 });
   }
 
-  const upstream = await fetch(`${PUBLIC_API_URL}/auth/buyer/google`, {
+  const upstream = await fetch(`${PUBLIC_API_URL}/auth/buyer/google/complete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
-    body: JSON.stringify({ credential: body.credential, acceptPolicies: true }),
+    body: JSON.stringify({ pendingToken: body.pendingToken, phone: body.phone }),
   });
   const result = await upstream.json().catch(() => ({})) as {
     accessToken?: string;
     maxAgeSeconds?: number;
     message?: string | string[];
-    // v2.3.9 FR-42.1: nomor HP/WhatsApp belum ada di akun — sesi belum
-    // diterbitkan, Buyer harus melengkapi nomor dulu (lihat /api/auth/google/complete).
-    requiresPhone?: boolean;
-    pendingToken?: string;
   };
-  if (!upstream.ok && !result.requiresPhone) {
+  if (!upstream.ok || !result.accessToken) {
     const message = Array.isArray(result.message) ? result.message.join(", ") : result.message;
-    return NextResponse.json({ message: message ?? "Login Google gagal." }, { status: upstream.status || 401 });
-  }
-  if (result.requiresPhone) {
-    return NextResponse.json({ requiresPhone: true, pendingToken: result.pendingToken });
-  }
-  if (!result.accessToken) {
-    return NextResponse.json({ message: "Login Google gagal." }, { status: 401 });
+    return NextResponse.json({ message: message ?? "Gagal menyimpan nomor HP." }, { status: upstream.status || 401 });
   }
 
   const response = NextResponse.json({ redirectTo: safeCallbackUrl(body.callbackUrl) });
