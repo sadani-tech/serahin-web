@@ -18,10 +18,10 @@ export default async function VerificationPage({ searchParams }: { searchParams:
   const [campaigns, queue] = await Promise.all([
     api.list<Campaign>("/pre-orders"),
     tab === "payments"
-      ? api.get<Envelope<PaymentVerificationRow>>("/payments/pending", { campaignId: sp.campaignId, paymentType: sp.paymentType, search: sp.q, page, limit: 25 })
+      ? api.get<Envelope<PaymentVerificationRow>>("/payments/pending", { campaignId: sp.campaignId, paymentType: sp.paymentType, search: sp.q, page, limit: 10 })
       : tab === "pembatalan"
-        ? api.get<Envelope<CancellationRow>>("/pesanan-verifikasi/pembatalan", { campaignId: sp.campaignId, page, limit: 25 })
-        : api.get<Envelope<VerificationRow>>("/pesanan-verifikasi", { campaignId: sp.campaignId, variantId: sp.variantId, page, limit: 25 }),
+        ? api.get<Envelope<CancellationRow>>("/pesanan-verifikasi/pembatalan", { campaignId: sp.campaignId, page, limit: 10 })
+        : api.get<Envelope<VerificationRow>>("/pesanan-verifikasi", { campaignId: sp.campaignId, variantId: sp.variantId, page, limit: 10 }),
   ]);
   const selectedCampaign = campaigns.find((campaign) => campaign.id === sp.campaignId);
   const ordersQueue = queue as Envelope<VerificationRow>;

@@ -228,7 +228,7 @@ export default async function CampaignDetailPage({
     tab === "produk"
       ? await api.get<ProductPage>(`/pre-orders/${id}/products`, {
           page: productPage,
-          limit: 20,
+          limit: 10,
           q: sp.q,
           status: sp.productStatus,
         })
@@ -252,7 +252,7 @@ export default async function CampaignDetailPage({
   const requestedPage = Math.max(1, Number(sp.page) || 1);
   const requestedLimit = [10, 25, 50, 100].includes(Number(sp.limit))
     ? Number(sp.limit)
-    : 25;
+    : 10;
   const ordersEnvelope =
     tab === "pesanan"
       ? await api.get<CampaignOrderEnvelope>(`/pre-orders/${id}/orders`, {
@@ -296,7 +296,7 @@ export default async function CampaignDetailPage({
     if (sp.payment) query.set("payment", sp.payment);
     if (sp.variant) query.set("variant", sp.variant);
     if (sp.shipping) query.set("shipping", sp.shipping);
-    if (requestedLimit !== 25) query.set("limit", String(requestedLimit));
+    if (requestedLimit !== 10) query.set("limit", String(requestedLimit));
     if (page > 1) query.set("page", String(page));
     return `/pre-orders/${id}?${query.toString()}`;
   };
