@@ -129,13 +129,19 @@ export default async function KeuanganPage({
         <div className="space-y-6">
           {/* Laba Bersih Riil (PRD v2.3.8 §3.1/§5.1) */}
           <Card>
-            <CardHeader title="Laba Bersih Riil" subtitle="Nilai pesanan terverifikasi − HPP (snapshot saat pesan)" />
+            <CardHeader title="Laba Bersih Riil" subtitle="Nilai pesanan terverifikasi − HPP (snapshot saat pesan), hanya dari pesanan yang HPP-nya sudah lengkap" />
             <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
               <StatItem label="Total Nilai Pesanan" value={formatRupiah(summary.totalNilaiPesanan)} />
               <StatItem label="Total HPP" value={formatRupiah(summary.totalHpp)} accent="text-amber-600" />
               <StatItem label="Laba Bersih Riil" value={formatRupiah(summary.labaSetelahHpp)} accent="text-emerald-600" />
               <StatItem label="HPP Belum Lengkap" value={`${summary.hppBelumLengkap} pesanan`} accent={summary.hppBelumLengkap > 0 ? "text-rose-600" : "text-sand-900"} />
             </div>
+            <p className="border-t border-sand-100 px-5 py-3 text-xs text-sand-500">
+              Ini laba kotor (harga jual − HPP) per pesanan yang sudah ada pembayaran terverifikasi — BELUM dikurangi
+              fee payment gateway, ongkir yang disubsidi, refund, atau biaya operasional lain. Pesanan yang Produknya
+              belum diisi HPP dikecualikan sepenuhnya dari angka di atas (lihat daftar di bawah), bukan dihitung
+              HPP = 0 — menghindari laba yang terlihat lebih besar dari sebenarnya.
+            </p>
           </Card>
 
           {summary.hppBelumLengkap > 0 && (
