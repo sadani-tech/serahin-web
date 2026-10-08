@@ -6,7 +6,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 /**
  * Hapus pesanan invalid — Admin saja (dijaga juga oleh backend `@Roles("ADMIN")`
  * dan gating role di server component pemanggil). Disederhanakan dari
- * `DestructiveActionForm` (v2.3.8 FR-38.47): tidak perlu lagi mengetik ulang
+ * `DestructiveActionForm` (v2.4.2 FR-38.47, dahulu v2.3.8/v2.4.1): tidak perlu lagi mengetik ulang
  * ID/token/nama pembeli sebagai konfirmasi — `confirmation` diisi otomatis
  * dari `orderId` yang backend sudah tahu, cukup isi alasan lalu satu klik
  * konfirmasi lewat modal blur (`useConfirm`), bukan `window.confirm` native.

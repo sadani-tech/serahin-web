@@ -8,11 +8,19 @@ export const dynamic = "force-dynamic";
 
 type AuditRow = {
   id: string;
+  jenis: string;
   jumlahBaris: number;
   format: string;
   keterangan: string | null;
   createdAt: string;
   createdBy: { name: string | null; email: string };
+};
+
+const JENIS_LABEL: Record<string, string> = {
+  kontak: "Kontak",
+  pesanan: "Pesanan",
+  keuangan: "Keuangan",
+  "rekap-vendor": "Rekap Vendor",
 };
 
 export default async function ExportPage() {
@@ -41,12 +49,12 @@ export default async function ExportPage() {
       {/* Audit lintas Seller hanya untuk Admin internal. */}
       {session?.role === "ADMIN" && <div>
         <h2 className="mb-3 text-base font-semibold text-sand-900">
-          Riwayat Ekspor Kontak
+          Riwayat Ekspor
         </h2>
         <Card>
           {audits.length === 0 ? (
             <p className="px-5 py-8 text-center text-sm text-sand-500">
-              Belum ada ekspor kontak.
+              Belum ada ekspor.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -55,6 +63,7 @@ export default async function ExportPage() {
                   <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                     <th className="px-5 py-3 font-medium">Waktu</th>
                     <th className="px-5 py-3 font-medium">Oleh</th>
+                    <th className="px-5 py-3 font-medium">Jenis</th>
                     <th className="px-5 py-3 font-medium">Jumlah</th>
                     <th className="px-5 py-3 font-medium">Format</th>
                     <th className="px-5 py-3 font-medium">Filter</th>
@@ -70,7 +79,10 @@ export default async function ExportPage() {
                         {a.createdBy.name ?? a.createdBy.email}
                       </td>
                       <td className="px-5 py-3 text-sand-700">
-                        {a.jumlahBaris} kontak
+                        {JENIS_LABEL[a.jenis] ?? a.jenis}
+                      </td>
+                      <td className="px-5 py-3 text-sand-700">
+                        {a.jumlahBaris}
                       </td>
                       <td className="px-5 py-3 uppercase text-sand-500">
                         {a.format}

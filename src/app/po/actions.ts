@@ -187,10 +187,16 @@ export async function createPublicOrder(
   if (result.needsCartConfirm) {
     return { warning: result.warning, needsCartConfirm: true };
   }
-  // Gateway: langsung ke halaman pembayaran provider. Manual: ke halaman sukses.
+  // Gateway dengan hosted payment page (paymentUrl): redirect langsung ke sana.
+  // Gateway tanpa paymentUrl (VA/QRIS — tidak ada halaman hosted, cuma nomor VA
+  // atau QR untuk ditampilkan): langsung ke portal, bukan halaman sukses
+  // generik, supaya buyer tidak perlu klik lagi untuk lihat cara bayarnya.
+  // Manual transfer: ke halaman sukses seperti biasa.
   redirect(
     gateway && result.paymentUrl
       ? result.paymentUrl
-      : `/po/sukses/${result.tokenAkses}?campaign=${encodeURIComponent(formToken)}`,
+      : gateway && result.tokenAkses
+        ? `/portal/${result.tokenAkses}`
+        : `/po/sukses/${result.tokenAkses}?campaign=${encodeURIComponent(formToken)}`,
   );
 }

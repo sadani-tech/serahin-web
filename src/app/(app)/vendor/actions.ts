@@ -5,6 +5,27 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { api, ApiError } from "@/lib/api";
 
+export type VendorPaymentFormState = { error?: string } | undefined;
+
+/**
+ * Catat pembayaran ke Vendor (PRD v2.3.8 §3.1/§5.2). FormData diteruskan apa
+ * adanya ke backend (multipart) — field "bukti" (file, opsional) ditangani
+ * oleh `FileInterceptor("bukti")` di KeuanganController.
+ */
+export async function createVendorPayment(
+  vendorId: string,
+  _prev: VendorPaymentFormState,
+  formData: FormData,
+): Promise<VendorPaymentFormState> {
+  try {
+    await api.postForm(`/keuangan/vendor/${vendorId}/payments`, formData);
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menyimpan pembayaran" };
+  }
+  revalidatePath(`/vendor/${vendorId}`);
+  return undefined;
+}
+
 const vendorSchema = z.object({
   nama: z.string().min(1, "Nama vendor wajib diisi"),
   kontak: z.string().optional(),
