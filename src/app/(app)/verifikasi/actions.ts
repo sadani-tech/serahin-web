@@ -27,6 +27,35 @@ export async function reviewOrders(
   }
 }
 
+// v2.3.9 FR-42.2: keputusan Seller/Admin atas pengajuan pembatalan Buyer.
+export async function decideCancellation(
+  orderId: string,
+  keputusan: "APPROVE" | "REJECT",
+  alasan?: string,
+): Promise<{ ok?: boolean; error?: string }> {
+  if (keputusan === "REJECT" && !alasan?.trim()) {
+    return { error: "Alasan penolakan wajib diisi." };
+  }
+  try {
+    await api.post(`/pesanan/${orderId}/cancellation/decision`, { keputusan, alasan: alasan?.trim() });
+    revalidatePath("/verifikasi");
+    return { ok: true };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal memproses keputusan pembatalan." };
+  }
+}
+
+// v2.3.9 FR-42.2: Seller menandai refund manual sudah selesai dilakukan.
+export async function completeRefund(orderId: string, catatan?: string): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    await api.post(`/pesanan/${orderId}/cancellation/refund`, { catatan: catatan?.trim() || undefined });
+    revalidatePath("/verifikasi");
+    return { ok: true };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal mencatat refund." };
+  }
+}
+
 export async function reviewPayments(
   ids: string[],
   keputusan: "TERVERIFIKASI" | "DITOLAK",
