@@ -67,7 +67,14 @@ export function Dropdown(props: ComponentProps<"select">) {
       if (listRef.current?.contains(target)) return;
       setOpen(false);
     }
-    function onViewportChange() {
+    function onViewportChange(e: Event) {
+      // Listener capture-phase ini menerima SEMUA event scroll di halaman,
+      // termasuk scroll di dalam daftar pilihan (`listRef`) itu sendiri —
+      // tanpa pengecualian ini, dropdown langsung menutup diri pada scroll
+      // pertama di dalam listnya sendiri sebelum sempat terlihat scroll.
+      // Hanya scroll di LUAR list (mis. halaman/Card bergeser) yang harus
+      // menutup dropdown.
+      if (listRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
     document.addEventListener("mousedown", onClickOutside);
