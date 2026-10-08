@@ -2,12 +2,14 @@
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 
-export function CatalogQuickAdd({ detailHref, event, item }: {
+export function CatalogQuickAdd({ detailHref, event, item, role }: {
   detailHref: string;
   event: { salesEventId: string; eventTitle: string; formToken: string; sellerName: string; endsAt: string };
   item: { variantId: string; name: string; price: number; image?: string | null; colors?: string[]; quotaRemaining: number };
+  role?: string;
 }) {
   const { addItem } = useCart();
+  if (role === "SELLER") return null;
   if (item.colors?.length) return <Link href={detailHref} className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-2 text-xs font-extrabold text-white hover:bg-brand-700 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">
     <CartIcon />
     <span className="hidden sm:inline">Pilih opsi</span>

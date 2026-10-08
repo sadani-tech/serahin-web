@@ -100,7 +100,7 @@ export default async function CatalogPage({
 
   return (
     <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} />
+      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} catalogNav />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -242,7 +242,7 @@ export default async function CatalogPage({
                     </p>
                     <div className="mt-5 flex gap-2">
                       <Link href={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} className="inline-flex min-h-9 items-center justify-center rounded-lg border border-sand-300 px-2 text-xs font-extrabold text-sand-700 hover:border-brand-400 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">Detail</Link>
-                      <CatalogQuickAdd detailHref={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }} item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }} />
+                      <CatalogQuickAdd role={session?.role} detailHref={variant.productSlug ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }} item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }} />
                     </div>
                   </div>
                 </article>
