@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 
 function payload(formData: FormData) {
   return { reason: String(formData.get("reason") ?? ""), confirmation: String(formData.get("confirmation") ?? "") };
@@ -55,7 +55,14 @@ export async function reactivateSeller(id: string) {
   refreshSeller(id);
 }
 
-export async function removeInvalidOrder(campaignId: string, orderId: string, formData: FormData) {
-  await api.post(`/admin/preorders/${campaignId}/orders/${orderId}/remove`, payload(formData));
-  revalidatePath(`/pre-orders/${campaignId}`);
+// v2.3.9 FR-42.7: hapus pesanan satu klik (ikon tong sampah + modal
+// yakin/tidak) — tidak perlu lagi alasan tertulis/konfirmasi ketik ulang.
+export async function removeOrder(campaignId: string, orderId: string): Promise<{ error?: string }> {
+  try {
+    await api.post(`/admin/preorders/${campaignId}/orders/${orderId}/remove`, {});
+    revalidatePath(`/pre-orders/${campaignId}`);
+    return {};
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal menghapus pesanan." };
+  }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Select } from "@/components/ui";
+import { Button, DeleteIconButton, Select } from "@/components/ui";
 import { OrderBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
@@ -40,18 +40,42 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
 export function OrderBulkTable({
   campaignId,
   rows,
+  onDelete,
 }: {
   campaignId: string;
   rows: OrderRow[];
+  /** Admin saja — diisi bila boleh hapus pesanan (v2.3.9 FR-42.7). */
+  onDelete?: (orderId: string) => Promise<{ error?: string }>;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { confirm } = useConfirm();
   const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
   const router = useRouter();
   const headRef = useRef<HTMLInputElement>(null);
+
+  async function handleDelete(order: OrderRow) {
+    if (!onDelete) return;
+    const ok = await confirm({
+      title: "Hapus pesanan ini?",
+      description: `Pesanan ${order.namaPembeli} akan dihapus. Pesanan tanpa histori pembayaran dihapus permanen; pesanan yang sudah ada pembayaran/pengiriman akan dibatalkan dan diarsipkan (bukan dihapus total).`,
+      confirmLabel: "Ya, hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
+    setDeletingId(order.id);
+    const result = await onDelete(order.id);
+    setDeletingId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Pesanan dihapus.");
+    router.refresh();
+  }
 
   // Simpan & pulihkan posisi scroll daftar agar saat kembali dari detail
   // pesanan (browser back atau tautan "←") tetap di baris yang dipilih —
@@ -196,6 +220,7 @@ export function OrderBulkTable({
               <SortableTh label="Pembayaran" sortKey="pembayaran" activeKey={sortKey} direction={direction} onSort={toggleSort} />
               <th className="px-5 py-3 font-medium">Jenis Pengiriman</th>
               <SortableTh label="Sisa tagihan" sortKey="sisa" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              {onDelete && <th className="px-5 py-3" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-sand-100">
@@ -247,6 +272,16 @@ export function OrderBulkTable({
                       <span className="text-emerald-600">Lunas</span>
                     )}
                   </td>
+                  {onDelete && (
+                    <td className="px-5 py-3">
+                      <DeleteIconButton
+                        title="Hapus pesanan"
+                        loading={deletingId === o.id}
+                        disabled={deletingId !== null && deletingId !== o.id}
+                        onClick={() => handleDelete(o)}
+                      />
+                    </td>
+                  )}
                 </tr>
               );
             })}
