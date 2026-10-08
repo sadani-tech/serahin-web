@@ -146,7 +146,7 @@ export default async function DashboardPage({
           className="col-span-2 sm:col-span-1"
           label="Dana masuk"
           value={formatRupiah(data.totalCashflow)}
-          note={`dari ${formatRupiah(data.totalNilaiPesanan)} total`}
+          note="uang yang benar-benar sudah diterima (DP/pelunasan terverifikasi)"
           tone="brand"
           compact
           icon={
@@ -158,9 +158,18 @@ export default async function DashboardPage({
         />
         <StatCard
           className="col-span-2 sm:col-span-1"
+          href="/keuangan"
           label="Laba setelah HPP"
           value={formatRupiah(data.labaKotor)}
-          note={data.hppBelumLengkap ? `${data.hppBelumLengkap} order HPP belum lengkap` : `HPP ${formatRupiah(data.totalHpp)}`}
+          note={
+            // v2.3.9 FR-42.9: angka ini HANYA dari order yang HPP-nya lengkap
+            // (order tanpa HPP dikecualikan sepenuhnya, bukan dihitung HPP=0)
+            // — selalu tunjukkan berapa order yang dikecualikan supaya tidak
+            // disangka laba riil penuh.
+            data.hppBelumLengkap
+              ? `HPP ${formatRupiah(data.totalHpp)} · ${data.hppBelumLengkap} order belum masuk (HPP kosong)`
+              : `dari nilai pesanan ${formatRupiah(data.totalNilaiPesanan)} − HPP ${formatRupiah(data.totalHpp)}`
+          }
           tone="brand"
           compact
           icon={<><path d="M4 19V5M4 19h16" /><path d="m7 15 4-4 3 2 4-6" /></>}

@@ -12,6 +12,7 @@ export function PublicHeader({
   email,
   avatarUrl,
   minimal = false,
+  catalogNav = false,
 }: {
   loggedIn?: boolean;
   role?: "ADMIN" | "BUYER" | "SELLER";
@@ -22,8 +23,14 @@ export function PublicHeader({
    * dipakai di halaman pendaftaran/aktivasi Seller agar navigasi tidak
    * membingungkan calon Seller (v2.3.7). */
   minimal?: boolean;
+  /** Halaman Katalog (v2.3.9 FR-42.11): sembunyikan link navigasi
+   * (Katalog/FAQ/Arsip/Kontak), sisakan hanya keranjang + Masuk/profil. */
+  catalogNav?: boolean;
 }) {
   const { count } = useCart();
+  // Seller tidak berbelanja sebagai Buyer — ikon keranjang disembunyikan di
+  // mana pun PublicHeader dipakai saat login sebagai Seller (v2.3.9 FR-42.11).
+  const showCart = role !== "SELLER";
   return (
     <header className="sticky top-0 z-40 border-b border-sand-200 bg-white/95 backdrop-blur-md">
       <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
@@ -34,34 +41,40 @@ export function PublicHeader({
           aria-label="Navigasi publik"
           className="flex items-center gap-1 sm:gap-2"
         >
-          <Link
-            href="/catalog"
-            className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
-          >
-            Katalog
-          </Link>
-          <Link
-            href="/#faq"
-            className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
-          >
-            FAQ
-          </Link>
-          <Link href="/arsip" className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 xl:inline-flex">Arsip</Link>
-          <Link
-            href="/contact"
-            className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
-          >
-            Kontak
-          </Link>
-          <Link
-            href="/cart"
-            className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-2 text-sand-700 hover:bg-brand-50 hover:text-brand-700"
-            aria-label={`Keranjang, ${count} item`}
-            title="Keranjang"
-          >
-            <CartIcon className="h-6 w-6 text-brand-700" />
-            {count > 0 && <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5 text-[11px] text-white">{count > 99 ? "99+" : count}</span>}
-          </Link>
+          {!catalogNav && (
+            <>
+              <Link
+                href="/catalog"
+                className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
+              >
+                Katalog
+              </Link>
+              <Link
+                href="/#faq"
+                className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
+              >
+                FAQ
+              </Link>
+              <Link href="/arsip" className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 xl:inline-flex">Arsip</Link>
+              <Link
+                href="/contact"
+                className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
+              >
+                Kontak
+              </Link>
+            </>
+          )}
+          {showCart && (
+            <Link
+              href="/cart"
+              className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-2 text-sand-700 hover:bg-brand-50 hover:text-brand-700"
+              aria-label={`Keranjang, ${count} item`}
+              title="Keranjang"
+            >
+              <CartIcon className="h-6 w-6 text-brand-700" />
+              {count > 0 && <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5 text-[11px] text-white">{count > 99 ? "99+" : count}</span>}
+            </Link>
+          )}
           {loggedIn && role ? (
             <ProfileMenu user={{ name, email, role, avatarUrl }} />
           ) : (

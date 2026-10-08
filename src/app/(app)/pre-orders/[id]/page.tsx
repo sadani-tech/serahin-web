@@ -15,7 +15,6 @@ import {
 import { formatRupiah, formatWaktu } from "@/lib/format";
 import {
   CAMPAIGN_STATUS_LABEL,
-  ORDER_STATUS_LABEL,
   PAYMENT_SCHEME_LABEL,
 } from "@/lib/domain";
 import {
@@ -40,9 +39,8 @@ import { FormPublikControl } from "./FormPublikControl";
 import { EvaluationForm } from "./EvaluationForm";
 import { OrderBulkTable, type OrderRow } from "@/components/OrderBulkTable";
 import { getSession } from "@/lib/session";
-import { removeInvalidOrder } from "../../management-actions";
+import { removeOrder } from "../../management-actions";
 import { ProductDeleteButton } from "./ProductDeleteButton";
-import { DeleteOrderButton } from "./DeleteOrderButton";
 import { TimelineDeleteButton } from "./TimelineDeleteButton";
 import { ProductModal } from "./ProductModal";
 import { createPreorderProduct, updatePreorderProduct } from "../actions";
@@ -228,7 +226,7 @@ export default async function CampaignDetailPage({
     tab === "produk"
       ? await api.get<ProductPage>(`/pre-orders/${id}/products`, {
           page: productPage,
-          limit: 20,
+          limit: 10,
           q: sp.q,
           status: sp.productStatus,
         })
@@ -252,7 +250,7 @@ export default async function CampaignDetailPage({
   const requestedPage = Math.max(1, Number(sp.page) || 1);
   const requestedLimit = [10, 25, 50, 100].includes(Number(sp.limit))
     ? Number(sp.limit)
-    : 25;
+    : 10;
   const ordersEnvelope =
     tab === "pesanan"
       ? await api.get<CampaignOrderEnvelope>(`/pre-orders/${id}/orders`, {
@@ -296,7 +294,7 @@ export default async function CampaignDetailPage({
     if (sp.payment) query.set("payment", sp.payment);
     if (sp.variant) query.set("variant", sp.variant);
     if (sp.shipping) query.set("shipping", sp.shipping);
-    if (requestedLimit !== 25) query.set("limit", String(requestedLimit));
+    if (requestedLimit !== 10) query.set("limit", String(requestedLimit));
     if (page > 1) query.set("page", String(page));
     return `/pre-orders/${id}?${query.toString()}`;
   };
@@ -955,44 +953,11 @@ export default async function CampaignDetailPage({
             />
           ) : (
             <>
-              <OrderBulkTable campaignId={id} rows={orderRows} />
-              {session?.role === "ADMIN" && (
-                <div className="border-t border-sand-200 bg-rose-50/40 p-4">
-                  <h3 className="font-extrabold text-sand-900">
-                    Pembersihan pesanan invalid
-                  </h3>
-                  <p className="mt-1 text-xs text-sand-500">
-                    Order tanpa payment/shipment dihapus permanen. Order dengan
-                    histori finansial hanya dibatalkan dan diarsipkan.
-                  </p>
-                  <div className="mt-3 space-y-3">
-                    {orders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="rounded-xl border border-sand-200 bg-white p-3"
-                      >
-                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-bold text-sand-900">
-                              {order.namaPembeli}
-                            </p>
-                            <p className="font-mono text-xs text-sand-500">
-                              {order.id}
-                            </p>
-                          </div>
-                          <span className="text-xs font-bold text-sand-500">
-                            {ORDER_STATUS_LABEL[order.status]}
-                          </span>
-                        </div>
-                        <DeleteOrderButton
-                          action={removeInvalidOrder.bind(null, id, order.id)}
-                          orderId={order.id}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <OrderBulkTable
+                campaignId={id}
+                rows={orderRows}
+                onDelete={session?.role === "ADMIN" ? removeOrder.bind(null, id) : undefined}
+              />
               {(ordersEnvelope?.meta.totalPages ?? 0) > 1 && (
                 <nav
                   className="flex items-center justify-center gap-3 border-t border-sand-100 px-5 py-4 text-sm font-bold"

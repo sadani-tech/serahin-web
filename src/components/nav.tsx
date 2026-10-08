@@ -13,6 +13,8 @@ type NavLink = {
   exact?: boolean;
   icon: React.ReactNode;
   roles?: Array<"ADMIN" | "SELLER">;
+  /** Pengelompokan tampilan sidebar desktop saja (v2.3.9 FR-42.4) — tidak memengaruhi rute/izin. */
+  group?: string;
 };
 
 // Navigasi utama (tampil sebagai teks di header desktop).
@@ -22,6 +24,7 @@ const links: NavLink[] = [
     label: "Dashboard",
     exact: true,
     roles: ["ADMIN"],
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
@@ -34,6 +37,7 @@ const links: NavLink[] = [
     label: "Dashboard Seller",
     exact: true,
     roles: ["SELLER"],
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
@@ -44,6 +48,7 @@ const links: NavLink[] = [
   {
     href: "/pre-orders",
     label: "Pre-Order",
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
@@ -55,6 +60,7 @@ const links: NavLink[] = [
     href: "/pesanan",
     label: "Pesanan",
     roles: ["SELLER"],
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M6 2h12l2 5H4l2-5Z" /><path d="M5 7v15h14V7" /><path d="M9 11h6M9 15h6" />
@@ -65,6 +71,7 @@ const links: NavLink[] = [
     href: "/penjual",
     label: "Penjual",
     roles: ["ADMIN"],
+    group: "Pembeli & Mitra",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6M9 18h6" />
@@ -75,6 +82,7 @@ const links: NavLink[] = [
     href: "/pembeli",
     label: "Pembeli",
     roles: ["ADMIN", "SELLER"],
+    group: "Pembeli & Mitra",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -86,6 +94,7 @@ const links: NavLink[] = [
     href: "/verifikasi",
     label: "Verifikasi",
     roles: ["ADMIN", "SELLER"],
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
@@ -96,6 +105,7 @@ const links: NavLink[] = [
     href: "/rekening",
     label: "Rekening",
     roles: ["SELLER"],
+    group: "Keuangan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18M12 3 3 7v3h18V7l-9-4Z" />
@@ -106,6 +116,7 @@ const links: NavLink[] = [
     href: "/broadcast",
     label: "Broadcast",
     roles: ["ADMIN", "SELLER"],
+    group: "Promosi & Konten",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M4 4h16v16H4z" /><path d="m4 6 8 6 8-6" /><path d="M8 16h8" />
@@ -115,6 +126,7 @@ const links: NavLink[] = [
   {
     href: "/vendor",
     label: "Vendor",
+    group: "Pembeli & Mitra",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
@@ -125,6 +137,7 @@ const links: NavLink[] = [
     href: "/konten",
     label: "Konten",
     roles: ["ADMIN"],
+    group: "Promosi & Konten",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
@@ -136,6 +149,7 @@ const links: NavLink[] = [
     href: "/konten/faq",
     label: "FAQ",
     roles: ["SELLER"],
+    group: "Promosi & Konten",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <circle cx="12" cy="12" r="10" /><path d="M9.5 9a2.5 2.5 0 015 0c0 2-2.5 2-2.5 4" /><path d="M12 17h.01" />
@@ -146,6 +160,7 @@ const links: NavLink[] = [
     href: "/data-privacy",
     label: "Privasi Data",
     roles: ["ADMIN"],
+    group: "Pengaturan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -159,10 +174,25 @@ function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
   return items.filter((link) => !link.roles || (role !== undefined && link.roles.includes(role as "ADMIN" | "SELLER")));
 }
 
+// Urutan section sidebar desktop (v2.3.9 FR-42.4) — murni tampilan, tidak
+// memengaruhi rute/izin. Group yang tidak ada di daftar ini (seharusnya tidak
+// terjadi, semua NavLink sudah diberi `group`) jatuh ke "Lainnya" di akhir.
+const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Data", "Pengaturan"];
+
+function groupSidebarLinks(items: NavLink[]) {
+  const byGroup = new Map<string, NavLink[]>();
+  for (const link of items) {
+    const group = link.group ?? "Lainnya";
+    if (!byGroup.has(group)) byGroup.set(group, []);
+    byGroup.get(group)!.push(link);
+  }
+  const order = [...SIDEBAR_GROUP_ORDER, ...[...byGroup.keys()].filter((g) => !SIDEBAR_GROUP_ORDER.includes(g))];
+  return order.filter((group) => byGroup.has(group)).map((group) => ({ group, items: byGroup.get(group)! }));
+}
+
 export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
   const isActive = useActiveLink();
-  const primary = visibleLinks(links, role);
-  const utilities = visibleLinks(utilityLinks, role);
+  const sections = groupSidebarLinks([...visibleLinks(links, role), ...visibleLinks(utilityLinks, role)]);
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sand-200 bg-white lg:flex">
       <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
@@ -173,25 +203,11 @@ export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
         </p>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi dashboard">
-        <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sand-400">Workspace</p>
-        <ul className="space-y-1">
-          {primary.map((link) => {
-            const active = isActive(link.href, link.exact);
-            return (
-              <li key={link.href}>
-                <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
-                  <span className={active ? "text-sun-300" : "text-sand-400"}>{link.icon}</span>
-                  {link.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        {utilities.length > 0 && (
-          <>
-            <p className="mb-2 mt-6 px-3 text-[10px] font-bold uppercase tracking-widest text-sand-400">Data</p>
+        {sections.map(({ group, items }) => (
+          <div key={group} className="mb-6 last:mb-0">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sand-400">{group}</p>
             <ul className="space-y-1">
-              {utilities.map((link) => {
+              {items.map((link) => {
                 const active = isActive(link.href, link.exact);
                 return (
                   <li key={link.href}>
@@ -203,8 +219,8 @@ export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
                 );
               })}
             </ul>
-          </>
-        )}
+          </div>
+        ))}
       </nav>
       <div className="border-t border-sand-100 px-5 py-4 text-xs leading-5 text-sand-400">
         Serahin · Sistem Manajemen Pre-Order
@@ -219,6 +235,7 @@ const utilityLinks: NavLink[] = [
     href: "/import",
     label: "Import",
     roles: ["ADMIN", "SELLER"],
+    group: "Data",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -229,6 +246,7 @@ const utilityLinks: NavLink[] = [
     href: "/export",
     label: "Export",
     roles: ["ADMIN", "SELLER"],
+    group: "Data",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
@@ -239,6 +257,7 @@ const utilityLinks: NavLink[] = [
     href: "/keuangan",
     label: "Keuangan",
     roles: ["ADMIN", "SELLER"],
+    group: "Keuangan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
@@ -387,34 +406,36 @@ export function MobileDrawer({
           </button>
         </div>
 
-        {/* Nav links */}
+        {/* Nav links — dikelompokkan per section, sama seperti sidebar desktop (v2.3.9 FR-42.4) */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-sand-400">
-            Menu
-          </p>
-          <ul className="space-y-0.5">
-            {roleLinks.map((link) => {
-              const active = isActive(link.href, link.exact);
-              return (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={onClose}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-brand-600 text-white shadow-brand"
-                        : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
-                    }`}
-                  >
-                    <span className={active ? "text-sun-300" : "text-sand-400"}>
-                      {link.icon}
-                    </span>
-                    {link.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          {groupSidebarLinks(roleLinks).map(({ group, items }) => (
+            <div key={group} className="mb-5 last:mb-0">
+              <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-sand-400">{group}</p>
+              <ul className="space-y-0.5">
+                {items.map((link) => {
+                  const active = isActive(link.href, link.exact);
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        onClick={onClose}
+                        className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                          active
+                            ? "bg-brand-600 text-white shadow-brand"
+                            : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
+                        }`}
+                      >
+                        <span className={active ? "text-sun-300" : "text-sand-400"}>
+                          {link.icon}
+                        </span>
+                        {link.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         {/* Ringkasan actor; logout tersedia pada dropdown avatar di header. */}

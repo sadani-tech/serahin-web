@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { formatRupiah, formatTanggal } from "@/lib/format";
+import { CancelRequestForm } from "./CancelRequestForm";
+
+// v2.3.9 FR-42.2: status pembatalan — tidak ada permintaan aktif, menunggu
+// keputusan Seller, disetujui (menunggu/selesai refund), atau ditolak.
+const NOT_CANCELLABLE_STATUS = ["CANCELLED", "REJECTED", "COMPLETED", "SHIPPED"];
 
 type BuyerOrder = {
   id: string; status: string; publicToken: string; createdAt: string;
+  cancellationRequestStatus: "REQUESTED" | "APPROVED" | "REJECTED" | null;
+  cancellationRequestedAt: string | null;
+  cancellationReason: string | null;
+  cancellationDecisionReason: string | null;
+  refundStatus: "NOT_REQUIRED" | "PENDING" | "COMPLETED" | null;
+  refundNote: string | null;
+  refundCompletedAt: string | null;
   salesEvent: { title: string; timelineEntries: Array<{ id: string; title: string; notes: string | null; milestoneCode: string | null; createdAt: string }> };
   items: Array<{
     id: string; variantNameSnapshot: string; skuSnapshot: string | null; selectedColor: string | null; quantity: number; unitPrice: string;
@@ -66,6 +78,32 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
         {order.rejectionReason && <p className="mt-2 text-sm">Alasan: {order.rejectionReason}</p>}
         {!["WAIT_VERIFICATION", "NONE"].includes(order.nextAction) && <Link href={`/portal/${order.publicToken}`} className="mt-3 inline-flex rounded-xl bg-brand-700 px-4 py-2 text-sm font-extrabold text-white">Lanjutkan</Link>}
       </section>
+
+      <section className="mt-5 rounded-2xl border border-sand-200 p-4">
+        <h2 className="font-extrabold text-sand-900">Pembatalan pesanan</h2>
+        {order.cancellationRequestStatus === "REQUESTED" && (
+          <p className="mt-2 text-sm text-amber-700">
+            Pengajuan pembatalan sedang menunggu keputusan Seller
+            {order.cancellationRequestedAt && ` (diajukan ${formatTanggal(order.cancellationRequestedAt)})`}.
+          </p>
+        )}
+        {order.cancellationRequestStatus === "APPROVED" && (
+          <p className="mt-2 text-sm text-emerald-700">
+            Pembatalan disetujui.{" "}
+            {order.refundStatus === "PENDING" && "Pengembalian dana sedang diproses manual oleh Seller."}
+            {order.refundStatus === "COMPLETED" && `Dana sudah dikembalikan${order.refundCompletedAt ? ` pada ${formatTanggal(order.refundCompletedAt)}` : ""}${order.refundNote ? ` — ${order.refundNote}` : ""}.`}
+          </p>
+        )}
+        {order.cancellationRequestStatus === "REJECTED" && (
+          <div className="mt-2 text-sm text-rose-700">
+            <p>Pengajuan pembatalan ditolak Seller{order.cancellationDecisionReason ? `: ${order.cancellationDecisionReason}` : "."}</p>
+          </div>
+        )}
+        {(!order.cancellationRequestStatus || order.cancellationRequestStatus === "REJECTED") && !NOT_CANCELLABLE_STATUS.includes(order.status) && (
+          <div className="mt-3"><CancelRequestForm orderId={order.id} /></div>
+        )}
+      </section>
+
       <h2 className="mt-6 font-extrabold">Item</h2>
       <div className="mt-2 divide-y">{order.items.map((item) => {
         const image = item.salesEventItem.displayImages[0] ?? item.salesEventItem.productVariant.images[0] ?? null;
