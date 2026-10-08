@@ -17,7 +17,7 @@ export default async function PembeliPage({ searchParams }: { searchParams: Prom
     api.list<{ id: string; namaProduk: string }>("/pre-orders"),
     api.get<{ data: PembeliRow[]; meta: PembeliMeta }>("/pembeli", sp),
   ]);
-  return <div className="space-y-6"><header><h1 className="text-2xl font-extrabold text-sand-900">Pembeli</h1><p className="mt-1 text-sm text-sand-500">Kontak pembeli dari Batch PO milik Anda.</p></header><PembeliTable rows={res.data} meta={res.meta} campaigns={campaigns} filters={{ search: sp.search ?? "", campaignId: sp.campaignId ?? "", status: sp.status ?? "", sort: sp.sort ?? "createdAt", order: sp.order === "asc" ? "asc" : "desc" }}/></div>;
+  return <div className="space-y-6"><header><h1 className="text-2xl font-extrabold text-sand-900">Pembeli</h1><p className="mt-1 text-sm text-sand-500">Kontak pembeli dari Batch PO milik Anda.</p></header><PembeliTable rows={res.data} meta={res.meta} campaigns={campaigns} filters={{ search: sp.search ?? "", campaignId: sp.campaignId ?? "", sort: sp.sort ?? "createdAt", order: sp.order === "asc" ? "asc" : "desc" }}/></div>;
 }
 
 async function AdminBuyerList({ sp }: { sp: Params }) {
