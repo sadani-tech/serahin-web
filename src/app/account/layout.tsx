@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { SerahinLogo } from "@/components/brand";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
+import { AccountCartLink } from "./AccountCartLink";
 
 export default async function AccountLayout({ children }: { children: ReactNode }) {
   const user = await getSession();
@@ -16,8 +17,9 @@ export default async function AccountLayout({ children }: { children: ReactNode 
           <SerahinLogo href="/" size="sm" />
           {isBuyer && (
             <div className="ml-auto flex items-center gap-2">
-              <Link href="/account" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Pesanan Saya</Link>
+              <Link href="/account" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Pesanan</Link>
               <Link href="/account/profile" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Profil</Link>
+              <AccountCartLink />
               <ProfileMenu user={{ name: user.name, email: user.email, role: "BUYER", avatarUrl }} />
             </div>
           )}

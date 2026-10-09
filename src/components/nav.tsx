@@ -34,7 +34,7 @@ const links: NavLink[] = [
   },
   {
     href: "/seller/dashboard",
-    label: "Dashboard Seller",
+    label: "Dashboard",
     exact: true,
     roles: ["SELLER"],
     group: "Operasional",
@@ -170,7 +170,7 @@ const links: NavLink[] = [
   },
   {
     href: "/seller/profile",
-    label: "Pengaturan Toko",
+    label: "Pengaturan",
     roles: ["SELLER"],
     group: "Pengaturan",
     icon: (
@@ -187,6 +187,7 @@ const links: NavLink[] = [
     label: "Panduan Pengguna",
     roles: ["SELLER"],
     group: "Bantuan",
+    exact: true,
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
@@ -226,7 +227,7 @@ function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
 // Urutan section sidebar desktop (v2.3.9 FR-42.4) — murni tampilan, tidak
 // memengaruhi rute/izin. Group yang tidak ada di daftar ini (seharusnya tidak
 // terjadi, semua NavLink sudah diberi `group`) jatuh ke "Lainnya" di akhir.
-const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Data", "Pengaturan", "Bantuan"];
+const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Bantuan", "Pengaturan"];
 
 function groupSidebarLinks(items: NavLink[]) {
   const byGroup = new Map<string, NavLink[]>();
@@ -284,7 +285,7 @@ const utilityLinks: NavLink[] = [
     href: "/import",
     label: "Import",
     roles: ["ADMIN", "SELLER"],
-    group: "Data",
+    group: "Pengaturan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -295,7 +296,7 @@ const utilityLinks: NavLink[] = [
     href: "/export",
     label: "Export",
     roles: ["ADMIN", "SELLER"],
-    group: "Data",
+    group: "Pengaturan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />

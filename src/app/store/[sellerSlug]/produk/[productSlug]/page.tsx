@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title,
     description,
-    alternates: { canonical: `/s/${product.seller.slug}/produk/${product.canonicalSlug}` },
+    alternates: { canonical: `/store/${product.seller.slug}/produk/${product.canonicalSlug}` },
     openGraph: { title, description, images },
     twitter: { card: "summary_large_image", title, description, images },
   };
@@ -48,8 +48,8 @@ export default async function ProductPage({
   ]);
   const avatarUrl = await getBuyerAvatarUrl(session);
   const requested = (await params).productSlug;
-  if (product.redirected && product.canonicalSlug !== requested) permanentRedirect(`/s/${product.seller.slug}/produk/${product.canonicalSlug}`);
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/s/${product.seller.slug}/produk/${product.canonicalSlug}`;
+  if (product.redirected && product.canonicalSlug !== requested) permanentRedirect(`/store/${product.seller.slug}/produk/${product.canonicalSlug}`);
+  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/store/${product.seller.slug}/produk/${product.canonicalSlug}`;
   const productJsonLd = {
     "@context": "https://schema.org", "@type": "Product", name: product.name,
     url: canonicalUrl,

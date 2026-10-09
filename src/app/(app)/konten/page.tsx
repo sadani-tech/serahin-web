@@ -16,11 +16,13 @@ type PageRow = {
 };
 
 export default async function KontenPage() {
-  const [pages, faqs] = await Promise.all([
+  const [pages, faqs, testimonials] = await Promise.all([
     api.list<PageRow>("/cms/pages"),
     api.list<unknown>("/cms/faq"),
+    api.list<{ status: "DRAFT" | "PUBLISHED" }>("/cms/testimonials"),
   ]);
   const faqCount = faqs.length;
+  const testimonialDraftCount = testimonials.filter((t) => t.status === "DRAFT").length;
 
   return (
     <div className="space-y-8">
@@ -35,6 +37,9 @@ export default async function KontenPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <LinkButton href="/konten/testimoni" variant="secondary">
+            Testimoni{testimonialDraftCount > 0 ? ` (${testimonialDraftCount} baru)` : ""}
+          </LinkButton>
           <LinkButton href="/konten/faq" variant="secondary">
             Kelola FAQ ({faqCount})
           </LinkButton>

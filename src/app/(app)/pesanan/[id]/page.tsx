@@ -125,6 +125,7 @@ export default async function OrderDetailPage({
     }))],
   });
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
+  const adaPembayaranTerverifikasi = order.payments.some((p) => p.statusVerifikasi === "TERVERIFIKASI");
 
   const dibatalkan = order.status === "DIBATALKAN";
   const deadline = order.campaign.deadlinePelunasan
@@ -168,11 +169,18 @@ export default async function OrderDetailPage({
               {totalQty} unit
             </p>
           </div>
-          {!dibatalkan && (
-            <LinkButton href={`/pesanan/${id}/edit`} variant="secondary">
-              Edit pesanan
-            </LinkButton>
-          )}
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {adaPembayaranTerverifikasi && (
+              <LinkButton href={`/api/pesanan/${id}/invoice`} variant="secondary" target="_blank">
+                Unduh Invoice
+              </LinkButton>
+            )}
+            {!dibatalkan && (
+              <LinkButton href={`/pesanan/${id}/edit`} variant="secondary">
+                Edit pesanan
+              </LinkButton>
+            )}
+          </div>
         </div>
       </div>
 

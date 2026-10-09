@@ -91,7 +91,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-white/10" />
         <div className="relative flex flex-wrap items-center justify-between gap-5">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-100">Pesanan Saya</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-100">Pesanan</p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Halo, {firstName}!</h1>
             <p className="mt-2 text-sm text-brand-50">Cek yang perlu dibayar, sedang diproses, hingga tiba di tanganmu.</p>
           </div>

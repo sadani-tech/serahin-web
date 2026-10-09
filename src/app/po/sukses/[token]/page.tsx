@@ -100,9 +100,9 @@ export default async function PublicOrderSuccessPage({
             Pesanan sudah tersimpan di akunmu
           </p>
           <p className="mb-3 text-xs text-sand-500">
-            Buka Pesanan Saya untuk melihat pembayaran dan status terbaru tanpa mencari link lagi.
+            Buka Pesanan untuk melihat pembayaran dan status terbaru tanpa mencari link lagi.
           </p>
-          <Link href="/account" className="mb-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white">Lihat Pesanan Saya</Link>
+          <Link href="/account" className="mb-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white">Lihat Pesanan</Link>
           <p className="mb-2 text-xs font-bold text-sand-500">Tautan cadangan pesanan</p>
           <PortalLinkBox token={order.tokenAkses} />
         </div>

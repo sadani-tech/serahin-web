@@ -21,16 +21,15 @@ const roleLabel: Record<UserRole, string> = {
 
 const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   ADMIN: [
-    { href: "/dashboard", label: "Dashboard Admin" },
+    { href: "/dashboard", label: "Dashboard" },
     { href: "/penjual", label: "Penjual" },
   ],
   SELLER: [
-    { href: "/seller/dashboard", label: "Dashboard Seller" },
-    { href: "/rekening", label: "Rekening Seller" },
-    { href: "/seller/profile", label: "Pengaturan Toko" },
+    { href: "/seller/dashboard", label: "Dashboard" },
+    { href: "/seller/profile", label: "Pengaturan" },
   ],
   BUYER: [
-    { href: "/account", label: "Pesanan Saya" },
+    { href: "/account", label: "Pesanan" },
     { href: "/account/profile", label: "Profile" },
   ],
 };

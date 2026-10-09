@@ -2,6 +2,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { CancelRequestForm } from "./CancelRequestForm";
+import { ReviewForm } from "./ReviewForm";
 
 // v2.3.9 FR-42.2: status pembatalan — tidak ada permintaan aktif, menunggu
 // keputusan Seller, disetujui (menunggu/selesai refund), atau ditolak.
@@ -31,6 +32,7 @@ type BuyerOrder = {
   billing: { total: number; downPaymentRequired: number; downPaymentVerified: number; settlement: number; paid: number; shopeeCheckoutPerUnit?: number; shopeeCheckoutTotal?: number; pending: number; rejected: number; remaining: number };
   nextAction: string;
   rejectionReason: string | null;
+  review: { id: string; rating: number | null; quote: string; status: "DRAFT" | "PUBLISHED"; nameAnonymized: boolean; createdAt: string } | null;
 };
 
 const MILESTONE_LABEL: Record<string, string> = {
@@ -68,10 +70,21 @@ const NEXT_ACTION_LABEL: Record<string, string> = {
 export default async function BuyerOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const order = await api.get<BuyerOrder>(`/buyer/orders/${id}`);
+  const adaPembayaranTerverifikasi = order.payments.some((p) => p.verificationStatus === "VERIFIED");
   return <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-    <Link href="/account" className="text-sm font-bold text-brand-700">← Pesanan Saya</Link>
+    <Link href="/account" className="text-sm font-bold text-brand-700">← Pesanan</Link>
     <div className="mt-4 rounded-2xl border border-sand-200 bg-white p-6">
-      <div className="flex flex-wrap justify-between gap-3"><div><h1 className="text-2xl font-extrabold text-sand-900">{order.salesEvent.title}</h1><p className="text-sm text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p></div><span className="h-fit rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-800">{ORDER_STATUS_LABEL[order.status] ?? order.status}</span></div>
+      <div className="flex flex-wrap justify-between gap-3">
+        <div><h1 className="text-2xl font-extrabold text-sand-900">{order.salesEvent.title}</h1><p className="text-sm text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p></div>
+        <div className="flex h-fit items-center gap-2">
+          {adaPembayaranTerverifikasi && (
+            <a href={`/api/buyer/orders/${id}/invoice`} target="_blank" rel="noreferrer" className="rounded-full border border-brand-300 px-3 py-1 text-xs font-bold text-brand-700 hover:bg-brand-50">
+              Unduh Invoice
+            </a>
+          )}
+          <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-800">{ORDER_STATUS_LABEL[order.status] ?? order.status}</span>
+        </div>
+      </div>
       <section className={`mt-5 rounded-2xl p-4 ${order.nextAction === "REUPLOAD_PAYMENT" ? "bg-rose-50 text-rose-900" : "bg-brand-50 text-brand-900"}`}>
         <p className="text-xs font-extrabold uppercase tracking-wider">Tindakan berikutnya</p>
         <p className="mt-1 text-lg font-extrabold">{NEXT_ACTION_LABEL[order.nextAction] ?? "Lihat status pesanan"}</p>
@@ -103,6 +116,23 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
           <div className="mt-3"><CancelRequestForm orderId={order.id} /></div>
         )}
       </section>
+
+      {order.status === "COMPLETED" && (
+        <section className="mt-5 rounded-2xl border border-sand-200 p-4">
+          <h2 className="font-extrabold text-sand-900">Ulasan kamu</h2>
+          {order.review ? (
+            <div className="mt-2 text-sm text-sand-700">
+              <p className="text-amber-500">{"★".repeat(order.review.rating ?? 0)}{"☆".repeat(5 - (order.review.rating ?? 0))}</p>
+              <p className="mt-1 whitespace-pre-wrap">{order.review.quote}</p>
+              <p className="mt-2 text-xs text-sand-500">
+                {order.review.status === "PUBLISHED" ? "Sudah tampil publik." : "Menunggu ditinjau Seller sebelum tampil publik."}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3"><ReviewForm orderId={order.id} /></div>
+          )}
+        </section>
+      )}
 
       <h2 className="mt-6 font-extrabold">Item</h2>
       <div className="mt-2 divide-y">{order.items.map((item) => {
