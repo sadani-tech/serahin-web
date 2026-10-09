@@ -102,7 +102,16 @@ export function DatePicker({
       if (target instanceof Element && target.closest("[data-dropdown-list]")) return;
       setOpen(false);
     }
-    function onViewportChange() {
+    function onViewportChange(e: Event) {
+      // Sama seperti pengecualian di onClickOutside di atas: listener scroll
+      // capture-phase ini menerima scroll dari DALAM panel kalender maupun
+      // dari dropdown jam/menit yang di-portal terpisah ke document.body
+      // ([data-dropdown-list]) — tanpa pengecualian ini, scroll di dalam
+      // dropdown jam langsung menutup seluruh panel kalender sebelum sempat
+      // memilih jam (kasus sama dengan fix Dropdown.tsx, satu level di atas).
+      const target = e.target;
+      if (target instanceof Node && panelRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest("[data-dropdown-list]")) return;
       setOpen(false);
     }
     document.addEventListener("mousedown", onClickOutside);
