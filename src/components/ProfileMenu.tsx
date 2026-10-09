@@ -27,7 +27,7 @@ const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   SELLER: [
     { href: "/seller/dashboard", label: "Dashboard Seller" },
     { href: "/rekening", label: "Rekening Seller" },
-    { href: "/seller/profile", label: "Profile Bisnis" },
+    { href: "/seller/profile", label: "Pengaturan Toko" },
   ],
   BUYER: [
     { href: "/account", label: "Pesanan Saya" },

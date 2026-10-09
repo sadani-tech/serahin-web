@@ -168,6 +168,55 @@ const links: NavLink[] = [
       </svg>
     ),
   },
+  {
+    href: "/seller/profile",
+    label: "Pengaturan Toko",
+    roles: ["SELLER"],
+    group: "Pengaturan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 5a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09A1.65 1.65 0 0015 5a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09A1.65 1.65 0 0019.4 15z" />
+      </svg>
+    ),
+  },
+  // Bantuan (v2.3.9 FR-42.19) — acuan konsep pengelompokan dari
+  // libraries/serahin-docs/references/sidebar-feature.jpg (bukan skema warna).
+  {
+    href: "/panduan",
+    label: "Panduan Pengguna",
+    roles: ["SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/panduan/aplikasi",
+    label: "Panduan Aplikasi",
+    roles: ["ADMIN", "SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="5" y="2" width="14" height="20" rx="2" />
+        <line x1="12" y1="18" x2="12.01" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    href: "/kritik-saran",
+    label: "Kritik & Saran",
+    roles: ["ADMIN", "SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+      </svg>
+    ),
+  },
 ];
 
 function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
@@ -177,7 +226,7 @@ function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
 // Urutan section sidebar desktop (v2.3.9 FR-42.4) — murni tampilan, tidak
 // memengaruhi rute/izin. Group yang tidak ada di daftar ini (seharusnya tidak
 // terjadi, semua NavLink sudah diberi `group`) jatuh ke "Lainnya" di akhir.
-const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Data", "Pengaturan"];
+const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Data", "Pengaturan", "Bantuan"];
 
 function groupSidebarLinks(items: NavLink[]) {
   const byGroup = new Map<string, NavLink[]>();
