@@ -29,6 +29,13 @@ export const metadata: Metadata = {
   description,
   applicationName: "Serahin",
   authors: [{ name: publicSite.legalName }],
+  // Meta tag iOS untuk "Add to Home Screen" (v2.3.9 §/panduan/aplikasi) —
+  // Safari tidak baca manifest.webmanifest, butuh meta tag Apple sendiri.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Serahin",
+  },
   // Default preview link (di-override per halaman bila perlu). Gambar OG/twitter
   // diambil otomatis dari `src/app/opengraph-image.tsx` & `twitter-image.tsx`.
   openGraph: {
