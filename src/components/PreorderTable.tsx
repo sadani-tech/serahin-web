@@ -18,7 +18,7 @@ import { useSort } from "@/hooks/useSort";
 import { SortableTh } from "@/components/SortableTh";
 
 export type CampaignStatus =
-  "OPEN" | "CLOSED" | "PRODUKSI" | "SIAP_KIRIM" | "SELESAI";
+  "DRAFT" | "OPEN" | "CLOSED" | "PRODUKSI" | "SIAP_KIRIM" | "SELESAI";
 
 export type CampaignRow = {
   id: string;

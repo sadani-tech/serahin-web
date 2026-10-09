@@ -4,6 +4,7 @@
 export type UserRole = "ADMIN" | "BUYER" | "SELLER";
 
 export type CampaignStatus =
+  | "DRAFT"
   | "OPEN"
   | "CLOSED"
   | "PRODUKSI"
