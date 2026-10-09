@@ -330,25 +330,27 @@ export default async function CampaignDetailPage({
               {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
             </p>
             {campaign.needsProducts && (
-              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                {campaign.productWarning} Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.
+              <div className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">{campaign.productWarning}</p>
+                <p className="mt-1 text-sm text-amber-800">Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.</p>
                 <Link
                   href={`/pre-orders/${id}?tab=produk`}
-                  className="ml-2 underline"
+                  className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-amber-600 px-3 text-sm font-bold text-white hover:bg-amber-700"
                 >
                   Tambah Produk
                 </Link>
-              </p>
+              </div>
             )}
             {campaign.needsBankAccount && (
-              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                Anda belum mengisi rekening transfer, atau belum ada rekening
-                utama. Pembeli transfer manual tidak akan melihat tujuan
-                pembayaran yang jelas.
-                <Link href="/rekening" className="ml-2 underline">
+              <div className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">
+                  Anda belum mengisi rekening transfer, atau belum ada rekening utama.
+                </p>
+                <p className="mt-1 text-sm text-amber-800">Pembeli transfer manual tidak akan melihat tujuan pembayaran yang jelas.</p>
+                <Link href="/rekening" className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-amber-600 px-3 text-sm font-bold text-white hover:bg-amber-700">
                   Atur rekening
                 </Link>
-              </p>
+              </div>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -633,11 +635,6 @@ export default async function CampaignDetailPage({
               />
             }
           />
-          {campaign.needsProducts && (
-            <p className="mx-5 mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              {campaign.productWarning}
-            </p>
-          )}
           <form className="flex flex-wrap items-end gap-3 border-b border-sand-100 px-5 py-4">
             <input type="hidden" name="tab" value="produk" />
             <label className="flex-1 text-xs font-medium text-sand-500">
@@ -749,22 +746,14 @@ export default async function CampaignDetailPage({
                       </td>
                       {campaign.paymentScheme === "DP_PELUNASAN" && (
                         <td className="px-5 py-3">
-                          {product.dpEfektif.sumber === "PRODUK" ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
-                              Kustom:{" "}
-                              {product.dpEfektif.tipe === "NOMINAL"
-                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
-                                : `${product.dpEfektif.percent ?? 50}%`}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-2.5 py-1 text-xs font-bold text-sand-600">
-                              Ikuti Batch PO (
-                              {product.dpEfektif.tipe === "NOMINAL"
-                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
-                                : `${product.dpEfektif.percent ?? 50}%`}
-                              )
-                            </span>
-                          )}
+                          <span
+                            title={product.dpEfektif.sumber === "PRODUK" ? "DP kustom Produk ini" : "Ikuti DP Batch PO"}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${product.dpEfektif.sumber === "PRODUK" ? "bg-brand-50 text-brand-700" : "bg-sand-100 text-sand-600"}`}
+                          >
+                            {product.dpEfektif.tipe === "NOMINAL"
+                              ? formatRupiah(product.dpEfektif.nominal ?? "0")
+                              : `${product.dpEfektif.percent ?? 50}%`}
+                          </span>
                         </td>
                       )}
                       <td className="px-5 py-3 text-sand-700">
