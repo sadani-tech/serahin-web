@@ -49,12 +49,19 @@ export const dynamic = "force-dynamic";
 
 type Tab = "info" | "produk" | "pesanan" | "timeline";
 
+// Label HARUS sama persis dengan CAMPAIGN_STATUS_LABEL (lib/domain.ts) untuk
+// milestone yang punya padanan status Batch PO (v2.3.9 FR-42.12) — Seller
+// ganti status "Siap Kirim" lewat StatusControl, lalu entri timeline yang
+// otomatis dibuat (STATUS_MILESTONE di backend: SIAP_KIRIM -> PACKING) harus
+// menampilkan label yang sama, bukan "Packing", supaya tidak terlihat seperti
+// dua hal berbeda. SHIPMENT/DELIVERED tidak punya padanan CampaignStatus
+// (hanya bisa ditambah manual lewat TimelineForm), jadi tetap label sendiri.
 const MILESTONE_LABEL: Record<string, string> = {
   OPEN: "Open",
   CLOSED: "Closed",
   PRODUCTION: "Produksi",
   SHIPMENT: "Shipment",
-  PACKING: "Packing",
+  PACKING: "Siap Kirim",
   DELIVERED: "Deliver",
   COMPLETED: "Selesai",
 };

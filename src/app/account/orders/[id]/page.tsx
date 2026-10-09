@@ -35,7 +35,7 @@ type BuyerOrder = {
 
 const MILESTONE_LABEL: Record<string, string> = {
   OPEN: "Open", CLOSED: "Closed", PRODUCTION: "Produksi", SHIPMENT: "Shipment",
-  PACKING: "Packing", DELIVERED: "Deliver", COMPLETED: "Selesai",
+  PACKING: "Siap Kirim", DELIVERED: "Deliver", COMPLETED: "Selesai",
 };
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
