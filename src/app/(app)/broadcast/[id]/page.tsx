@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { formatTanggal } from "@/lib/format";
-import { Status } from "../page";
+import { Status } from "../BroadcastStatus";
 
 export const dynamic = "force-dynamic";
 
