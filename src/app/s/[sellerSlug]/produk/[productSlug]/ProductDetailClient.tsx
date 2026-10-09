@@ -12,9 +12,12 @@ import type { PublicProduct } from "@/lib/public-product";
 export function ProductDetailClient({
   product,
   initialVariantId,
+  role,
 }: {
   product: PublicProduct;
   initialVariantId?: string;
+  /** Seller tidak berbelanja sebagai Buyer (v2.3.9 FR-42.11). */
+  role?: string;
 }) {
   const router = useRouter();
   const available = product.variants.filter((variant) => variant.offering);
@@ -32,10 +35,11 @@ export function ProductDetailClient({
   const offerings = variant?.offerings?.length ? variant.offerings : variant?.offering ? [variant.offering] : [];
   const offering = offerings.find((item) => item.salesEventId === salesEventId) ?? offerings[0];
   const image = variant?.images[imageIndex] ?? variant?.images[0] ?? null;
-  const canOrder = Boolean(offering?.orderable && offering.quotaRemaining > 0 && (!variant.colors.length || color));
+  const isSeller = role === "SELLER";
+  const canOrder = !isSeller && Boolean(offering?.orderable && offering.quotaRemaining > 0 && (!variant.colors.length || color));
 
   async function add(goToCheckout = false) {
-    if (!variant || !offering || !canOrder) return;
+    if (isSeller || !variant || !offering || !canOrder) return;
     const ok = await addItem({
       salesEventId: offering.salesEventId,
       eventTitle: offering.eventTitle,
@@ -110,12 +114,20 @@ export function ProductDetailClient({
         <p className="mt-1 text-sm font-bold text-sand-600">{offering.eventTitle} · tutup {formatTanggal(offering.endsAt)} · sisa {offering.quotaRemaining}</p>
       </div> : <p className="mt-6 rounded-2xl bg-sand-100 p-4 text-sm font-bold text-sand-600">Produk ini ditampilkan sebagai arsip dan belum tersedia pada Batch PO aktif.</p>}
 
-      <label className="mt-5 block w-24 text-sm font-bold text-sand-700">Jumlah<input type="number" min={1} max={offering?.quotaRemaining ?? 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))} className="mt-1 min-h-12 w-full rounded-xl border border-sand-300 px-3" /></label>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        <button type="button" disabled={!canOrder} onClick={() => void add(false)} className="min-h-12 rounded-xl border border-brand-400 bg-white px-4 text-sm font-extrabold text-brand-700 hover:bg-brand-50 disabled:border-sand-200 disabled:bg-sand-100 disabled:text-sand-400">{offering?.orderable ? "Tambah ke Keranjang" : "Batch PO Ditutup"}</button>
-        <button type="button" disabled={!canOrder} onClick={() => void add(true)} className="min-h-12 rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white hover:bg-brand-700 disabled:bg-sand-300">Beli Sekarang</button>
-      </div>
-      <p className="mt-5 text-xs leading-5 text-sand-500">Keranjang dan pembayaran tetap mengikuti satu Batch PO agar skema DP/pelunasan dan kuota tetap jelas.</p>
+      {isSeller ? (
+        <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">
+          Akun Seller tidak bisa memesan sebagai Buyer.
+        </p>
+      ) : (
+        <>
+          <label className="mt-5 block w-24 text-sm font-bold text-sand-700">Jumlah<input type="number" min={1} max={offering?.quotaRemaining ?? 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Number(event.target.value) || 1))} className="mt-1 min-h-12 w-full rounded-xl border border-sand-300 px-3" /></label>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <button type="button" disabled={!canOrder} onClick={() => void add(false)} className="min-h-12 rounded-xl border border-brand-400 bg-white px-4 text-sm font-extrabold text-brand-700 hover:bg-brand-50 disabled:border-sand-200 disabled:bg-sand-100 disabled:text-sand-400">{offering?.orderable ? "Tambah ke Keranjang" : "Batch PO Ditutup"}</button>
+            <button type="button" disabled={!canOrder} onClick={() => void add(true)} className="min-h-12 rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white hover:bg-brand-700 disabled:bg-sand-300">Beli Sekarang</button>
+          </div>
+          <p className="mt-5 text-xs leading-5 text-sand-500">Keranjang dan pembayaran tetap mengikuti satu Batch PO agar skema DP/pelunasan dan kuota tetap jelas.</p>
+        </>
+      )}
       {preview && variant?.images.length ? <ImagePreviewModal images={variant.images} startIndex={imageIndex} title={product.name} onClose={() => setPreview(false)} /> : null}
     </section>
   </div>;
