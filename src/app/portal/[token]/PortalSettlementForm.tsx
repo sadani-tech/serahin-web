@@ -31,6 +31,7 @@ export function PortalSettlementForm({
   token,
   items,
   unsettledItemIds,
+  pendingItemIds,
   paymentChannel,
   gatewayAvailable = false,
   manualTransfer,
@@ -41,6 +42,11 @@ export function PortalSettlementForm({
   token: string;
   items: SettlementItem[];
   unsettledItemIds: string[];
+  /** Item yang sedang punya pengajuan pelunasan menunggu verifikasi Admin —
+   * ditampilkan dengan badge "Menunggu verifikasi" (tidak bisa dicentang
+   * lagi), BEDA dari item lain yang belum pernah diajukan sama sekali
+   * (tetap bisa dicentang langsung). */
+  pendingItemIds: string[];
   paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
   gatewayAvailable?: boolean;
   manualTransfer?: {
@@ -188,7 +194,12 @@ export function PortalSettlementForm({
         </p>
         <div className="divide-y divide-sand-100 rounded-xl border border-sand-200">
           {items.map((item) => {
-            const unsettled = unsettledItemIds.includes(item.id);
+            const isPending = pendingItemIds.includes(item.id);
+            // Selectable hanya item yang belum lunas DAN tidak sedang
+            // menunggu verifikasi — item lain yang kebetulan sedang pending
+            // tidak boleh memblokir item ini dari daftar pilihan.
+            const unsettled = unsettledItemIds.includes(item.id) && !isPending;
+            const lunas = !unsettledItemIds.includes(item.id);
             const checked = selected.has(item.id);
             return (
               <label
@@ -223,7 +234,12 @@ export function PortalSettlementForm({
                     {item.jumlah} × {formatRupiah(item.hargaSaatPesan)}
                   </span>
                 </span>
-                {!unsettled && (
+                {isPending && (
+                  <span className="shrink-0 rounded-full bg-sun-100 px-2 py-0.5 text-[10px] font-extrabold text-sun-800">
+                    Menunggu verifikasi
+                  </span>
+                )}
+                {lunas && (
                   <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
                     Lunas
                   </span>
