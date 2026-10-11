@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import { IconSprite, Icon } from "@/components/revamp/IconSprite";
+import { RevampHeader } from "@/components/revamp/RevampHeader";
+import { RevampFooter } from "@/components/revamp/RevampFooter";
 import { PublicFaq } from "@/components/PublicFaq";
 import { ProductImage } from "@/components/ProductImage";
 import { getPublicCatalog, getPublicTestimonials } from "@/lib/public-catalog";
@@ -9,11 +10,8 @@ import { getSession } from "@/lib/session";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import { publicSite } from "@/lib/public-site";
-import { toPublicSlug } from "@/lib/slug";
 import { CatalogQuickAdd } from "@/components/CatalogQuickAdd";
 import { ToastFeedback } from "@/components/Toast";
-import { Select } from "@/components/ui";
-import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +45,17 @@ type HomeSearchParams = {
   q?: string;
   sort?: string;
   page?: string;
+  /** "closed" = tampilkan PO yang sudah ditutup (dulu halaman /arsip terpisah) — v2.3.9 tetap di /catalog, cuma filter. */
+  status?: string;
 };
+
+const NAV_LINKS = [
+  { href: "/#kenapa", label: "Kenapa Serahin" },
+  { href: "/#fitur", label: "Fitur" },
+  { href: "/#cara-kerja", label: "Cara Kerja" },
+  { href: "/#testimonial", label: "Testimonial" },
+  { href: "/#faq", label: "FAQ" },
+];
 
 function pageHref(params: HomeSearchParams, page: number) {
   const query = new URLSearchParams();
@@ -56,7 +64,33 @@ function pageHref(params: HomeSearchParams, page: number) {
   if (params.category) query.set("category", params.category);
   if (params.q) query.set("q", params.q);
   if (params.sort) query.set("sort", params.sort);
+  if (params.status) query.set("status", params.status);
   if (page > 1) query.set("page", String(page));
+  const value = query.toString();
+  return value ? `/catalog?${value}#catalog` : "/catalog#catalog";
+}
+
+function categoryHref(params: HomeSearchParams, category: string | null) {
+  const query = new URLSearchParams();
+  if (params.campaign) query.set("campaign", params.campaign);
+  if (params.seller) query.set("seller", params.seller);
+  if (category) query.set("category", category);
+  if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
+  if (params.status) query.set("status", params.status);
+  const value = query.toString();
+  return value ? `/catalog?${value}#catalog` : "/catalog#catalog";
+}
+
+/** Toggle href tab "Sedang Dibuka" / "PO Ditutup" — tetap di /catalog, filter lewat query `status`. */
+function statusHref(params: HomeSearchParams, status: "open" | "closed") {
+  const query = new URLSearchParams();
+  if (params.campaign) query.set("campaign", params.campaign);
+  if (params.seller) query.set("seller", params.seller);
+  if (params.category) query.set("category", params.category);
+  if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
+  if (status === "closed") query.set("status", "closed");
   const value = query.toString();
   return value ? `/catalog?${value}#catalog` : "/catalog#catalog";
 }
@@ -68,6 +102,7 @@ export default async function CatalogPage({
 }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number(params.page) || 1);
+  const showClosed = params.status === "closed";
   const [session, catalogResult, testimonials] = await Promise.all([
     getSession(),
     getPublicCatalog({
@@ -78,14 +113,16 @@ export default async function CatalogPage({
       sort: params.sort as "default" | "name" | "price_asc" | "price_desc" | undefined,
       page: requestedPage,
       limit: 8,
+      archive: showClosed,
     }).then(
       (data) => ({ data, error: null }),
       () => ({ data: null, error: "Katalog belum dapat dimuat. Silakan coba lagi." }),
     ),
     getPublicTestimonials().catch(() => []),
   ]);
-  const avatarUrl = await getBuyerAvatarUrl(session);
   const catalog = catalogResult.data;
+  const hasFilter = Boolean(params.campaign || params.seller || params.category || params.q || (params.sort && params.sort !== "default"));
+  const resetHref = showClosed ? "/catalog?status=closed#catalog" : "/catalog#catalog";
 
   const organizationJsonLd = {
     "@context": "https://schema.org",
@@ -99,229 +136,213 @@ export default async function CatalogPage({
   };
 
   return (
-    <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} catalogNav />
+    <div className="rv-scope js is-loaded">
+      <IconSprite />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
+      <RevampHeader navLinks={NAV_LINKS} loggedIn={Boolean(session)} role={session?.role} />
 
-      <main>
-        <section id="catalog" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-10 sm:px-6 sm:py-14">
-          <div className="relative overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 px-6 py-7 text-white shadow-[0_20px_55px_rgba(34,67,36,.18)] sm:px-8 sm:py-9">
-            <div aria-hidden="true" className="absolute -right-12 -top-20 h-56 w-56 rounded-full border border-sun-300/30" />
-            <div aria-hidden="true" className="absolute -right-4 -top-10 h-40 w-40 rounded-full border border-sun-300/25" />
-            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.2em] text-brand-100">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-sun-400" /> Sedang dibuka
-                </p>
-                <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-5xl">Semua Batch PO</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-brand-100 sm:text-base">Temukan produk dari Seller pilihan, cek kuota yang tersedia, lalu pilih Batch PO yang paling cocok untuk Anda.</p>
+      <main id="main">
+        <div className="k-stage">
+          {/* ===== Katalog hero ===== */}
+          <section className="k-hero" id="top" aria-labelledby="k-title">
+            <div className="k-hero__bg" aria-hidden="true"><span /><span /><span /><span /></div>
+            <div className="k-hero__inner">
+              <div className="k-hero__copy">
+                <p className="k-hero__status"><span className="k-hero__dot" aria-hidden="true" />{showClosed ? "PO Ditutup" : "Sedang Dibuka"}</p>
+                <h1 className="k-hero__title" id="k-title">Semua Batch PO</h1>
               </div>
-              {catalog && (
-                <div className="inline-flex w-fit items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur">
-                  <strong className="text-3xl font-extrabold text-sun-300">{catalog.meta.total}</strong>
-                  <span className="text-xs font-bold leading-4 text-brand-50">produk<br/>ditemukan</span>
+              <div className="k-hero__side">
+                <div className="k-tabs" role="tablist" aria-label="Status Batch PO" data-active={showClosed ? 1 : 0}>
+                  <span className="k-tabs__indicator" aria-hidden="true" />
+                  <Link href={statusHref(params, "open")} className="k-tabs__btn" role="tab" aria-selected={!showClosed}>Sedang Dibuka</Link>
+                  <Link href={statusHref(params, "closed")} className="k-tabs__btn" role="tab" aria-selected={showClosed}>PO Ditutup</Link>
+                </div>
+                <p className="k-hero__desc">{showClosed ? "Koleksi Batch PO yang sudah ditutup — tetap bisa dilihat sebagai referensi, tapi belum bisa dimasukkan ke keranjang." : "Temukan produk dari Seller pilihan, cek kuota yang tersedia, lalu pilih Batch PO yang paling cocok untuk Anda."}</p>
+              </div>
+            </div>
+          </section>
+
+          {/* ===== Products ===== */}
+          <section className="k-shop" aria-label="Daftar produk">
+            <div className="k-shop__inner">
+              <div className="k-toolbar">
+                <div className="k-cats" role="group" aria-label="Kategori produk">
+                  <Link href={categoryHref(params, null)} className="k-chip" aria-pressed={!params.category}>Semua Produk</Link>
+                  {catalog?.filters.categories.map((category) => (
+                    <Link key={category} href={categoryHref(params, category)} className="k-chip" aria-pressed={params.category === category}>
+                      {category}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <form action="/catalog" method="get" className="k-filterform">
+                <label>
+                  Seller
+                  <select name="seller" defaultValue={params.seller ?? ""}>
+                    <option value="">Semua Seller</option>
+                    {catalog?.filters.sellers.map((seller) => <option key={seller.slug} value={seller.slug}>{seller.label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Batch PO
+                  <select name="campaign" defaultValue={params.campaign ?? ""}>
+                    <option value="">Semua Batch PO</option>
+                    {catalog?.filters.campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.label}</option>)}
+                  </select>
+                </label>
+                <input type="hidden" name="category" value={params.category ?? ""} />
+                <input type="hidden" name="status" value={params.status ?? ""} />
+                <label>
+                  Urutkan
+                  <select name="sort" defaultValue={params.sort ?? "default"}>
+                    <option value="default">Rekomendasi</option>
+                    <option value="name">Nama (A-Z)</option>
+                    <option value="price_asc">Harga: Termurah</option>
+                    <option value="price_desc">Harga: Termahal</option>
+                  </select>
+                </label>
+                <label>
+                  Cari produk
+                  <input type="search" name="q" defaultValue={params.q ?? ""} maxLength={120} placeholder="Nama Batch PO atau produk" />
+                </label>
+                <button type="submit" className="btn btn--primary btn--sm"><span>Terapkan</span><span className="btn__icon"><Icon name="arrow" /></span></button>
+                {hasFilter && <Link href={resetHref} className="k-filterform__reset">Reset filter</Link>}
+              </form>
+
+              <ToastFeedback error={catalogResult.error} />
+
+              <aside className="k-alert" aria-labelledby="k-alert-title">
+                <span className="k-alert__icon"><Icon name="info" /></span>
+                <div className="k-alert__copy">
+                  <p className="k-alert__title" id="k-alert-title">Masuk sebagai buyer, untuk pengalaman lebih nyaman</p>
+                  <p className="k-alert__text">Kalau masuk sebagai Buyer, semua pesananmu terkumpul di satu tempat, jadi kamu tidak perlu mencari tautan pesanan satu per satu.</p>
+                </div>
+                <Link href="/account/login" className="btn btn--ghost btn--sm"><span>Masuk</span><span className="btn__icon"><Icon name="arrow" /></span></Link>
+              </aside>
+
+              {catalog && catalog.campaigns.length === 0 ? (
+                <p className="k-empty">Belum ada produk yang cocok. Coba pilih kategori atau filter lain.</p>
+              ) : (
+                <div className="k-grid">
+                  {catalog?.campaigns.flatMap((campaign) =>
+                    campaign.variants.map((variant) => {
+                      const detailHref = variant.productSlug ? `/store/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`;
+                      return (
+                        <article key={`${campaign.id}-${variant.id}`} className="pcard">
+                          <div className="pcard__media">
+                            <ProductImage src={variant.gambarUrl} alt={variant.namaVarian} className="h-full w-full object-cover" />
+                          </div>
+                          <div className="pcard__body">
+                            <p className="pcard__seller">{campaign.seller.businessName}</p>
+                            <h3 className="pcard__name">{variant.namaVarian}</h3>
+                            <div className="pcard__row">
+                              <p className="pcard__price">{formatRupiah(variant.harga)}</p>
+                              <span className={`pcard__meta${variant.sisa > 0 && variant.sisa <= 10 ? " pcard__meta--low" : ""}`}>
+                                {variant.sisa > 0 ? `Sisa ${variant.sisa} pcs` : "Kuota habis"}
+                              </span>
+                            </div>
+                            <div className="pcard__actions">
+                              <Link href={detailHref} className="pcard__buy">Beli Produk</Link>
+                              <CatalogQuickAdd
+                                role={session?.role}
+                                detailHref={detailHref}
+                                event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }}
+                                item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
+                              />
+                            </div>
+                            <p className="pcard__date"><Icon name="calendar" />{PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · Tutup PO: {formatTanggal(campaign.tanggalTutup)}</p>
+                          </div>
+                        </article>
+                      );
+                    }),
+                  )}
                 </div>
               )}
-            </div>
-          </div>
 
-          <form
-            action="/catalog"
-            method="get"
-            className="mt-5 grid grid-cols-2 gap-2.5 rounded-2xl border border-brand-100 bg-white/95 p-3.5 shadow-[0_18px_50px_rgba(38,76,39,.09)] sm:mt-7 sm:gap-4 sm:rounded-3xl sm:p-5 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_1.3fr_auto] lg:items-end"
-          >
-            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
-              Seller
-              <Select name="seller" defaultValue={params.seller ?? ""} className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">
-                <option value="">Semua Seller</option>
-                {catalog?.filters.sellers.map((seller) => <option key={seller.slug} value={seller.slug}>{seller.label}</option>)}
-              </Select>
-            </label>
-            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
-              Batch PO
-              <Select
-                name="campaign"
-                defaultValue={params.campaign ?? ""}
-                className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
-              >
-                <option value="">Semua Batch PO</option>
-                {catalog?.filters.campaigns.map((campaign) => (
-                  <option key={campaign.id} value={campaign.id}>
-                    {campaign.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
-              Kategori
-              <Select
-                name="category"
-                defaultValue={params.category ?? ""}
-                className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
-              >
-                <option value="">Semua Kategori</option>
-                {catalog?.filters.categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
-              Urutkan
-              <Select
-                name="sort"
-                defaultValue={params.sort ?? "default"}
-                className="mt-1 w-full min-h-9 rounded-lg px-2.5 text-xs font-medium sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
-              >
-                <option value="default">Rekomendasi</option>
-                <option value="name">Nama (A-Z)</option>
-                <option value="price_asc">Harga: Termurah</option>
-                <option value="price_desc">Harga: Termahal</option>
-              </Select>
-            </label>
-            <label className="block text-xs font-bold text-sand-700 sm:text-sm">
-              Cari produk
-              <input
-                type="search"
-                name="q"
-                defaultValue={params.q ?? ""}
-                maxLength={120}
-                placeholder="Nama Batch PO atau produk"
-                className="mt-1 block min-h-9 w-full rounded-lg border border-sand-300 bg-white px-2.5 text-xs sm:mt-1.5 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm"
-              />
-            </label>
-            <button className="col-span-2 min-h-9 rounded-lg bg-accent-600 px-5 text-xs font-extrabold text-white shadow-sm hover:bg-accent-700 sm:min-h-11 sm:rounded-xl sm:text-sm lg:col-span-1">
-              Terapkan
-            </button>
-          </form>
-
-          {(params.campaign || params.seller || params.category || params.q || (params.sort && params.sort !== "default")) && (
-            <div className="mt-3 text-right">
-              <Link href="/catalog#catalog" className="text-sm font-bold text-brand-700 hover:underline">
-                Reset semua filter
-              </Link>
-            </div>
-          )}
-
-          <ToastFeedback error={catalogResult.error} />
-
-          {catalog && catalog.campaigns.length === 0 && (
-            <div className="mt-8 rounded-3xl border border-dashed border-sand-300 bg-white px-6 py-14 text-center">
-              <h3 className="text-xl font-extrabold text-sand-900">Belum ada produk yang cocok</h3>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-sand-500">
-                Belum ada Batch PO aktif untuk pilihan ini. Coba reset filter
-                atau hubungi kami bila Anda membutuhkan bantuan.
-              </p>
-            </div>
-          )}
-
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-            {catalog?.campaigns.flatMap((campaign) =>
-              campaign.variants.map((variant) => (
-                <article key={`${campaign.id}-${variant.id}`} className="group flex flex-col overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_18px_45px_rgba(38,76,39,.12)]">
-                  <div className="relative aspect-square overflow-hidden bg-sand-100">
-                    <ProductImage src={variant.gambarUrl} alt={variant.namaVarian} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]" />
-                    <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-brand-800 shadow-sm backdrop-blur">Open PO</span>
+              {catalog && catalog.meta.totalPages > 1 && (
+                <nav className="k-pager" aria-label="Pagination katalog">
+                  <Link
+                    href={pageHref(params, Math.max(1, catalog.meta.page - 1))}
+                    aria-disabled={catalog.meta.page <= 1}
+                    className="k-page k-page--nav"
+                  >
+                    <Icon name="chev-left" />
+                  </Link>
+                  <div className="k-pager__nums">
+                    <span className="k-page" aria-current="page">{catalog.meta.page}</span>
+                    <span className="k-page k-page--gap">/ {catalog.meta.totalPages}</span>
                   </div>
-                  <div className="flex min-w-0 flex-1 flex-col p-5">
-                    <div className="flex flex-wrap gap-2 text-xs font-bold">
-                      <Link href={ `/catalog/${toPublicSlug(variant.kategori ?? "Others")}`} className="rounded-full bg-brand-100 px-2.5 py-1 text-brand-800 hover:bg-brand-200">{variant.kategori}</Link>
-                      <span className={`rounded-full px-2.5 py-1 ${variant.sisa > 0 ? "bg-sun-100 text-sun-800" : "bg-sand-200 text-sand-600"}`}>
-                        {variant.sisa > 0 ? `Kuota ${variant.sisa}` : "Kuota habis"}
-                      </span>
-                    </div>
-                    <h3 className="mt-3 text-lg font-extrabold text-sand-900">{variant.namaVarian}</h3>
-                    <p className="mt-1 text-xs font-bold text-sand-500">{campaign.seller.businessName} · {campaign.namaProduk}</p>
-                    <p className="mt-1 text-lg font-extrabold text-brand-700">{formatRupiah(variant.harga)}</p>
-                    <p className="mt-2 text-xs font-bold text-sand-500">
-                      {PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · tutup {formatTanggal(campaign.tanggalTutup)}
-                    </p>
-                    <div className="mt-5 flex gap-2">
-                      <Link href={variant.productSlug ? `/store/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} className="inline-flex min-h-9 items-center justify-center rounded-lg border border-sand-300 px-2 text-xs font-extrabold text-sand-700 hover:border-brand-400 sm:min-h-11 sm:rounded-xl sm:px-3 sm:text-sm">Detail</Link>
-                      <CatalogQuickAdd role={session?.role} detailHref={variant.productSlug ? `/store/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}` : `/po/${campaign.formToken}`} event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }} item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }} />
-                    </div>
+                  <Link
+                    href={pageHref(params, Math.min(catalog.meta.totalPages, catalog.meta.page + 1))}
+                    aria-disabled={catalog.meta.page >= catalog.meta.totalPages}
+                    className="k-page k-page--nav"
+                  >
+                    <Icon name="chev-right" />
+                  </Link>
+                </nav>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {testimonials.length > 0 && (
+          <section className="section" aria-labelledby="k-testi-title">
+            <header className="section-head">
+              <p className="eyebrow">Cerita Buyer</p>
+              <h2 className="h2" id="k-testi-title">Dipilih dari transaksi Serahin</h2>
+            </header>
+            <div className="k-grid" style={{ "--testi-cols": 3 } as React.CSSProperties}>
+              {testimonials.slice(0, 6).map((item) => (
+                <figure key={item.id} className="tcard is-focus">
+                  <div className="tcard__quote">
+                    <svg className="tcard__mark" aria-hidden="true"><use href="#i-quote" /></svg>
+                    <blockquote><p>{item.quote}</p></blockquote>
                   </div>
-                </article>
-              )),
-            )}
-          </div>
+                  <figcaption className="tcard__foot">
+                    <span className="tcard__name">{item.customerName}</span>
+                    {item.verified && <span className="tcard__role"><Icon name="check-circle" />Terverifikasi</span>}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
 
-          {catalog && catalog.meta.totalPages > 1 && (
-            <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Pagination katalog global">
-              <Link
-                aria-disabled={catalog.meta.page <= 1}
-                href={pageHref(params, Math.max(1, catalog.meta.page - 1))}
-                className={`inline-flex min-h-11 items-center rounded-xl border px-4 text-sm font-bold ${
-                  catalog.meta.page <= 1
-                    ? "pointer-events-none border-sand-200 text-sand-300"
-                    : "border-sand-300 bg-white text-sand-700 hover:border-brand-400"
-                }`}
-              >
-                Sebelumnya
-              </Link>
-              <span className="text-sm font-extrabold text-sand-600">
-                {catalog.meta.page} / {catalog.meta.totalPages}
-              </span>
-              <Link
-                aria-disabled={catalog.meta.page >= catalog.meta.totalPages}
-                href={pageHref(params, Math.min(catalog.meta.totalPages, catalog.meta.page + 1))}
-                className={`inline-flex min-h-11 items-center rounded-xl border px-4 text-sm font-bold ${
-                  catalog.meta.page >= catalog.meta.totalPages
-                    ? "pointer-events-none border-sand-200 text-sand-300"
-                    : "border-sand-300 bg-white text-sand-700 hover:border-brand-400"
-                }`}
-              >
-                Berikutnya
-              </Link>
-            </nav>
-          )}
-        </section>
-
-        {testimonials.length > 0 && <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-          <div className="text-center"><p className="text-xs font-extrabold uppercase tracking-[.18em] text-brand-700">Cerita Buyer</p><h2 className="mt-2 text-3xl font-extrabold text-sand-900">Dipilih dari transaksi Serahin</h2></div>
-          <div className="mt-7 grid gap-4 md:grid-cols-3">{testimonials.slice(0, 6).map((item) => <figure key={item.id} className="rounded-2xl border border-sand-200 bg-white p-6 shadow-sm"><div className="text-sun-600" aria-label={item.rating ? `${item.rating} dari 5 bintang` : undefined}>{item.rating ? "★".repeat(item.rating) : ""}</div><blockquote className="mt-3 text-sm leading-6 text-sand-700">“{item.quote}”</blockquote><figcaption className="mt-4 text-sm font-extrabold text-sand-900">{item.customerName} {item.verified && <span className="ml-1 rounded-full bg-brand-100 px-2 py-1 text-xs text-brand-800">Pembelian terverifikasi</span>}</figcaption></figure>)}</div>
-        </section>}
-
-        <section id="faq" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-10 sm:px-6">
-          <div className="mb-5 text-center">
-            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand-700">
-              Bantuan
-            </p>
-            <h2 className="mt-2 text-3xl font-extrabold text-sand-900">
-              Pertanyaan yang sering diajukan
-            </h2>
-          </div>
+        {/* ===== FAQ ===== */}
+        <section className="panel faq" id="faq" aria-labelledby="faq-title">
+          <p className="eyebrow">Bantuan</p>
+          <h2 className="h2" id="faq-title">Yang mungkin ingin<br /> kamu tanyakan</h2>
           <PublicFaq />
-          <p className="mt-5 text-center text-sm text-sand-600">
-            Belum menemukan jawaban?{" "}
-            <Link href="/contact" className="font-extrabold text-brand-700 hover:underline">
-              Hubungi dukungan Serahin
-            </Link>
-            .
-          </p>
-        </section>
-
-        <section className="bg-brand-800 px-4 py-12 text-brand-50 sm:px-6">
-          <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[1.4fr_1fr] md:items-center">
-            <div>
-              <h2 className="text-2xl font-extrabold sm:text-3xl">Transaksi yang transparan sejak awal</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-brand-100">
-                Harga, skema pembayaran, deadline PO, dan progres pesanan ditampilkan dengan jelas.
-                Pembayaran online diproses melalui penyedia payment gateway; Serahin tidak meminta PIN atau OTP perbankan Anda.
-              </p>
+          <div className="k-help">
+            <span className="k-help__icon"><Icon name="info" /></span>
+            <div className="k-help__copy">
+              <p className="k-help__title">Butuh bantuan lebih lanjut?</p>
+              <p className="k-help__text">Jangan ragu untuk bertanya. Tim Serahin siap membantu memberikan informasi yang kamu butuhkan.</p>
             </div>
-            <div className="flex flex-wrap gap-3 md:justify-end">
-              <Link href="/terms" className="rounded-xl bg-white px-4 py-3 text-sm font-extrabold text-brand-800">Syarat & Ketentuan</Link>
-              <Link href="/contact" className="rounded-xl border border-brand-400 px-4 py-3 text-sm font-extrabold text-white">Hubungi Kami</Link>
-            </div>
+            <Link href="/contact" className="btn btn--ghost btn--sm"><span>Hubungi Kami</span><span className="btn__icon"><Icon name="arrow" /></span></Link>
           </div>
         </section>
+
+        {/* ===== CTA ===== */}
+        <section className="cta k-cta" aria-labelledby="k-cta-title">
+          <div>
+            <h2 className="h2 h2--left cta__title" id="k-cta-title">Giliranmu membuka PO</h2>
+            <p className="lead">Punya produk atau ide koleksi? Buka kampanye PO-mu sendiri dan tampil di katalog ini, lengkap dengan kuota, pembayaran, dan progres produksi yang rapi.</p>
+          </div>
+          <div className="btn-row">
+            <Link href="/seller/login" className="btn btn--primary"><span>Mulai Jualan</span><span className="btn__icon"><Icon name="arrow" /></span></Link>
+            <Link href="/#cara-kerja" className="btn btn--ghost"><span><span className="hide-sm">Lihat </span>Cara Kerja<span className="hide-sm">nya</span></span><span className="btn__icon"><Icon name="arrow" /></span></Link>
+          </div>
+        </section>
+
+        <div className="k-band" aria-hidden="true" />
       </main>
-      <PublicFooter />
+
+      <RevampFooter />
     </div>
   );
 }

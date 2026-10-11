@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import { IconSprite } from "@/components/revamp/IconSprite";
+import { RevampHeader } from "@/components/revamp/RevampHeader";
+import { RevampFooter } from "@/components/revamp/RevampFooter";
 import { getPublicProduct } from "@/lib/public-product";
 import { getSession } from "@/lib/session";
-import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
 import { ApiError } from "@/lib/api";
 import { ProductDetailClient } from "./ProductDetailClient";
-import { toPublicSlug } from "@/lib/slug";
 
 type Params = Promise<{ sellerSlug: string; productSlug: string }>;
 type SearchParams = Promise<{ variant?: string }>;
+
+const NAV_LINKS = [
+  { href: "/#kenapa", label: "Kenapa Serahin" },
+  { href: "/#fitur", label: "Fitur" },
+  { href: "/#cara-kerja", label: "Cara Kerja" },
+  { href: "/#testimonial", label: "Testimonial" },
+  { href: "/#faq", label: "FAQ" },
+];
 
 async function load(params: Params) {
   const { sellerSlug, productSlug } = await params;
@@ -46,7 +52,6 @@ export default async function ProductPage({
     getSession(),
     searchParams,
   ]);
-  const avatarUrl = await getBuyerAvatarUrl(session);
   const requested = (await params).productSlug;
   if (product.redirected && product.canonicalSlug !== requested) permanentRedirect(`/store/${product.seller.slug}/produk/${product.canonicalSlug}`);
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/store/${product.seller.slug}/produk/${product.canonicalSlug}`;
@@ -64,10 +69,19 @@ export default async function ProductPage({
       availability: offering.orderable && offering.quotaRemaining > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     }))),
   };
-  return <div className="bg-serahin-dots min-h-full">
-      <PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={avatarUrl} catalogNav />
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12"><nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-sm font-bold text-sand-500"><Link href="/catalog" className="hover:text-brand-700">Katalog</Link><span>/</span><Link href={`/catalog/${toPublicSlug(product.variants[0]?.category ?? "Others")}`} className="hover:text-brand-700">{product.variants[0]?.category ?? "Produk"}</Link><span>/</span><span className="text-sand-800">{product.name}</span></nav><ProductDetailClient product={product} initialVariantId={query.variant} role={session?.role} /></main>
-    <PublicFooter />
-  </div>;
+  return (
+    <div className="rv-scope js is-loaded">
+      <IconSprite />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <RevampHeader navLinks={NAV_LINKS} loggedIn={Boolean(session)} role={session?.role} />
+      <main id="main">
+        <div className="pd-stage">
+          <ProductDetailClient product={product} initialVariantId={query.variant} role={session?.role} />
+        </div>
+        <div className="k-band" aria-hidden="true" />
+      </main>
+      <RevampFooter />
+    </div>
+  );
 }
+
