@@ -1010,7 +1010,7 @@ export function PublicOrderForm({
                 type="button"
                 onClick={() => setColorModalFor(null)}
                 aria-label="Tutup"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sand-400 hover:bg-sand-100 hover:text-sand-700"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
                   <line x1="18" y1="6" x2="6" y2="18" />

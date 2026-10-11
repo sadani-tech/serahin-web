@@ -6,10 +6,10 @@ import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import type { PaymentScheme } from "@/lib/types";
 import { RichText } from "@/components/RichText";
 import { PublicFaq } from "@/components/PublicFaq";
+import { PublicFooter } from "@/components/PublicFooter";
 import { isRichTextEmpty } from "@/lib/sanitize";
 import { IconSprite, Icon } from "@/components/revamp/IconSprite";
 import { RevampHeader } from "@/components/revamp/RevampHeader";
-import { RevampFooter } from "@/components/revamp/RevampFooter";
 import { PublicOrderForm } from "./PublicOrderForm";
 import { getSession } from "@/lib/session";
 
@@ -189,9 +189,7 @@ export default async function PublicFormPage({
         <PublicFaq campaignId={data.id} />
       </main>
 
-      <div className="rv-scope js is-loaded">
-        <RevampFooter />
-      </div>
+      <PublicFooter />
     </div>
   );
 }
