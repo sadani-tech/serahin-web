@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { PublicHeader } from "@/components/PublicHeader";
-import { PublicFooter } from "@/components/PublicFooter";
+import { IconSprite } from "@/components/revamp/IconSprite";
+import { RevampHeader } from "@/components/revamp/RevampHeader";
+import { RevampFooter } from "@/components/revamp/RevampFooter";
 import { getSession } from "@/lib/session";
 import { CartPageClient } from "./CartPageClient";
 import { api } from "@/lib/api";
@@ -13,5 +14,17 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   const buyerProfile = session?.role === "BUYER"
     ? await api.get<{ name: string; email: string | null; phone: string | null; avatarUrl: string | null }>("/auth/buyer/profile").catch(() => ({ name: session.name, email: session.email, phone: null, avatarUrl: null }))
     : null;
-  return <div className="bg-serahin-dots min-h-full"><PublicHeader loggedIn={Boolean(session)} role={session?.role} name={session?.name} email={session?.email} avatarUrl={buyerProfile?.avatarUrl} catalogNav /><main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6"><CartPageClient resumeCheckout={checkout === "1"} switchingAccount={Boolean(session && session.role !== "BUYER")} buyerProfile={buyerProfile} /></main><PublicFooter /></div>;
+  return (
+    <div className="rv-scope js is-loaded">
+      <IconSprite />
+      {/* navLinks kosong = setara "catalogNav" di PublicHeader lama: tanpa
+          link Kenapa Serahin/Fitur/dll, cart icon + Masuk/Dashboard tetap
+          tampil (lihat RevampHeader — showCart default true). */}
+      <RevampHeader navLinks={[]} loggedIn={Boolean(session)} role={session?.role} />
+      <main className="cart-page">
+        <CartPageClient resumeCheckout={checkout === "1"} switchingAccount={Boolean(session && session.role !== "BUYER")} buyerProfile={buyerProfile} />
+      </main>
+      <RevampFooter />
+    </div>
+  );
 }
