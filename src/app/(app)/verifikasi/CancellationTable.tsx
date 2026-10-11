@@ -110,7 +110,7 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
                   <div className="flex flex-wrap gap-2">
                     {row.cancellationRequestStatus === "REQUESTED" && (
                       <>
-                        <button disabled={busyId === row.id} onClick={() => approve(row)} className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Setujui</button>
+                        <button disabled={busyId === row.id} onClick={() => approve(row)} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Setujui</button>
                         <button disabled={busyId === row.id} onClick={() => reject(row)} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-50">Tolak</button>
                       </>
                     )}

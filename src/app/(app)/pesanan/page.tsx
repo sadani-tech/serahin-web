@@ -39,7 +39,7 @@ export default async function PesananPage({ searchParams }: { searchParams: Prom
       <label className="text-sm">Batch PO<Select name="campaignId" defaultValue={sp.campaignId ?? ""} className="mt-1 block"><option value="">Semua Batch PO</option>{envelope.filters.campaigns.map((c) => <option key={c.id} value={c.id}>{c.namaProduk}</option>)}</Select></label>
       <label className="text-sm">Status<Select name="status" defaultValue={sp.status ?? ""} className="mt-1 block"><option value="">Semua status</option>{(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => <option key={s} value={s}>{ORDER_STATUS_LABEL[s]}</option>)}</Select></label>
       <label className="text-sm">Pembayaran<Select name="payment" defaultValue={sp.payment ?? ""} className="mt-1 block"><option value="">Semua</option><option value="PENDING_VERIFICATION">Menunggu verifikasi</option><option value="VERIFIED">Terverifikasi</option><option value="REJECTED">Ditolak</option><option value="EXPIRED">Kedaluwarsa</option></Select></label>
-      <button className="min-h-11 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-brand">Terapkan</button>
+      <button className="min-h-11 rounded-full bg-brand-600 px-4 text-sm font-bold text-white shadow-brand">Terapkan</button>
       {hasFilter && <Link className="py-2 text-sm text-sand-500" href="/pesanan">Reset</Link>}
     </form></Card>
 

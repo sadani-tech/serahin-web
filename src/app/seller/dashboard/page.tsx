@@ -68,7 +68,7 @@ export default async function SellerDashboardPage({
             <Input type="date" name="dateTo" defaultValue={sp.dateTo ?? ""} className="w-full py-1.5 sm:w-auto" />
           </div>
           <div className="col-span-2 flex items-center gap-3 sm:col-auto">
-            <button type="submit" className="flex-1 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all hover:bg-brand-700 active:translate-y-px sm:flex-none">
+            <button type="submit" className="flex-1 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all hover:bg-brand-700 active:translate-y-px sm:flex-none">
               Terapkan
             </button>
             {adaFilter && (

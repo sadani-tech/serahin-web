@@ -77,7 +77,7 @@ export default async function TestimoniPage() {
                       </form>
                     ) : (
                       <form action={publishTestimonial.bind(null, row)}>
-                        <button className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-700">Publikasikan</button>
+                        <button className="rounded-full bg-brand-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-700">Publikasikan</button>
                       </form>
                     )}
                     <form action={deleteTestimonialAction.bind(null, row.id)}>

@@ -101,7 +101,7 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
           <td className="px-4 py-3 font-extrabold text-sand-900">{rupiah(Number(row.jumlah))}</td>
           <td className="px-4 py-3">{row.buktiFile ? <ProofViewerButton url={row.buktiFile} className="font-bold text-brand-700 hover:underline" /> : <span className="text-rose-600">Tidak ada</span>}</td>
           <td className="px-4 py-3 text-xs text-sand-600">{waitingSince(row.createdAt)}</td>
-          <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => { setSelected(new Set([row.id])); setError("Isi alasan, lalu pilih Tolak."); }} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
+          <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => { setSelected(new Set([row.id])); setError("Isi alasan, lalu pilih Tolak."); }} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
         </tr>)}</tbody>
       </table>
     </div>

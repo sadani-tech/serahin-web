@@ -240,11 +240,11 @@ export function DatePicker({
           className="z-[200] w-72 rounded-xl border border-sand-200 bg-white p-3 shadow-lg"
         >
           <div className="flex items-center justify-between">
-            <button type="button" onClick={() => shiftMonth(-1)} aria-label="Bulan sebelumnya" className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-500 hover:bg-sand-100">
+            <button type="button" onClick={() => shiftMonth(-1)} aria-label="Bulan sebelumnya" className="flex h-8 w-8 items-center justify-center rounded-full text-sand-500 hover:bg-sand-100">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
             <p className="text-sm font-extrabold text-sand-900">{MONTHS[view.month - 1]} {view.year}</p>
-            <button type="button" onClick={() => shiftMonth(1)} aria-label="Bulan berikutnya" className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-500 hover:bg-sand-100">
+            <button type="button" onClick={() => shiftMonth(1)} aria-label="Bulan berikutnya" className="flex h-8 w-8 items-center justify-center rounded-full text-sand-500 hover:bg-sand-100">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           </div>
@@ -262,7 +262,7 @@ export function DatePicker({
                   type="button"
                   disabled={!c.inMonth}
                   onClick={() => pickDay(c.day)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold transition ${
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition ${
                     !c.inMonth
                       ? "cursor-default text-transparent"
                       : isSelected
@@ -305,7 +305,7 @@ export function DatePicker({
             <button type="button" onClick={clear} className="text-sand-500 hover:text-rose-700">Hapus</button>
             <button type="button" onClick={goToday} className="text-brand-700 hover:underline">Hari ini</button>
             {mode === "datetime" && (
-              <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700">Selesai</button>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700">Selesai</button>
             )}
           </div>
         </div>,

@@ -660,7 +660,7 @@ export default async function CampaignDetailPage({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="rounded-full bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               Terapkan
             </button>
@@ -923,7 +923,7 @@ export default async function CampaignDetailPage({
             <div className="col-span-2 flex items-end gap-2 md:col-span-3 xl:col-span-6">
               <button
                 type="submit"
-                className="min-h-9 rounded-lg bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
+                className="min-h-9 rounded-full bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
               >
                 Terapkan
               </button>

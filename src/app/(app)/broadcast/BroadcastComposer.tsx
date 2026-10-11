@@ -91,7 +91,7 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
         <div className="rounded-2xl bg-brand-700 p-5 text-white"><p className="text-xs font-bold uppercase tracking-wide text-brand-100">Recipient unik</p><strong className="mt-2 block text-4xl">{preview.recipientCount}</strong><small>Maksimum {preview.maximumRecipients}</small></div>
         <div className="grid grid-cols-2 gap-2 text-xs">{Object.entries(preview.excluded).map(([key, value]) => <div key={key} className="rounded-xl bg-white p-3"><b className="block text-lg text-sand-900">{value}</b><span className="text-sand-500">{excludedLabel[key] ?? key}</span></div>)}</div>
         <div className="space-y-2"><h3 className="text-xs font-extrabold uppercase tracking-wide text-sand-500">Sampel</h3>{preview.sample.map((item) => <div className="rounded-xl border border-sand-200 bg-white p-3 text-sm" key={item.email}><b>{item.name}</b><p className="text-xs text-sand-500">{item.email} · {item.orderCount} pesanan</p><p className="mt-1 text-xs text-sand-600">{item.products.join(", ")}</p></div>)}</div>
-        <button type="button" disabled={pending || preview.recipientCount === 0} onClick={send} className="min-h-11 w-full rounded-xl bg-accent-600 px-5 font-extrabold text-white disabled:opacity-50">Konfirmasi & antrekan</button>
+        <button type="button" disabled={pending || preview.recipientCount === 0} onClick={send} className="min-h-11 w-full rounded-full bg-accent-600 px-5 font-extrabold text-white disabled:opacity-50">Konfirmasi & antrekan</button>
       </div>}
     </aside>
   </div>;
