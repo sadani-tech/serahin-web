@@ -92,6 +92,6 @@ export const config = {
   // dari pengunjung anonim ke-redirect ke `/login` sehingga favicon dan
   // preview link sosial gagal dimuat.
   matcher: [
-    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|testimonials/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
+    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|revamp/|testimonials/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
   ],
 };

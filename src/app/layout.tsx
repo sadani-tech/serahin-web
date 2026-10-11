@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
+import { Nunito, Kulim_Park } from "next/font/google";
 import "./globals.css";
 import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { publicSite } from "@/lib/public-site";
@@ -14,6 +14,16 @@ const nunito = Nunito({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-nunito",
+  display: "swap",
+});
+
+// Kulim Park — font heading desain revamp (landing, katalog, produk, auth,
+// pengajuan Seller). Nunito tetap dipakai untuk body & seluruh dashboard.
+const kulimPark = Kulim_Park({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-kulim-park",
   display: "swap",
 });
 
@@ -70,7 +80,7 @@ export default async function RootLayout({
   return (
     <html
       lang="id"
-      className={`${nunito.variable} h-full antialiased`}
+      className={`${nunito.variable} ${kulimPark.variable} h-full antialiased`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
