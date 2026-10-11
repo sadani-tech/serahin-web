@@ -1,31 +1,13 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { getSession } from "@/lib/session";
-import { SerahinLogo } from "@/components/brand";
-import { ProfileMenu } from "@/components/ProfileMenu";
-import { getBuyerAvatarUrl } from "@/lib/buyer-avatar";
-import { AccountCartLink } from "./AccountCartLink";
 
-export default async function AccountLayout({ children }: { children: ReactNode }) {
-  const user = await getSession();
-  const isBuyer = user?.role === "BUYER";
-  const avatarUrl = isBuyer ? await getBuyerAvatarUrl(user) : null;
-  return (
-    <div className="bg-serahin-dots min-h-full">
-      <header className="border-b border-sand-200 bg-white">
-        <nav className="mx-auto flex min-h-16 max-w-6xl items-center gap-2 px-4 sm:gap-4 sm:px-6">
-          <SerahinLogo href="/" size="sm" />
-          {isBuyer && (
-            <div className="ml-auto flex items-center gap-2">
-              <Link href="/account" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Pesanan</Link>
-              <Link href="/account/profile" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Profil</Link>
-              <AccountCartLink />
-              <ProfileMenu user={{ name: user.name, email: user.email, role: "BUYER", avatarUrl }} />
-            </div>
-          )}
-        </nav>
-      </header>
-      {children}
-    </div>
-  );
+/**
+ * Layout bersama seluruh /account/*. Sengaja TIDAK merender header di sini —
+ * halaman AuthShell (login/register/activate/forgot/reset-password) sudah
+ * punya chrome brand sendiri (panel gelap + link "Kembali ke Beranda"), jadi
+ * header lama di sini akan dobel dan tidak konsisten dengan tema revamp.
+ * Header untuk dashboard Buyer (Pesanan/Profil) ada di
+ * (dashboard)/layout.tsx, yang hanya membungkus rute yang butuh header itu.
+ */
+export default function AccountLayout({ children }: { children: ReactNode }) {
+  return <div className="bg-serahin-dots min-h-full">{children}</div>;
 }
