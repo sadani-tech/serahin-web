@@ -131,9 +131,6 @@ export function GoogleBuyerSignIn({ callbackUrl = "/account" }: { callbackUrl?: 
         <div ref={target} className="flex min-h-11 w-full justify-center" />
       </div>
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={() => setReady(true)} />
-      <p className="text-center text-[11px] leading-4 text-sand-500">
-        Dengan Google, Anda menyetujui Syarat & Ketentuan dan Kebijakan Privasi Serahin.
-      </p>
     </div>
   );
 }

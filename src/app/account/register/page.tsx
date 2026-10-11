@@ -1,11 +1,11 @@
 import { AuthForm } from "../AuthForm";
-import { AuthShell } from "../AuthShell";
+import { AuthShell, AuthWord } from "../AuthShell";
 import { buyerRegisterAction } from "@/lib/buyer-auth-actions";
 import { GoogleBuyerSignIn } from "@/components/GoogleBuyerSignIn";
 
 export default async function BuyerRegisterPage({ searchParams }: { searchParams: Promise<{ callbackUrl?: string }> }) {
   const { callbackUrl = "/account" } = await searchParams;
-  return <AuthShell title="Daftar akun Buyer" copy="Pilihan produk Anda tetap tersimpan saat membuat akun.">
+  return <AuthShell title={<>Daftar akun <AuthWord>Buyer</AuthWord></>} copy="Pilihan produk Anda tetap tersimpan saat membuat akun.">
     <AuthForm action={buyerRegisterAction} hidden={{ callbackUrl }} submit="Daftar" fields={[
       { name: "name", label: "Nama lengkap", autoComplete: "name" },
       { name: "email", label: "Email", type: "email", autoComplete: "email" },

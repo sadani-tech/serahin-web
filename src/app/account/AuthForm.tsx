@@ -9,7 +9,7 @@ import { ToastFeedback } from "@/components/Toast";
 type Action = (state: BuyerActionState, form: FormData) => Promise<BuyerActionState>;
 type Field = { name: string; label: string; type?: string; autoComplete?: string; required?: boolean; defaultValue?: string };
 
-export function AuthForm({ action, fields, hidden, submit, footer, success, social }: { action: Action; fields: Field[]; hidden?: Record<string, string>; submit: string; footer?: { href: string; label: string }; success?: { title: string; copy: string }; social?: ReactNode }) {
+export function AuthForm({ action, fields, hidden, submit, secondaryAction, footer, success, social }: { action: Action; fields: Field[]; hidden?: Record<string, string>; submit: string; /** Link kecil di bawah tombol submit, mis. "Lupa kata sandi?" */ secondaryAction?: { href: string; label: string }; footer?: { href: string; label: string }; success?: { title: string; copy: string }; social?: ReactNode }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   if (state?.message && success) return <div role="status" className="space-y-5 text-center">
     <ToastFeedback success={state.message} />
@@ -36,6 +36,7 @@ export function AuthForm({ action, fields, hidden, submit, footer, success, soci
         <input name={field.name} type={field.type ?? "text"} autoComplete={field.autoComplete} defaultValue={field.defaultValue} required={field.required ?? true} className="mt-1.5 min-h-11 w-full rounded-xl border border-sand-300 px-3 font-medium" />
       </label>)}
     <button disabled={pending} className="min-h-11 w-full rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white disabled:opacity-60">{pending ? "Memproses…" : submit}</button>
+    {secondaryAction && <p className="text-center text-sm"><Link className="font-bold text-brand-700 hover:underline" href={secondaryAction.href}>{secondaryAction.label}</Link></p>}
     {footer && <p className="text-center text-sm text-sand-600"><Link className="font-bold text-brand-700 hover:underline" href={footer.href}>{footer.label}</Link></p>}
   </form>{social}</>;
 }
