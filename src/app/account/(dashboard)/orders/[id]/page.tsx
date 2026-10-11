@@ -71,6 +71,9 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const order = await api.get<BuyerOrder>(`/buyer/orders/${id}`);
   const adaPembayaranTerverifikasi = order.payments.some((p) => p.verificationStatus === "VERIFIED");
+  const canCancel =
+    (!order.cancellationRequestStatus || order.cancellationRequestStatus === "REJECTED") &&
+    !NOT_CANCELLABLE_STATUS.includes(order.status);
   return <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
     <Link href="/account" className="text-sm font-bold text-brand-700">← Pesanan</Link>
     <div className="mt-4 rounded-2xl border border-sand-200 bg-white p-6">
@@ -112,8 +115,8 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
             <p>Pengajuan pembatalan ditolak Seller{order.cancellationDecisionReason ? `: ${order.cancellationDecisionReason}` : "."}</p>
           </div>
         )}
-        {(!order.cancellationRequestStatus || order.cancellationRequestStatus === "REJECTED") && !NOT_CANCELLABLE_STATUS.includes(order.status) && (
-          <div className="mt-3"><CancelRequestForm orderId={order.id} /></div>
+        {canCancel && (
+          <p className="mt-2 text-sm text-sand-500">Tombol pengajuan ada di samping &ldquo;Buka pembayaran &amp; status&rdquo; di bawah.</p>
         )}
       </section>
 
@@ -183,7 +186,10 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
       {order.shipment ? <div className="mt-2 rounded-xl bg-sand-50 p-3 text-sm text-sand-700"><p>{SHIPMENT_METHOD_LABEL[order.shipment.method] ?? "Pengiriman"} · {SHIPMENT_STATUS_LABEL[order.shipment.status] ?? "Diproses"}</p>{order.shipment.courier && <p>{order.shipment.courier}{order.shipment.trackingNumber ? ` · ${order.shipment.trackingNumber}` : ""}</p>}{order.shipment.address && <p>{order.shipment.address}</p>}</div> : <p className="mt-2 text-sm text-sand-500">Metode pengiriman belum dipilih.</p>}
       <h2 className="mt-6 font-extrabold">Progres pesanan</h2>
       <ol className="mt-2 space-y-3">{order.salesEvent.timelineEntries.length ? order.salesEvent.timelineEntries.map((entry) => <li key={entry.id} className="border-l-2 border-brand-300 pl-3 text-sm"><strong>{entry.title}</strong>{entry.milestoneCode && <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-brand-700">{MILESTONE_LABEL[entry.milestoneCode] ?? entry.milestoneCode}</span>}<p className="text-xs text-sand-500">{formatTanggal(entry.createdAt)}</p>{entry.notes && <p className="mt-1 text-sand-600">{entry.notes}</p>}</li>) : <li className="text-sm text-sand-500">Belum ada pembaruan.</li>}</ol>
-      <div className="mt-6"><Link href={`/portal/${order.publicToken}`} className="inline-flex rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">Buka pembayaran & status</Link></div>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link href={`/portal/${order.publicToken}`} className="inline-flex rounded-full bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">Buka pembayaran & status</Link>
+        {canCancel && <CancelRequestForm orderId={order.id} />}
+      </div>
     </div>
   </main>;
 }

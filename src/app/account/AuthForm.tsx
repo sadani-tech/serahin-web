@@ -1,16 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { ReactNode } from "react";
 import type { BuyerActionState } from "@/lib/buyer-auth-actions";
 import { ToastFeedback } from "@/components/Toast";
+import { Icon } from "@/components/revamp/IconSprite";
 
 type Action = (state: BuyerActionState, form: FormData) => Promise<BuyerActionState>;
 type Field = { name: string; label: string; type?: string; autoComplete?: string; required?: boolean; defaultValue?: string };
 
+/** Ikon prefix per tipe field (lihat Icon di @/components/revamp/IconSprite). */
+const FIELD_ICON: Partial<Record<string, string>> = { email: "mail", tel: "phone" };
+
 export function AuthForm({ action, fields, hidden, submit, secondaryAction, footer, success, social }: { action: Action; fields: Field[]; hidden?: Record<string, string>; submit: string; /** Link kecil di bawah tombol submit, mis. "Lupa kata sandi?" */ secondaryAction?: { href: string; label: string }; footer?: { href: string; label: string }; success?: { title: string; copy: string }; social?: ReactNode }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+
+  function togglePassword(name: string) {
+    setVisiblePasswords((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
   if (state?.message && success) return <div role="status" className="space-y-5 text-center">
     <ToastFeedback success={state.message} />
     <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-100 text-2xl text-brand-700">✓</div>
@@ -30,11 +45,47 @@ export function AuthForm({ action, fields, hidden, submit, secondaryAction, foot
   return <><form action={formAction} className="space-y-4">
     {hidden && Object.entries(hidden).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
     <ToastFeedback error={state?.error} success={state?.message} />
-    {fields.map((field) => field.type === "checkbox"
-      ? <label key={field.name} className="flex gap-3 text-sm font-bold leading-5 text-sand-700"><input name={field.name} type="checkbox" required={field.required ?? false} className="mt-1 h-4 w-4" /><span>{field.label}</span></label>
-      : <label key={field.name} className="block text-sm font-bold text-sand-700">{field.label}
-        <input name={field.name} type={field.type ?? "text"} autoComplete={field.autoComplete} defaultValue={field.defaultValue} required={field.required ?? true} className="mt-1.5 min-h-11 w-full rounded-xl border border-sand-300 px-3 font-medium" />
-      </label>)}
+    {fields.map((field) => {
+      if (field.type === "checkbox") return (
+        <label key={field.name} className="flex gap-3 text-sm font-bold leading-5 text-sand-700">
+          <input name={field.name} type="checkbox" required={field.required ?? false} className="mt-1 h-4 w-4" />
+          <span>{field.label}</span>
+        </label>
+      );
+      const isPassword = field.type === "password";
+      const prefixIcon = isPassword ? "lock" : FIELD_ICON[field.type ?? "text"];
+      const shown = visiblePasswords.has(field.name);
+      return (
+        <label key={field.name} className="block text-sm font-bold text-sand-700">
+          {field.label}
+          <span className="relative mt-1.5 block">
+            {prefixIcon && (
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sand-400">
+                <Icon name={prefixIcon} className="h-4 w-4" />
+              </span>
+            )}
+            <input
+              name={field.name}
+              type={isPassword ? (shown ? "text" : "password") : (field.type ?? "text")}
+              autoComplete={field.autoComplete}
+              defaultValue={field.defaultValue}
+              required={field.required ?? true}
+              className={`min-h-11 w-full rounded-xl border border-sand-300 py-2.5 font-medium text-sand-900 ${prefixIcon ? "pl-10" : "pl-3.5"} ${isPassword ? "pr-10" : "pr-3.5"}`}
+            />
+            {isPassword && (
+              <button
+                type="button"
+                onClick={() => togglePassword(field.name)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sand-400 hover:text-sand-600"
+                aria-label={shown ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+              >
+                <Icon name={shown ? "eye-off" : "eye"} className="h-4 w-4" />
+              </button>
+            )}
+          </span>
+        </label>
+      );
+    })}
     <button disabled={pending} className="min-h-11 w-full rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white disabled:opacity-60">{pending ? "Memproses…" : submit}</button>
     {secondaryAction && <p className="text-center text-sm"><Link className="font-bold text-brand-700 hover:underline" href={secondaryAction.href}>{secondaryAction.label}</Link></p>}
     {footer && <p className="text-center text-sm text-sand-600"><Link className="font-bold text-brand-700 hover:underline" href={footer.href}>{footer.label}</Link></p>}

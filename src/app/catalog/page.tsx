@@ -215,16 +215,25 @@ export default async function CatalogPage({
 
               <ToastFeedback error={catalogResult.error} />
 
-              <aside className="k-alert" aria-labelledby="k-alert-title">
-                <span className="k-alert__icon"><Icon name="info" /></span>
-                <div className="k-alert__copy">
-                  <p className="k-alert__title" id="k-alert-title">Masuk sebagai buyer, untuk pengalaman lebih nyaman</p>
-                  <p className="k-alert__text">Kalau masuk sebagai Buyer, semua pesananmu terkumpul di satu tempat, jadi kamu tidak perlu mencari tautan pesanan satu per satu.</p>
-                </div>
-                <Link href="/account/login" className="btn btn--ghost btn--sm"><span>Masuk</span><span className="btn__icon"><Icon name="arrow" /></span></Link>
-              </aside>
+              {catalog && (
+                <aside className="k-alert" aria-labelledby="k-alert-title">
+                  <span className="k-alert__icon"><Icon name="info" /></span>
+                  <div className="k-alert__copy">
+                    <p className="k-alert__title" id="k-alert-title">Masuk sebagai buyer, untuk pengalaman lebih nyaman</p>
+                    <p className="k-alert__text">Kalau masuk sebagai Buyer, semua pesananmu terkumpul di satu tempat, jadi kamu tidak perlu mencari tautan pesanan satu per satu.</p>
+                  </div>
+                  <Link href="/account/login" className="btn btn--ghost btn--sm"><span>Masuk</span><span className="btn__icon"><Icon name="arrow" /></span></Link>
+                </aside>
+              )}
 
-              {catalog && catalog.campaigns.length === 0 ? (
+              {!catalog ? (
+                <div className="k-state k-state--error">
+                  <span className="k-state__icon"><Icon name="signal-off" /></span>
+                  <p className="k-state__title">Katalog belum bisa dimuat</p>
+                  <p className="k-state__text">Sepertinya ada kendala koneksi atau server sedang sibuk. Coba muat ulang halaman ini sebentar lagi.</p>
+                  <Link href="/catalog" className="btn btn--primary btn--sm"><span>Muat Ulang</span><span className="btn__icon"><Icon name="arrow" /></span></Link>
+                </div>
+              ) : catalog.campaigns.length === 0 ? (
                 <p className="k-empty">Belum ada produk yang cocok. Coba pilih kategori atau filter lain.</p>
               ) : (
                 <div className="k-grid">
@@ -234,10 +243,11 @@ export default async function CatalogPage({
                       return (
                         <article key={`${campaign.id}-${variant.id}`} className="pcard">
                           <div className="pcard__media">
+                            {showClosed && <span className="pcard__tag">PO Ditutup</span>}
                             <ProductImage src={variant.gambarUrl} alt={variant.namaVarian} className="h-full w-full object-cover" />
                           </div>
                           <div className="pcard__body">
-                            <p className="pcard__seller">{campaign.seller.businessName}</p>
+                            <p className="pcard__seller">{campaign.seller.businessName} · {campaign.namaProduk}</p>
                             <h3 className="pcard__name">{variant.namaVarian}</h3>
                             <div className="pcard__row">
                               <p className="pcard__price">{formatRupiah(variant.harga)}</p>
@@ -246,13 +256,19 @@ export default async function CatalogPage({
                               </span>
                             </div>
                             <div className="pcard__actions">
-                              <Link href={detailHref} className="pcard__buy">Beli Produk</Link>
-                              <CatalogQuickAdd
-                                role={session?.role}
-                                detailHref={detailHref}
-                                event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }}
-                                item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
-                              />
+                              {showClosed ? (
+                                <Link href={detailHref} className="pcard__buy">Detail Produk</Link>
+                              ) : (
+                                <>
+                                  <Link href={detailHref} className="pcard__buy">Beli Produk</Link>
+                                  <CatalogQuickAdd
+                                    role={session?.role}
+                                    detailHref={detailHref}
+                                    event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }}
+                                    item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
+                                  />
+                                </>
+                              )}
                             </div>
                             <p className="pcard__date"><Icon name="calendar" />{PAYMENT_SCHEME_LABEL[campaign.paymentScheme]} · Tutup PO: {formatTanggal(campaign.tanggalTutup)}</p>
                           </div>
