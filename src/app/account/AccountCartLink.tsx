@@ -9,12 +9,16 @@ export function AccountCartLink() {
   return (
     <Link
       href="/cart"
-      className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-2 text-sand-700 hover:bg-brand-50 hover:text-brand-700"
+      className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition hover:scale-105 hover:bg-brand-100"
       aria-label={`Keranjang, ${count} item`}
       title="Keranjang"
     >
-      <CartIcon className="h-6 w-6 text-brand-700" />
-      {count > 0 && <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5 text-[11px] text-white">{count > 99 ? "99+" : count}</span>}
+      <CartIcon className="h-5 w-5" />
+      {count > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full border-2 border-white bg-accent-600 px-1 py-0.5 text-[10px] font-extrabold leading-none text-white">
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
     </Link>
   );
 }

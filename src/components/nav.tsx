@@ -261,7 +261,7 @@ export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
                 const active = isActive(link.href, link.exact);
                 return (
                   <li key={link.href}>
-                    <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
+                    <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-full px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
                       <span className={active ? "text-sun-300" : "text-sand-400"}>{link.icon}</span>
                       {link.label}
                     </Link>
@@ -340,7 +340,7 @@ export function NavLinks({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
           <Link
             key={link.href}
             href={link.href}
-            className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"
@@ -369,7 +369,7 @@ export function NavIconActions({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }
             href={link.href}
             title={link.label}
             aria-label={link.label}
-            className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-500 hover:bg-brand-50 hover:text-brand-700"
@@ -393,7 +393,7 @@ export function MobileMenuButton({
   return (
     <button
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-xl text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 lg:hidden"
+      className="flex h-9 w-9 items-center justify-center rounded-full text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 lg:hidden"
       aria-label={open ? "Tutup menu" : "Buka menu"}
     >
       {open ? (
@@ -448,7 +448,7 @@ export function MobileDrawer({
           <SerahinLogo size="sm" />
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-sand-400 hover:bg-sand-100 hover:text-sand-700"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="h-4 w-4">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -469,7 +469,7 @@ export function MobileDrawer({
                       <Link
                         href={link.href}
                         onClick={onClose}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                        className={`flex items-center gap-3 rounded-full px-3 py-3 text-sm font-medium transition-colors ${
                           active
                             ? "bg-brand-600 text-white shadow-brand"
                             : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
@@ -536,7 +536,7 @@ export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
                 }`}
               >
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
+                  className={`flex h-6 w-6 items-center justify-center rounded-full transition-all ${
                     active ? "bg-brand-600 text-white scale-110" : ""
                   }`}
                 >
@@ -555,7 +555,7 @@ export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
             }`}
           >
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full transition-all ${
                 menuOpen ? "bg-brand-600 text-white scale-110" : ""
               }`}
             >
@@ -586,7 +586,7 @@ export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
                   active ? "text-brand-700" : "text-sand-500"
                 }`}
               >
-                <span className={`rounded-xl p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
+                <span className={`rounded-full p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
                   {link.icon}
                 </span>
                 {link.label}
