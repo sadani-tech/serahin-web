@@ -195,6 +195,10 @@ export function PortalPaymentForm({
               (opt) => (
                 <label
                   key={opt}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMetode(opt);
+                  }}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                     metode === opt
                       ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
@@ -206,8 +210,8 @@ export function PortalPaymentForm({
                     name="metodePengirimanRadio"
                     value={opt}
                     checked={metode === opt}
-                    onChange={() => setMetode(opt)}
-                    className="h-4 w-4 accent-brand-600"
+                    readOnly
+                    className="h-4 w-4 pointer-events-none accent-brand-600"
                   />
                   <span className="font-medium text-sand-800">
                     {METODE_PENGIRIMAN_LABEL[opt]}

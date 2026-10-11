@@ -193,14 +193,26 @@ export function PortalSettlementForm({
             return (
               <label
                 key={item.id}
+                // iOS: beberapa in-app browser (mis. WebView WhatsApp) tidak
+                // meneruskan tap pada <label> ke <input> anaknya, sehingga
+                // checklist terasa tidak merespons sama sekali. onClick di
+                // label ini menangani toggle secara eksplisit (preventDefault
+                // mencegah toggle native ganda di browser yang forwarding-nya
+                // normal); input dibuat pointer-events-none supaya tidak
+                // pernah jadi sumber event kedua.
+                onClick={(e) => {
+                  if (!unsettled) return;
+                  e.preventDefault();
+                  toggleItem(item.id);
+                }}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm ${unsettled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
               >
                 <input
                   type="checkbox"
                   checked={unsettled ? checked : true}
                   disabled={!unsettled}
-                  onChange={() => unsettled && toggleItem(item.id)}
-                  className="h-4 w-4 accent-brand-600"
+                  readOnly
+                  className="h-4 w-4 pointer-events-none accent-brand-600"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium text-sand-800">
@@ -266,6 +278,10 @@ export function PortalSettlementForm({
               .map((opt) => (
                 <label
                   key={opt}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMetode(opt);
+                  }}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                     metode === opt ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500" : "border-sand-200 hover:border-sand-300"
                   }`}
@@ -275,8 +291,8 @@ export function PortalSettlementForm({
                     name="metodePengirimanRadio"
                     value={opt}
                     checked={metode === opt}
-                    onChange={() => setMetode(opt)}
-                    className="h-4 w-4 accent-brand-600"
+                    readOnly
+                    className="h-4 w-4 pointer-events-none accent-brand-600"
                   />
                   <span className="font-medium text-sand-800">{METODE_PENGIRIMAN_LABEL[opt]}</span>
                 </label>

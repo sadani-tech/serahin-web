@@ -113,6 +113,7 @@ export function PublicOrderForm({
     undefined,
   );
   const checkoutKey = useRef("");
+  const acceptPoliciesRef = useRef<HTMLInputElement>(null);
   // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
   const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
     gatewayEnabled ? "GATEWAY" : "MANUAL",
@@ -778,6 +779,11 @@ export function PublicOrderForm({
                 ).map(([value, judul, sub]) => (
                   <label
                     key={value}
+                    onClick={(e) => {
+                      if (orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)) return;
+                      e.preventDefault();
+                      setMetodeBayar(value);
+                    }}
                     className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${
                       metodeBayar === value
                         ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
@@ -789,9 +795,9 @@ export function PublicOrderForm({
                       name="metodeBayarRadio"
                       value={value}
                       checked={metodeBayar === value}
-                      onChange={() => setMetodeBayar(value)}
+                      readOnly
                       disabled={orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)}
-                      className="mt-0.5 h-4 w-4 accent-brand-600"
+                      className="pointer-events-none mt-0.5 h-4 w-4 accent-brand-600"
                     />
                     <span>
                       <span className="block font-bold text-sand-800">{judul}</span>
@@ -844,6 +850,10 @@ export function PublicOrderForm({
                     {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[]).map((opt) => (
                       <label
                         key={opt}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setMetode(opt);
+                        }}
                         className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                           metode === opt
                             ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
@@ -855,8 +865,8 @@ export function PublicOrderForm({
                           name="metodePengirimanRadio"
                           value={opt}
                           checked={metode === opt}
-                          onChange={() => setMetode(opt)}
-                          className="h-4 w-4 accent-brand-600"
+                          readOnly
+                          className="h-4 w-4 pointer-events-none accent-brand-600"
                         />
                         <span className="font-medium text-sand-800">{METODE_PENGIRIMAN_LABEL[opt]}</span>
                       </label>
@@ -918,8 +928,17 @@ export function PublicOrderForm({
             <p className="mt-1 text-right text-xs text-sand-500">{paymentRule}</p>
           </div>
           <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
-            <label className="flex items-start gap-3">
+            <label
+              className="flex items-start gap-3"
+              onClick={(e) => {
+                if (orderingDisabled || (e.target as HTMLElement).closest("a")) return;
+                e.preventDefault();
+                const input = acceptPoliciesRef.current;
+                if (input) input.checked = !input.checked;
+              }}
+            >
               <input
+                ref={acceptPoliciesRef}
                 type="checkbox"
                 name="acceptPolicies"
                 value="1"
