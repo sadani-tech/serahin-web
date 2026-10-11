@@ -459,7 +459,7 @@ export function PublicOrderForm({
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Pilih produk</p>
-            <h2 id="catalog-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">
+            <h2 id="catalog-heading" className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">
               Katalog varian
             </h2>
           </div>
@@ -720,7 +720,7 @@ export function PublicOrderForm({
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl p-5 sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Keranjang</p>
-          <h2 id="summary-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
+          <h2 id="summary-heading" className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
           {adaItem ? (
             <ul className="mt-4 space-y-3 border-y border-sand-100 py-4">
               {rows.map((r) => (
@@ -754,7 +754,7 @@ export function PublicOrderForm({
         <div className="mx-auto max-w-2xl space-y-5 p-5 sm:p-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Checkout</p>
-            <h2 id={`${idPrefix}-checkout-heading`} className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Konfirmasi dan bayar</h2>
+            <h2 id={`${idPrefix}-checkout-heading`} className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Konfirmasi dan bayar</h2>
             <p className="mt-1 text-sm text-sand-500">Pilihan produk di atas langsung menjadi pesananmu. Tidak perlu mengisi form produk lagi.</p>
           </div>
 
