@@ -8,6 +8,14 @@ import { api } from "@/lib/api";
 
 export const metadata: Metadata = { title: "Keranjang", robots: { index: false, follow: false } };
 
+const NAV_LINKS = [
+  { href: "/#kenapa", label: "Kenapa Serahin" },
+  { href: "/#fitur", label: "Fitur" },
+  { href: "/#cara-kerja", label: "Cara Kerja" },
+  { href: "/#testimonial", label: "Testimonial" },
+  { href: "/#faq", label: "FAQ" },
+];
+
 export default async function CartPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
   const session = await getSession();
   const { checkout } = await searchParams;
@@ -17,10 +25,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   return (
     <div className="rv-scope js is-loaded">
       <IconSprite />
-      {/* navLinks kosong = setara "catalogNav" di PublicHeader lama: tanpa
-          link Kenapa Serahin/Fitur/dll, cart icon + Masuk/Dashboard tetap
-          tampil (lihat RevampHeader — showCart default true). */}
-      <RevampHeader navLinks={[]} loggedIn={Boolean(session)} role={session?.role} />
+      <RevampHeader navLinks={NAV_LINKS} loggedIn={Boolean(session)} role={session?.role} />
       <main className="cart-page">
         <CartPageClient resumeCheckout={checkout === "1"} switchingAccount={Boolean(session && session.role !== "BUYER")} buyerProfile={buyerProfile} />
       </main>

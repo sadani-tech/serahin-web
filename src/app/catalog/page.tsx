@@ -215,7 +215,7 @@ export default async function CatalogPage({
 
               <ToastFeedback error={catalogResult.error} />
 
-              {catalog && (
+              {catalog && !(session?.role === "BUYER") && (
                 <aside className="k-alert" aria-labelledby="k-alert-title">
                   <span className="k-alert__icon"><Icon name="info" /></span>
                   <div className="k-alert__copy">

@@ -1404,9 +1404,16 @@
   .rv-scope .pcard__price { font-size: 1.15rem; }
   .rv-scope .pcard__meta { font-size: .76rem; white-space: normal; }
   .rv-scope .pcard__date { font-size: .72rem; }
-  .rv-scope .pcard__buy { min-height: 40px; font-size: .82rem; }
+  .rv-scope .pcard__buy { min-height: 40px; padding: 6px 8px; font-size: .82rem; line-height: 1.2; text-align: center; }
   .rv-scope .pcard__cart { width: 40px; height: 40px; }
   .rv-scope .pcard__cart svg { width: 16px; height: 16px; }
+}
+/* Layar super sempit (mis. iPhone SE 320px) — "Beli Produk" bisa wrap
+   2 baris di dalam tombol pill; .pcard__buy sudah auto-grow (min-height
+   bukan height tetap) tapi font/padding diperkecil lagi di sini supaya
+   teks tetap muat 1 baris dan tidak mepet ke border pill. */
+@media (max-width: 359px) {
+  .rv-scope .pcard__buy { font-size: .74rem; padding: 6px 4px; letter-spacing: -.01em; }
 }
 .rv-scope .pcard__date {
   display: flex; align-items: center; justify-content: center; gap: 10px;
