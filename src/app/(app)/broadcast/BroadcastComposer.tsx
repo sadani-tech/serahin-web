@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ToastFeedback, useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { Select } from "@/components/ui";
 import { createBroadcast, loadBroadcastOptions, previewBroadcast, type BroadcastOptions, type BroadcastPayload, type BroadcastPreview } from "./actions";
 
@@ -24,6 +25,7 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
   const [pending, startTransition] = useTransition();
   const toast = useToast();
   const router = useRouter();
+  const { confirm } = useConfirm();
   const selectedProduct = options?.products.find((product) => product.id === productId);
 
   const payload = useMemo<BroadcastPayload>(() => ({
@@ -56,8 +58,15 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
     });
   }
 
-  function send() {
-    if (!preview || !window.confirm(`Antrekan email untuk ${preview.recipientCount} Buyer? Audience akan disimpan sebagai snapshot.`)) return;
+  async function send() {
+    if (!preview) return;
+    const ok = await confirm({
+      title: `Antrekan email untuk ${preview.recipientCount} Buyer?`,
+      description: "Audience akan disimpan sebagai snapshot.",
+      confirmLabel: "Antrekan",
+      variant: "primary",
+    });
+    if (!ok) return;
     setError("");
     startTransition(async () => {
       const result = await createBroadcast(payload);
