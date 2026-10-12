@@ -16,7 +16,7 @@ const sections: Section[] = [
           <li>
             <strong>Pengaturan Toko</strong> (<Link href="/seller/profile">/seller/profile</Link>) — isi nama
             bisnis, deskripsi, email &amp; nomor kontak, dan URL logo. Data ini langsung tampil di storefront
-            publik toko kamu (<code>/s/&lt;slug-toko&gt;</code>) yang akan dilihat Buyer.
+            publik toko kamu (<code>/store/&lt;slug-toko&gt;</code>) yang akan dilihat Buyer.
           </li>
           <li>
             <strong>Rekening Transfer</strong> (<Link href="/rekening">/rekening</Link>) — tambahkan minimal satu
@@ -80,13 +80,13 @@ const sections: Section[] = [
         <p>Ada beberapa cara membagikan Batch PO yang sudah Open ke calon pembeli:</p>
         <ul>
           <li>
-            <strong>Link storefront toko</strong> — <code>https://serahin.suraise.com/s/&lt;slug-toko&gt;</code>,
+            <strong>Link storefront toko</strong> — <code>https://serahin.suraise.com/store/&lt;slug-toko&gt;</code>,
             menampilkan semua produk aktif dari semua Batch PO toko kamu dalam satu halaman. Slug toko bisa
             dilihat di halaman Pengaturan Toko.
           </li>
           <li>
             <strong>Link produk spesifik</strong> — setiap Produk punya halaman detail sendiri
-            (<code>/s/&lt;slug-toko&gt;/produk/&lt;slug-produk&gt;</code>) lengkap dengan galeri foto, harga,
+            (<code>/store/&lt;slug-toko&gt;/produk/&lt;slug-produk&gt;</code>) lengkap dengan galeri foto, harga,
             sisa kuota, dan tombol Tambah ke Keranjang/Beli Sekarang. Ini link paling cocok dibagikan ke grup
             WhatsApp/Instagram karena langsung mengarah ke barang yang dipromosikan.
           </li>
