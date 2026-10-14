@@ -10,6 +10,7 @@ import {
 } from "@/components/nav";
 import { SerahinLogo } from "@/components/brand";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { SellerAssistantWidget } from "@/components/SellerAssistantWidget";
 import { NavigationProgress } from "@/hooks/useNavigationLoading";
 import { NavLoadingProvider } from "@/hooks/useNavLoading";
 
@@ -56,6 +57,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           <BottomNav role={dashboardRole} />
         </div>
       </div>
+      {dashboardRole === "SELLER" && <SellerAssistantWidget />}
     </NavLoadingProvider>
   );
 }

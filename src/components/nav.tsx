@@ -57,6 +57,17 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/produk",
+    label: "Produk",
+    roles: ["SELLER"],
+    group: "Operasional",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 8l-9-5-9 5 9 5 9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
+      </svg>
+    ),
+  },
+  {
     href: "/pesanan",
     label: "Pesanan",
     roles: ["SELLER"],
@@ -66,7 +77,7 @@ const links: NavLink[] = [
         <path d="M6 2h12l2 5H4l2-5Z" /><path d="M5 7v15h14V7" /><path d="M9 11h6M9 15h6" />
       </svg>
     ),
-  },  
+  },
   {
     href: "/penjual",
     label: "Penjual",

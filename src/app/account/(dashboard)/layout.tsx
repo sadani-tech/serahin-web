@@ -26,7 +26,7 @@ export default async function AccountDashboardLayout({ children }: { children: R
           )}
         </nav>
       </header>
-      <div className="dashboard-main">{children}</div>
+      <div className="dashboard-main bg-serahin-dots min-h-full">{children}</div>
     </>
   );
 }

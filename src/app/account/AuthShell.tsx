@@ -1,16 +1,20 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { SerahinLogo } from "@/components/brand";
+import { SerahinMark } from "@/components/brand";
 import { PublicFooter } from "@/components/PublicFooter";
 import { IconSprite, Icon } from "@/components/revamp/IconSprite";
 
 /**
- * Shell auth revamp (login/register/activate/forgot/reset-password Buyer, +
- * seller/login) — diport dari libraries/serahin-docs/design/serahin
- * login.css/daftar.css, lalu panel foto diganti panel brand gelap tanpa foto
- * model (lihat auth__media di revamp.css). Logo+judul+form di kanan.
- * <AuthForm> (fields, submit, validasi, Google sign-in) dirender apa adanya
- * lewat {children} — TIDAK direstyle di sini, lihat AuthForm.tsx.
+ * Shell auth bersama — dipakai Admin (/login), Buyer
+ * (login/register/activate/forgot/reset-password), dan Seller
+ * (seller/login). Campuran dua model (lihat catatan panjang di
+ * revamp.css bagian "Auth pages"): kartu putih + pita aksen di puncak
+ * sendirian di mobile, ditambah panel brand dekoratif di kiri khusus
+ * desktop/tablet ≥900px. Panel kiri murni dekoratif (aria-hidden,
+ * tanpa logo sendiri) supaya logo tetap satu-satunya instance di
+ * DOM — logo dobel pernah jadi bug saat kolom kiri ditumpuk di mobile.
+ * <AuthForm> (fields, submit, validasi, Google sign-in) dirender apa
+ * adanya lewat {children} — TIDAK direstyle di sini, lihat AuthForm.tsx.
  */
 export function AuthShell({
   title,
@@ -22,45 +26,60 @@ export function AuthShell({
   children: ReactNode;
 }) {
   return (
-    <div className="rv-scope js is-ready flex min-h-full flex-1 flex-col">
+    <div
+      className="rv-scope js is-ready flex min-h-full flex-1 flex-col"
+      style={{ background: "#e4f0e2" }}
+    >
       <IconSprite />
       <main className="auth">
         <aside className="auth__media" aria-hidden="true">
           <span className="auth__media-grid" />
           <span className="auth__media-glow" />
-          <Link className="auth__media-brand" href="/" tabIndex={-1}>
-            <SerahinLogo size="sm" tone="onDark" />
-          </Link>
           <div className="auth__media-copy">
             <h2 className="auth__media-title">Kelola pre-order dari satu tempat yang rapi.</h2>
             <p className="auth__media-lead">Kampanye, pembayaran, dan pengiriman tersusun dalam satu alur — tanpa spreadsheet dan chat yang tercecer.</p>
-            <div className="auth__media-chips">
-              <span className="auth__media-chip"><Icon name="check" />Buyer tanpa akun</span>
-              <span className="auth__media-chip"><Icon name="check" />DP &amp; pelunasan fleksibel</span>
+          </div>
+          <div className="auth__media-stats">
+            <div className="auth__media-stat">
+              <span className="auth__media-stat-icon"><Icon name="check" /></span>
+              <span>
+                <span className="auth__media-stat-value">Real-time</span>
+                <span className="auth__media-stat-label">Status pesanan terpantau</span>
+              </span>
+            </div>
+            <div className="auth__media-stat">
+              <span className="auth__media-stat-icon"><Icon name="wallet" /></span>
+              <span>
+                <span className="auth__media-stat-value">Fleksibel</span>
+                <span className="auth__media-stat-label">DP &amp; pelunasan</span>
+              </span>
             </div>
           </div>
         </aside>
 
         <section className="auth__panel" aria-labelledby="auth-title">
           <div className="auth__inner">
-            <Link className="auth__brand" href="/" aria-label="Serahin — ke beranda" data-step style={{ "--i": 0 } as React.CSSProperties}>
-              <SerahinLogo size="sm" />
-            </Link>
+            <div className="bg-serahin-ribbon h-1.5 w-full" aria-hidden="true" />
+            <div className="auth__card-body">
+              <Link className="auth__brand" href="/" aria-label="Serahin — ke beranda" data-step style={{ "--i": 0 } as React.CSSProperties}>
+                <SerahinMark className="h-14 w-14" />
+              </Link>
 
-            <Link className="auth__back" href="/" data-step style={{ "--i": 0 } as React.CSSProperties}>
-              <Icon name="arrow" />Kembali ke Beranda
-            </Link>
+              <Link className="auth__back" href="/" data-step style={{ "--i": 0 } as React.CSSProperties}>
+                <Icon name="arrow" />Kembali ke Beranda
+              </Link>
 
-            <h1 className="auth__title auth__title--first" id="auth-title" data-step style={{ "--i": 1 } as React.CSSProperties}>
-              {title}
-            </h1>
-            <p className="lead" style={{ margin: "-16px 0 20px", textAlign: "center" }} data-step>{copy}</p>
+              <h1 className="auth__title auth__title--first" id="auth-title" data-step style={{ "--i": 1 } as React.CSSProperties}>
+                {title}
+              </h1>
+              <p className="lead" style={{ margin: "-16px 0 20px", textAlign: "center" }} data-step>{copy}</p>
 
-            {children}
+              {children}
 
-            <p className="auth__legal" data-step style={{ "--i": 12 } as React.CSSProperties}>
-              Dengan masuk, Anda menyetujui <Link href="/terms">Syarat &amp; Ketentuan</Link> dan <Link href="/privacy">Kebijakan Privasi</Link> Serahin.
-            </p>
+              <p className="auth__legal" data-step style={{ "--i": 12 } as React.CSSProperties}>
+                Dengan masuk, Anda menyetujui <Link href="/terms">Syarat &amp; Ketentuan</Link> dan <Link href="/privacy">Kebijakan Privasi</Link> Serahin.
+              </p>
+            </div>
           </div>
         </section>
       </main>

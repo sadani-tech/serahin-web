@@ -8,7 +8,7 @@ import { ToastFeedback } from "@/components/Toast";
 import { Icon } from "@/components/revamp/IconSprite";
 
 type Action = (state: BuyerActionState, form: FormData) => Promise<BuyerActionState>;
-type Field = { name: string; label: string; type?: string; autoComplete?: string; required?: boolean; defaultValue?: string };
+type Field = { name: string; label: string; type?: string; autoComplete?: string; required?: boolean; defaultValue?: string; minLength?: number; placeholder?: string };
 
 /** Ikon prefix per tipe field (lihat Icon di @/components/revamp/IconSprite). */
 const FIELD_ICON: Partial<Record<string, string>> = { email: "mail", tel: "phone" };
@@ -70,6 +70,8 @@ export function AuthForm({ action, fields, hidden, submit, secondaryAction, foot
               autoComplete={field.autoComplete}
               defaultValue={field.defaultValue}
               required={field.required ?? true}
+              minLength={field.minLength}
+              placeholder={field.placeholder}
               className={`min-h-11 w-full rounded-xl border border-sand-300 py-2.5 font-medium text-sand-900 ${prefixIcon ? "pl-10" : "pl-3.5"} ${isPassword ? "pr-10" : "pr-3.5"}`}
             />
             {isPassword && (

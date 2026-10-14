@@ -49,6 +49,8 @@ export default async function proxy(req: NextRequest) {
     pathname === "/seller" ||
     pathname === "/seller/login" ||
     pathname === "/seller/activate" ||
+    pathname === "/seller/forgot-password" ||
+    pathname === "/seller/reset-password" ||
     pathname === "/about" ||
     pathname === "/contact" ||
     pathname === "/terms" ||

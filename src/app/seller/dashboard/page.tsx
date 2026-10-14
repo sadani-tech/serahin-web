@@ -35,7 +35,7 @@ export default async function SellerDashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">Seller dashboard</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900 sm:text-3xl">{profile.businessName}</h1><p className="mt-1 text-sm text-sand-500">Ringkasan operasional Batch PO dan pembayaran toko Anda.</p></div>
-        <div className="flex gap-2"><LinkButton href={`/catalog?seller=${encodeURIComponent(profile.slug)}`} variant="secondary">Lihat storefront</LinkButton><LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton></div>
+        <div className="flex gap-2"><LinkButton href={`/catalog?seller=${encodeURIComponent(profile.slug)}`} variant="secondary">Lihat Toko</LinkButton><LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton></div>
       </div>
 
       {/* Filter (v2.3.7 — sebelumnya cuma ada di dashboard Admin) */}

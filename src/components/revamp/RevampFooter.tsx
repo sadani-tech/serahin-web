@@ -45,7 +45,7 @@ export function RevampFooter() {
       <div className="footer__cols">
         <nav aria-labelledby="f-menu"><h2 className="footer__h" id="f-menu">Menu</h2><ul><li><Link href="/#kenapa">Kenapa Serahin</Link></li><li><Link href="/#fitur">Fitur</Link></li><li><Link href="/#cara-kerja">Cara Kerja</Link></li><li><Link href="/#testimonial">Testimonial</Link></li><li><Link href="/#faq">FAQ</Link></li></ul></nav>
         <nav aria-labelledby="f-seller"><h2 className="footer__h" id="f-seller">Untuk Seller</h2><ul><li><Link href="/seller/login">Mulai Jualan</Link></li><li><Link href="/seller">Ajukan Sebagai Seller</Link></li></ul></nav>
-        <nav aria-labelledby="f-buyer"><h2 className="footer__h" id="f-buyer">Untuk Buyer</h2><ul><li><Link href="/catalog">Katalog Serahin</Link></li><li><Link href="/arsip">Arsip Katalog Serahin</Link></li><li><Link href="/account/login">Masuk Sebagai Buyer</Link></li></ul></nav>
+        <nav aria-labelledby="f-buyer"><h2 className="footer__h" id="f-buyer">Untuk Buyer</h2><ul><li><Link href="/catalog">Katalog Serahin</Link></li><li><Link href="/account/login">Masuk Sebagai Buyer</Link></li></ul></nav>
         <nav aria-labelledby="f-legal"><h2 className="footer__h" id="f-legal">Legalitas</h2><ul><li><Link href="/privacy">Kebijakan Privasi</Link></li><li><Link href="/terms">Ketentuan Penggunaan</Link></li></ul></nav>
         <div><h2 className="footer__h">Kontak</h2>
           <address><ul>

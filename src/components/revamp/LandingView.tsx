@@ -470,7 +470,7 @@ export function LandingView({
         <div className="footer__cols">
           <nav aria-labelledby="f-menu"><h2 className="footer__h" id="f-menu">Menu</h2><ul><li><a href="#kenapa">Kenapa Serahin</a></li><li><a href="#fitur">Fitur</a></li><li><a href="#cara-kerja">Cara Kerja</a></li><li><a href="#testimonial">Testimonial</a></li><li><a href="#faq">FAQ</a></li></ul></nav>
           <nav aria-labelledby="f-seller"><h2 className="footer__h" id="f-seller">Untuk Seller</h2><ul><li><Link href="/seller/login">Mulai Jualan</Link></li><li><Link href="/seller">Ajukan Sebagai Seller</Link></li></ul></nav>
-          <nav aria-labelledby="f-buyer"><h2 className="footer__h" id="f-buyer">Untuk Buyer</h2><ul><li><Link href="/catalog">Katalog Serahin</Link></li><li><Link href="/arsip">Arsip Katalog Serahin</Link></li><li><Link href="/account/login">Masuk Sebagai Buyer</Link></li></ul></nav>
+          <nav aria-labelledby="f-buyer"><h2 className="footer__h" id="f-buyer">Untuk Buyer</h2><ul><li><Link href="/catalog">Katalog Serahin</Link></li><li><Link href="/account/login">Masuk Sebagai Buyer</Link></li></ul></nav>
           <nav aria-labelledby="f-legal"><h2 className="footer__h" id="f-legal">Legalitas</h2><ul><li><Link href="/privacy">Kebijakan Privasi</Link></li><li><Link href="/terms">Ketentuan Penggunaan</Link></li></ul></nav>
           <div><h2 className="footer__h">Kontak</h2>
             <address><ul>

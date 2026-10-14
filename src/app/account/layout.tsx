@@ -9,5 +9,11 @@ import type { ReactNode } from "react";
  * (dashboard)/layout.tsx, yang hanya membungkus rute yang butuh header itu.
  */
 export default function AccountLayout({ children }: { children: ReactNode }) {
-  return <div className="bg-serahin-dots min-h-full">{children}</div>;
+  // Tidak ada background di sini (dulu bg-serahin-dots) — AuthShell (dipakai
+  // rute login/register/dll di grup ini) sudah bawa background hijaunya
+  // sendiri secara mandiri, termasuk di belakang PublicFooter yang
+  // transparan (bg-white/70) agar tidak ada "sisa" dots cream mengintip di
+  // baliknya. Dashboard Buyer (Pesanan/Profil) punya background dots-nya
+  // sendiri — lihat (dashboard)/layout.tsx.
+  return <div className="min-h-full">{children}</div>;
 }
