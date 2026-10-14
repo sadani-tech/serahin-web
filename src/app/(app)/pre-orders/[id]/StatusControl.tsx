@@ -36,6 +36,12 @@ export function StatusControl({
             value={target}
             onChange={(e) => setTarget(e.target.value as CampaignStatus)}
           >
+            {/* DRAFT bukan target yang bisa dipilih (v2.3.9 FR-42.15) — hanya
+                ditampilkan apa adanya supaya status saat ini tidak salah
+                tampil, lalu Seller pindah manual ke Open untuk publish. */}
+            {current === "DRAFT" && (
+              <option value="DRAFT" disabled>{CAMPAIGN_STATUS_LABEL.DRAFT} (belum dipublikasikan)</option>
+            )}
             {CAMPAIGN_STATUS_ORDER.map((s) => (
               <option key={s} value={s}>
                 {CAMPAIGN_STATUS_LABEL[s]}

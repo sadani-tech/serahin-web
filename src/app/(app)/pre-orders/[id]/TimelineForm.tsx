@@ -31,7 +31,7 @@ export function TimelineForm({ campaignId }: { campaignId: string }) {
           <option value="CLOSED">Closed</option>
           <option value="PRODUCTION">Produksi</option>
           <option value="SHIPMENT">Shipment</option>
-          <option value="PACKING">Packing</option>
+          <option value="PACKING">Siap Kirim</option>
           <option value="DELIVERED">Deliver</option>
           <option value="COMPLETED">Selesai</option>
         </Select>

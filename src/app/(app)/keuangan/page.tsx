@@ -102,7 +102,7 @@ export default async function KeuanganPage({
             <label className="mb-1 block text-xs font-medium text-sand-500">Sampai tanggal</label>
             <Input type="date" name="to" defaultValue={sp.to ?? ""} />
           </div>
-          <button type="submit" className="col-span-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 sm:col-auto">
+          <button type="submit" className="col-span-2 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 sm:col-auto">
             Terapkan
           </button>
         </form>

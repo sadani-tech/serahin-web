@@ -10,6 +10,7 @@ import {
 } from "@/components/nav";
 import { SerahinLogo } from "@/components/brand";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { SellerAssistantWidget } from "@/components/SellerAssistantWidget";
 import { NavigationProgress } from "@/hooks/useNavigationLoading";
 import { NavLoadingProvider } from "@/hooks/useNavLoading";
 
@@ -42,7 +43,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
 
           <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} user={user} />
 
-          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-24 sm:px-6 lg:py-8 lg:pb-8">
+          <main className="dashboard-main mx-auto w-full max-w-7xl flex-1 px-4 py-6 pb-24 sm:px-6 lg:py-8 lg:pb-8">
             {children}
           </main>
 
@@ -56,6 +57,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           <BottomNav role={dashboardRole} />
         </div>
       </div>
+      {dashboardRole === "SELLER" && <SellerAssistantWidget />}
     </NavLoadingProvider>
   );
 }

@@ -43,7 +43,7 @@ export default async function VerificationPage({ searchParams }: { searchParams:
       <label className="text-sm">Batch PO<Select name="campaignId" defaultValue={sp.campaignId ?? ""} className="mt-1 block"><option value="">Semua Batch PO</option>{campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.namaProduk}</option>)}</Select></label>
       {tab === "orders" && <label className="text-sm">Varian<Select name="variantId" defaultValue={sp.variantId ?? ""} className="mt-1 block"><option value="">Semua varian</option>{selectedCampaign?.variants.map((variant) => <option key={variant.id} value={variant.id}>{variant.namaVarian}</option>)}</Select></label>}
       {tab === "payments" && <label className="text-sm">Jenis pembayaran<Select name="paymentType" defaultValue={sp.paymentType ?? ""} className="mt-1 block"><option value="">Semua jenis</option><option value="DOWN_PAYMENT">DP</option><option value="SETTLEMENT">Pelunasan</option><option value="FULL_PAYMENT">Lunas</option></Select></label>}
-      <button className="min-h-11 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-brand">Terapkan</button>
+      <button className="min-h-11 rounded-full bg-brand-600 px-4 text-sm font-bold text-white shadow-brand">Terapkan</button>
       {(sp.campaignId || sp.variantId || sp.paymentType || sp.q) && <Link className="py-2 text-sm text-sand-500" href={`/verifikasi?tab=${tab}`}>Reset</Link>}
     </form></Card>
 

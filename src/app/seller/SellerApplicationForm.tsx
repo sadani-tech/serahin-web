@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { ToastFeedback } from "@/components/Toast";
+import { Icon } from "@/components/revamp/IconSprite";
 import { applySellerAction } from "./actions";
 
 export function SellerApplicationForm() {
@@ -13,6 +14,9 @@ export function SellerApplicationForm() {
     <label className="text-sm font-bold text-sand-700">URL logo (opsional)<input name="logoUrl" type="url" className="mt-1 min-h-11 w-full rounded-xl border border-sand-300 px-3" /></label>
     <label className="text-sm font-bold text-sand-700 sm:col-span-2">Deskripsi bisnis<textarea name="description" required minLength={20} maxLength={3000} rows={5} className="mt-1 w-full rounded-xl border border-sand-300 px-3 py-2" /></label>
     <ToastFeedback error={state?.error} success={state?.success} />
-    <button disabled={pending} className="min-h-11 rounded-xl bg-brand-700 px-5 font-extrabold text-white sm:col-span-2">{pending ? "Mengirim…" : "Kirim pengajuan Seller"}</button>
+    <button disabled={pending} type="submit" className="btn btn--primary btn--block sm:col-span-2 disabled:opacity-60">
+      <span>{pending ? "Mengirim…" : "Kirim pengajuan Seller"}</span>
+      <span className="btn__icon"><Icon name="arrow" /></span>
+    </button>
   </form>;
 }

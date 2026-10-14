@@ -47,3 +47,24 @@ export async function activateSellerAction(_state: SellerFormState, form: FormDa
   (await cookies()).set(TOKEN_COOKIE, data.accessToken, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: data.maxAgeSeconds ?? 86400 });
   redirect("/seller/dashboard");
 }
+
+export async function forgotPasswordSellerAction(_state: SellerFormState, form: FormData): Promise<SellerFormState> {
+  const res = await fetch(`${PUBLIC_API_URL}/auth/seller/forgot-password`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
+    body: JSON.stringify({ email: String(form.get("email") ?? "") }),
+  });
+  if (!res.ok) return { error: await message(res) };
+  const data = await res.json() as { message?: string };
+  return { success: data.message ?? "Jika email terdaftar, tautan reset akan dikirim." };
+}
+
+export async function resetPasswordSellerAction(_state: SellerFormState, form: FormData): Promise<SellerFormState> {
+  const res = await fetch(`${PUBLIC_API_URL}/auth/seller/reset-password`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
+    body: JSON.stringify({ token: String(form.get("token") ?? ""), password: String(form.get("password") ?? ""), confirmPassword: String(form.get("confirmPassword") ?? "") }),
+  });
+  if (!res.ok) return { error: await message(res) };
+  const data = await res.json() as { accessToken: string; maxAgeSeconds?: number };
+  (await cookies()).set(TOKEN_COOKIE, data.accessToken, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: data.maxAgeSeconds ?? 86400 });
+  redirect("/seller/dashboard");
+}

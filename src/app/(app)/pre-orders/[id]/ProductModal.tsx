@@ -7,6 +7,7 @@ import {
   type ProductEditorValues,
   type CampaignDpDefault,
 } from "./products/ProductEditor";
+import { CatalogProductPicker } from "./products/CatalogProductPicker";
 import type { PreorderFormState } from "../actions";
 
 type Vendor = { id: string; nama: string };
@@ -32,6 +33,7 @@ export function ProductModal({
   campaignDp?: CampaignDpDefault;
 }) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"baru" | "katalog">("baru");
 
   return (
     <>
@@ -79,14 +81,40 @@ export function ProductModal({
                 Tutup
               </Button>
             </div>
-            <ProductEditor
-              action={action}
-              initial={initial}
-              vendors={vendors}
-              campaignId={campaignId}
-              submitLabel={submitLabel}
-              campaignDp={campaignDp}
-            />
+            {!initial && (
+              <div className="mb-5 inline-flex rounded-xl border border-sand-200 bg-sand-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => setMode("baru")}
+                  className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
+                    mode === "baru" ? "bg-white text-sand-900 shadow-sm" : "text-sand-500"
+                  }`}
+                >
+                  Produk Baru
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("katalog")}
+                  className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
+                    mode === "katalog" ? "bg-white text-sand-900 shadow-sm" : "text-sand-500"
+                  }`}
+                >
+                  Pilih dari Produk Center
+                </button>
+              </div>
+            )}
+            {!initial && mode === "katalog" ? (
+              <CatalogProductPicker campaignId={campaignId} vendors={vendors} campaignDp={campaignDp} />
+            ) : (
+              <ProductEditor
+                action={action}
+                initial={initial}
+                vendors={vendors}
+                campaignId={campaignId}
+                submitLabel={submitLabel}
+                campaignDp={campaignDp}
+              />
+            )}
           </div>
         </div>
       )}

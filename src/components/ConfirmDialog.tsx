@@ -11,13 +11,22 @@ import {
 } from "react";
 import { Button } from "@/components/ui";
 
-// Pengganti window.confirm / window.alert dengan modal card UI yang konsisten.
+// Pengganti window.confirm / window.alert / window.prompt dengan modal card UI yang konsisten.
 // Pakai lewat hook `useConfirm()`:
-//   const { confirm, alert } = useConfirm();
+//   const { confirm, alert, prompt } = useConfirm();
 //   if (await confirm({ title, description })) { ... }
 //   await alert({ title, description });
+//   const alasan = await prompt({ title, label: "Alasan" }); // null bila dibatalkan/kosong & required
 
 type DialogVariant = "danger" | "primary";
+
+type InputConfig = {
+  label?: string;
+  placeholder?: string;
+  required: boolean;
+  multiline: boolean;
+  defaultValue: string;
+};
 
 type DialogState = {
   title: string;
@@ -25,6 +34,8 @@ type DialogState = {
   confirmLabel: string;
   cancelLabel: string | null; // null → mode alert (tanpa tombol batal)
   variant: DialogVariant;
+  input?: InputConfig;
+  cancelValue: false | null; // nilai yang di-resolve saat batal/Escape/klik luar
 };
 
 type ConfirmOptions = {
@@ -42,18 +53,32 @@ type AlertOptions = {
   variant?: DialogVariant;
 };
 
+type PromptOptions = {
+  title: string;
+  description?: ReactNode;
+  label?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  required?: boolean;
+  multiline?: boolean;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: DialogVariant;
+};
+
 type ConfirmContextValue = {
   confirm: (opts: ConfirmOptions) => Promise<boolean>;
   alert: (opts: AlertOptions) => Promise<void>;
+  prompt: (opts: PromptOptions) => Promise<string | null>;
 };
 
 const ConfirmContext = createContext<ConfirmContextValue | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const resolverRef = useRef<((result: boolean) => void) | null>(null);
+  const resolverRef = useRef<((result: boolean | string | null) => void) | null>(null);
 
-  const settle = useCallback((result: boolean) => {
+  const settle = useCallback((result: boolean | string | null) => {
     const resolve = resolverRef.current;
     resolverRef.current = null;
     setDialog(null);
@@ -62,13 +87,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 
   const confirm = useCallback((opts: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
-      resolverRef.current = resolve;
+      resolverRef.current = resolve as (result: boolean | string | null) => void;
       setDialog({
         title: opts.title,
         description: opts.description,
         confirmLabel: opts.confirmLabel ?? "Hapus",
         cancelLabel: opts.cancelLabel ?? "Batal",
         variant: opts.variant ?? "danger",
+        cancelValue: false,
       });
     });
   }, []);
@@ -82,18 +108,40 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         confirmLabel: opts.confirmLabel ?? "Mengerti",
         cancelLabel: null,
         variant: opts.variant ?? "primary",
+        cancelValue: false,
+      });
+    });
+  }, []);
+
+  const prompt = useCallback((opts: PromptOptions) => {
+    return new Promise<string | null>((resolve) => {
+      resolverRef.current = resolve as (result: boolean | string | null) => void;
+      setDialog({
+        title: opts.title,
+        description: opts.description,
+        confirmLabel: opts.confirmLabel ?? "Kirim",
+        cancelLabel: opts.cancelLabel ?? "Batal",
+        variant: opts.variant ?? "primary",
+        cancelValue: null,
+        input: {
+          label: opts.label,
+          placeholder: opts.placeholder,
+          required: opts.required ?? true,
+          multiline: opts.multiline ?? true,
+          defaultValue: opts.defaultValue ?? "",
+        },
       });
     });
   }, []);
 
   return (
-    <ConfirmContext.Provider value={{ confirm, alert }}>
+    <ConfirmContext.Provider value={{ confirm, alert, prompt }}>
       {children}
       {dialog && (
         <DialogCard
           dialog={dialog}
-          onConfirm={() => settle(true)}
-          onCancel={() => settle(false)}
+          onConfirm={(value) => settle(dialog.input ? (value ?? "").trim() : true)}
+          onCancel={() => settle(dialog.cancelValue)}
         />
       )}
     </ConfirmContext.Provider>
@@ -107,6 +155,7 @@ export function useConfirm(): ConfirmContextValue {
     return {
       confirm: async (o) => window.confirm(o.title),
       alert: async (o) => window.alert(o.title),
+      prompt: async (o) => window.prompt(o.title, o.defaultValue ?? ""),
     };
   }
   return ctx;
@@ -118,14 +167,17 @@ function DialogCard({
   onCancel,
 }: {
   dialog: DialogState;
-  onConfirm: () => void;
+  onConfirm: (value?: string) => void;
   onCancel: () => void;
 }) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+  const [value, setValue] = useState(dialog.input?.defaultValue ?? "");
   const isAlert = dialog.cancelLabel === null;
+  const confirmDisabled = Boolean(dialog.input?.required) && value.trim() === "";
 
   useEffect(() => {
-    confirmRef.current?.focus();
+    (dialog.input ? inputRef.current : confirmRef.current)?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
     };
@@ -135,7 +187,12 @@ function DialogCard({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onCancel]);
+  }, [onCancel, dialog.input]);
+
+  function submit() {
+    if (confirmDisabled) return;
+    onConfirm(value);
+  }
 
   return (
     <div
@@ -180,6 +237,36 @@ function DialogCard({
                 {dialog.description}
               </div>
             )}
+            {dialog.input && (
+              <label className="mt-3 block text-xs font-bold text-sand-700">
+                {dialog.input.label}
+                {dialog.input.multiline ? (
+                  <textarea
+                    ref={inputRef}
+                    rows={3}
+                    value={value}
+                    placeholder={dialog.input.placeholder}
+                    onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
+                    }}
+                    className="mt-1 block w-full rounded-lg border border-sand-300 px-3 py-2 text-sm font-normal text-sand-900"
+                  />
+                ) : (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={value}
+                    placeholder={dialog.input.placeholder}
+                    onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submit();
+                    }}
+                    className="mt-1 block min-h-10 w-full rounded-lg border border-sand-300 px-3 text-sm font-normal text-sand-900"
+                  />
+                )}
+              </label>
+            )}
           </div>
         </div>
 
@@ -190,9 +277,10 @@ function DialogCard({
             </Button>
           )}
           <Button
-            ref={confirmRef}
+            ref={dialog.input ? undefined : confirmRef}
             variant={dialog.variant === "danger" ? "danger" : "primary"}
-            onClick={onConfirm}
+            onClick={submit}
+            disabled={confirmDisabled}
           >
             {dialog.confirmLabel}
           </Button>

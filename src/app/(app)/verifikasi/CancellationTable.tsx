@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { ToastFeedback, useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { decideCancellation, completeRefund } from "./actions";
 
 export type CancellationRow = {
@@ -38,9 +39,16 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
   const [error, setError] = useState("");
   const toast = useToast();
   const router = useRouter();
+  const { confirm, prompt } = useConfirm();
 
   async function approve(row: CancellationRow) {
-    if (!window.confirm(`Setujui pembatalan pesanan ${row.namaPembeli}? Status pesanan akan menjadi Dibatalkan.`)) return;
+    const ok = await confirm({
+      title: `Setujui pembatalan pesanan ${row.namaPembeli}?`,
+      description: "Status pesanan akan menjadi Dibatalkan.",
+      confirmLabel: "Setujui",
+      variant: "primary",
+    });
+    if (!ok) return;
     setError("");
     setBusyId(row.id);
     const result = await decideCancellation(row.id, "APPROVE");
@@ -51,7 +59,11 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
   }
 
   async function reject(row: CancellationRow) {
-    const alasan = window.prompt("Alasan menolak pengajuan pembatalan:")?.trim();
+    const alasan = await prompt({
+      title: "Tolak pengajuan pembatalan",
+      label: "Alasan menolak pengajuan pembatalan",
+      confirmLabel: "Tolak",
+    });
     if (!alasan) return;
     setError("");
     setBusyId(row.id);
@@ -63,11 +75,23 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
   }
 
   async function markRefunded(row: CancellationRow) {
-    const catatan = window.prompt("Catatan refund (opsional) — mis. cara/bukti transfer balik:") ?? undefined;
-    if (!window.confirm(`Tandai refund untuk pesanan ${row.namaPembeli} sudah selesai dilakukan manual?`)) return;
+    const catatan = await prompt({
+      title: "Tandai refund selesai",
+      label: "Catatan refund (opsional)",
+      placeholder: "Mis. cara/bukti transfer balik",
+      required: false,
+      confirmLabel: "Tandai Selesai",
+    });
+    if (catatan === null) return;
+    const ok = await confirm({
+      title: `Tandai refund untuk pesanan ${row.namaPembeli} sudah selesai dilakukan manual?`,
+      confirmLabel: "Tandai Selesai",
+      variant: "primary",
+    });
+    if (!ok) return;
     setError("");
     setBusyId(row.id);
-    const result = await completeRefund(row.id, catatan);
+    const result = await completeRefund(row.id, catatan || undefined);
     setBusyId(null);
     if (result.error) return setError(result.error);
     toast.success("Refund ditandai selesai.");
@@ -110,7 +134,7 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
                   <div className="flex flex-wrap gap-2">
                     {row.cancellationRequestStatus === "REQUESTED" && (
                       <>
-                        <button disabled={busyId === row.id} onClick={() => approve(row)} className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Setujui</button>
+                        <button disabled={busyId === row.id} onClick={() => approve(row)} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Setujui</button>
                         <button disabled={busyId === row.id} onClick={() => reject(row)} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700 disabled:opacity-50">Tolak</button>
                       </>
                     )}

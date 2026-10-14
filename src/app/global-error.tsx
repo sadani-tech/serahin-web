@@ -26,20 +26,20 @@ export default function GlobalError({
     <html lang="id">
       <body className="bg-cream-soft text-sand-900 antialiased">
         <StatusPage
-          code="Oops"
-          title="Aplikasi gagal dimuat"
-          description="Terjadi gangguan saat memuat Serahin. Muat ulang halaman, atau coba lagi sebentar lagi."
+          code="Sebentar"
+          title="Serahin sedang dalam penyegaran singkat"
+          description="Muat ulang halaman ini untuk melanjutkan. Kalau masih belum bisa diakses, tim support Serahin siap membantu."
           actions={
             <>
               <button
                 type="button"
                 onClick={reset}
-                className="inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all duration-150 hover:bg-brand-700 active:translate-y-px active:bg-brand-800"
+                className="inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all duration-150 hover:bg-brand-700 active:translate-y-px active:bg-brand-800"
               >
-                Coba lagi
+                Muat Ulang
               </button>
-              <LinkButton href="/" variant="secondary">
-                Kembali ke Beranda
+              <LinkButton href="/contact" variant="secondary">
+                Hubungi Kami
               </LinkButton>
             </>
           }

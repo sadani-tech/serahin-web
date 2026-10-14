@@ -39,7 +39,7 @@ export default async function proxy(req: NextRequest) {
     pathname.startsWith("/po/") ||
     pathname.startsWith("/halaman/") ||
     pathname.startsWith("/payment/return") ||
-    pathname.startsWith("/s/") ||
+    pathname.startsWith("/store/") ||
     pathname.startsWith("/katalog/") ||
     pathname === "/katalog" ||
     pathname === "/catalog" ||
@@ -49,6 +49,8 @@ export default async function proxy(req: NextRequest) {
     pathname === "/seller" ||
     pathname === "/seller/login" ||
     pathname === "/seller/activate" ||
+    pathname === "/seller/forgot-password" ||
+    pathname === "/seller/reset-password" ||
     pathname === "/about" ||
     pathname === "/contact" ||
     pathname === "/terms" ||
@@ -57,6 +59,12 @@ export default async function proxy(req: NextRequest) {
     pathname === "/data-deletion" ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml";
+
+  // v2.3.9: /s/:slug → /store/:slug (nama rute lebih jelas) — redirect
+  // permanen supaya tautan lama yang sudah dibagikan tetap jalan.
+  if (pathname.startsWith("/s/")) {
+    return NextResponse.redirect(new URL(`/store/${pathname.slice(3)}${req.nextUrl.search}`, req.nextUrl.origin), 308);
+  }
 
   const role = await sessionRole(req.cookies.get("token")?.value);
   const loggedIn = role !== null;
@@ -86,6 +94,6 @@ export const config = {
   // dari pengunjung anonim ke-redirect ke `/login` sehingga favicon dan
   // preview link sosial gagal dimuat.
   matcher: [
-    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|testimonials/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
+    "/((?!api/auth|api/cart|_next/static|_next/image|brand/|revamp/|testimonials/|favicon.ico|icon.svg|icon.png|apple-icon.png|apple-touch-icon|opengraph-image|twitter-image|manifest.webmanifest|robots.txt|sitemap.xml|uploads).*)",
   ],
 };

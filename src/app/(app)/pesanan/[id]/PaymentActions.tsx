@@ -12,7 +12,7 @@ export function PaymentActions({
   paymentId: string;
   status: PaymentVerification;
 }) {
-  const { confirm } = useConfirm();
+  const { confirm, prompt } = useConfirm();
   const { pending, run } = useApiTransition();
 
   return (
@@ -29,8 +29,11 @@ export function PaymentActions({
       {status !== "DITOLAK" && (
         <button
           disabled={pending}
-          onClick={() => {
-            const alasan = window.prompt("Masukkan alasan penolakan pembayaran:")?.trim();
+          onClick={async () => {
+            const alasan = await prompt({
+              title: "Tolak pembayaran",
+              label: "Alasan penolakan pembayaran",
+            });
             if (!alasan) return;
             run(() => verifyPayment(paymentId, "DITOLAK", undefined, alasan));
           }}

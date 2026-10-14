@@ -1,7 +1,6 @@
-import Link from "next/link";
-import { SerahinLogo } from "@/components/brand";
-import { PublicFooter } from "@/components/PublicFooter";
-import { LoginForm } from "./LoginForm";
+import { AuthForm } from "@/app/account/AuthForm";
+import { AuthShell } from "@/app/account/AuthShell";
+import { loginAction } from "@/lib/auth-actions";
 
 export default async function LoginPage({
   searchParams,
@@ -12,44 +11,16 @@ export default async function LoginPage({
   const callbackUrl = params.callbackUrl ?? "/dashboard";
 
   return (
-    <div className="bg-serahin-dots relative flex min-h-full flex-1 flex-col">
-      {/* Sorotan sinar matahari di balik kartu — motif dari lambang Serahin. */}
-      <div
-        aria-hidden="true"
-        className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-80"
+    <AuthShell title="Masuk ke Panel Admin" copy="Akses internal untuk mengelola dan mengawasi operasional platform Serahin.">
+      <AuthForm
+        action={loginAction}
+        hidden={{ callbackUrl }}
+        submit="Masuk"
+        fields={[
+          { name: "email", label: "Email", type: "email", autoComplete: "email", placeholder: "admin@serahin.id" },
+          { name: "password", label: "Kata sandi", type: "password", autoComplete: "current-password" },
+        ]}
       />
-
-      <main className="relative flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm animate-rise">
-          <div className="mb-7 flex flex-col items-center text-center">
-            <SerahinLogo size="lg" layout="stacked" withTagline />
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-lg">
-            <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
-            <div className="p-6">
-              <h1 className="text-lg font-extrabold tracking-tight text-sand-900">
-                Masuk ke panel admin
-              </h1>
-              <p className="mt-1 mb-5 text-sm text-sand-500">
-                Akses internal untuk mengelola dan mengawasi operasional platform Serahin.
-              </p>
-              <LoginForm callbackUrl={callbackUrl} />
-            </div>
-          </div>
-
-          <p className="mt-6 text-center text-xs font-medium text-sand-500">
-            Akses khusus Admin internal.
-          </p>
-          <Link
-            href="/"
-            className="mt-2 block text-center text-xs font-bold text-brand-700 hover:underline"
-          >
-            ← Kembali ke beranda
-          </Link>
-        </div>
-      </main>
-      <PublicFooter />
-    </div>
+    </AuthShell>
   );
 }

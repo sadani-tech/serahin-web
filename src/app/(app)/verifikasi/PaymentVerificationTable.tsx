@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { ProofViewerButton } from "@/components/ProofViewerButton";
 import { ToastFeedback, useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { reviewPayments } from "./actions";
 import { useSort } from "@/hooks/useSort";
 import { SortableTh } from "@/components/SortableTh";
@@ -36,6 +37,7 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
   const headRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const router = useRouter();
+  const { confirm } = useConfirm();
   const { sorted, sortKey, direction, toggle: toggleSort } = useSort(rows, (row, key) => {
     switch (key) {
       case "buyer": return row.order.namaPembeli;
@@ -57,10 +59,10 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
     if (!ids.length) return;
     if (decision === "DITOLAK" && !reason.trim()) return setError("Alasan penolakan wajib diisi.");
     const total = rows.filter((row) => ids.includes(row.id)).reduce((sum, row) => sum + Number(row.jumlah), 0);
-    const message = decision === "TERVERIFIKASI"
-      ? `Verifikasi ${ids.length} pembayaran dengan total ${rupiah(total)}?`
-      : `Tolak ${ids.length} pembayaran? Alasan akan terlihat oleh Buyer.`;
-    if (!window.confirm(message)) return;
+    const ok = decision === "TERVERIFIKASI"
+      ? await confirm({ title: `Verifikasi ${ids.length} pembayaran dengan total ${rupiah(total)}?`, confirmLabel: "Verifikasi", variant: "primary" })
+      : await confirm({ title: `Tolak ${ids.length} pembayaran?`, description: "Alasan akan terlihat oleh Buyer.", confirmLabel: "Tolak" });
+    if (!ok) return;
     setBusy(true);
     const result = await reviewPayments(ids, decision, reason);
     setBusy(false);
@@ -101,7 +103,7 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
           <td className="px-4 py-3 font-extrabold text-sand-900">{rupiah(Number(row.jumlah))}</td>
           <td className="px-4 py-3">{row.buktiFile ? <ProofViewerButton url={row.buktiFile} className="font-bold text-brand-700 hover:underline" /> : <span className="text-rose-600">Tidak ada</span>}</td>
           <td className="px-4 py-3 text-xs text-sand-600">{waitingSince(row.createdAt)}</td>
-          <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => { setSelected(new Set([row.id])); setError("Isi alasan, lalu pilih Tolak."); }} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
+          <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => { setSelected(new Set([row.id])); setError("Isi alasan, lalu pilih Tolak."); }} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
         </tr>)}</tbody>
       </table>
     </div>

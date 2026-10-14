@@ -13,6 +13,7 @@ import {
 // ---------------------------------------------------------------------------
 
 export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
+  DRAFT: "Draft",
   OPEN: "Open",
   CLOSED: "Closed",
   PRODUKSI: "Produksi",
@@ -20,7 +21,11 @@ export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
   SELESAI: "Selesai",
 };
 
-/** Urutan linear status kampanye untuk validasi & tampilan progress. */
+/**
+ * Urutan linear status kampanye untuk validasi & tampilan progress. DRAFT
+ * sengaja TIDAK dimasukkan (v2.3.9 FR-42.15) — status awal otomatis sebelum
+ * Produk ditambahkan, bukan target yang bisa dipilih manual.
+ */
 export const CAMPAIGN_STATUS_ORDER: CampaignStatus[] = [
   "OPEN",
   "CLOSED",
@@ -30,6 +35,7 @@ export const CAMPAIGN_STATUS_ORDER: CampaignStatus[] = [
 ];
 
 export const CAMPAIGN_STATUS_BADGE: Record<CampaignStatus, string> = {
+  DRAFT: "bg-sand-100 text-sand-600 ring-sand-500/25",
   OPEN: "bg-brand-100 text-brand-800 ring-brand-600/25",
   CLOSED: "bg-sun-100 text-sun-800 ring-sun-600/25",
   PRODUKSI: "bg-accent-500 text-sand-900 ring-accent-600/30",

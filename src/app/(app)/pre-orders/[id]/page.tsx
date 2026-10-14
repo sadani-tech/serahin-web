@@ -49,12 +49,19 @@ export const dynamic = "force-dynamic";
 
 type Tab = "info" | "produk" | "pesanan" | "timeline";
 
+// Label HARUS sama persis dengan CAMPAIGN_STATUS_LABEL (lib/domain.ts) untuk
+// milestone yang punya padanan status Batch PO (v2.3.9 FR-42.12) — Seller
+// ganti status "Siap Kirim" lewat StatusControl, lalu entri timeline yang
+// otomatis dibuat (STATUS_MILESTONE di backend: SIAP_KIRIM -> PACKING) harus
+// menampilkan label yang sama, bukan "Packing", supaya tidak terlihat seperti
+// dua hal berbeda. SHIPMENT/DELIVERED tidak punya padanan CampaignStatus
+// (hanya bisa ditambah manual lewat TimelineForm), jadi tetap label sendiri.
 const MILESTONE_LABEL: Record<string, string> = {
   OPEN: "Open",
   CLOSED: "Closed",
   PRODUCTION: "Produksi",
   SHIPMENT: "Shipment",
-  PACKING: "Packing",
+  PACKING: "Siap Kirim",
   DELIVERED: "Deliver",
   COMPLETED: "Selesai",
 };
@@ -202,6 +209,8 @@ export default async function CampaignDetailPage({
     page?: string;
     limit?: string;
     created?: string;
+    sort?: string;
+    order?: string;
   }>;
 }) {
   const { id } = await params;
@@ -222,6 +231,8 @@ export default async function CampaignDetailPage({
   }
 
   const productPage = Math.max(1, Number(sp.page ?? 1) || 1);
+  const productSort = ["name", "kategori", "harga", "kuota", "vendor", "status"].includes(sp.sort ?? "") ? sp.sort : undefined;
+  const productOrder = sp.order === "desc" ? "desc" : "asc";
   const products =
     tab === "produk"
       ? await api.get<ProductPage>(`/pre-orders/${id}/products`, {
@@ -229,8 +240,32 @@ export default async function CampaignDetailPage({
           limit: 10,
           q: sp.q,
           status: sp.productStatus,
+          sort: productSort,
+          order: productSort ? productOrder : undefined,
         })
       : null;
+
+  // Link header tabel Produk yang bisa diklik untuk sort (FR-38.50 sisa
+  // cakupan) — server-paginated, jadi urutan dikirim lewat query param, bukan
+  // sort client-side seperti tabel lain (lihat hooks/useSort.ts).
+  function productSortHref(field: string) {
+    const nextOrder = productSort === field && productOrder === "asc" ? "desc" : "asc";
+    const params = new URLSearchParams({ tab: "produk", sort: field, order: nextOrder });
+    if (sp.q) params.set("q", sp.q);
+    if (sp.productStatus) params.set("productStatus", sp.productStatus);
+    return `/pre-orders/${id}?${params.toString()}`;
+  }
+  function productSortIndicator(field: string) {
+    if (productSort !== field) return null;
+    return productOrder === "asc" ? " ▲" : " ▼";
+  }
+  function productPageHref(page: number) {
+    const params = new URLSearchParams({ tab: "produk", page: String(page) });
+    if (sp.q) params.set("q", sp.q);
+    if (sp.productStatus) params.set("productStatus", sp.productStatus);
+    if (productSort) { params.set("sort", productSort); params.set("order", productOrder); }
+    return `/pre-orders/${id}?${params.toString()}`;
+  }
 
   // DP Batch PO — dipakai sebagai referensi "ikuti Batch PO" pada form dan
   // badge DP kustom Produk (v2.3.7 §3.18).
@@ -323,25 +358,27 @@ export default async function CampaignDetailPage({
               {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
             </p>
             {campaign.needsProducts && (
-              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                {campaign.productWarning} Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.
+              <div className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">{campaign.productWarning}</p>
+                <p className="mt-1 text-sm text-amber-800">Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.</p>
                 <Link
                   href={`/pre-orders/${id}?tab=produk`}
-                  className="ml-2 underline"
+                  className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-amber-600 px-3 text-sm font-bold text-white hover:bg-amber-700"
                 >
                   Tambah Produk
                 </Link>
-              </p>
+              </div>
             )}
             {campaign.needsBankAccount && (
-              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                Anda belum mengisi rekening transfer, atau belum ada rekening
-                utama. Pembeli transfer manual tidak akan melihat tujuan
-                pembayaran yang jelas.
-                <Link href="/rekening" className="ml-2 underline">
+              <div className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">
+                  Anda belum mengisi rekening transfer, atau belum ada rekening utama.
+                </p>
+                <p className="mt-1 text-sm text-amber-800">Pembeli transfer manual tidak akan melihat tujuan pembayaran yang jelas.</p>
+                <Link href="/rekening" className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-amber-600 px-3 text-sm font-bold text-white hover:bg-amber-700">
                   Atur rekening
                 </Link>
-              </p>
+              </div>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -626,11 +663,6 @@ export default async function CampaignDetailPage({
               />
             }
           />
-          {campaign.needsProducts && (
-            <p className="mx-5 mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              {campaign.productWarning}
-            </p>
-          )}
           <form className="flex flex-wrap items-end gap-3 border-b border-sand-100 px-5 py-4">
             <input type="hidden" name="tab" value="produk" />
             <label className="flex-1 text-xs font-medium text-sand-500">
@@ -656,7 +688,7 @@ export default async function CampaignDetailPage({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="rounded-full bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               Terapkan
             </button>
@@ -691,15 +723,27 @@ export default async function CampaignDetailPage({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                    <th className="px-5 py-3">Produk</th>
-                    <th className="px-5 py-3">Kategori</th>
-                    <th className="px-5 py-3">Harga</th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("name")} className="hover:text-sand-700">Produk{productSortIndicator("name")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("kategori")} className="hover:text-sand-700">Kategori{productSortIndicator("kategori")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("harga")} className="hover:text-sand-700">Harga{productSortIndicator("harga")}</Link>
+                    </th>
                     {campaign.paymentScheme === "DP_PELUNASAN" && (
                       <th className="px-5 py-3">DP</th>
                     )}
-                    <th className="px-5 py-3">Kuota</th>
-                    <th className="px-5 py-3">Vendor</th>
-                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("kuota")} className="hover:text-sand-700">Kuota{productSortIndicator("kuota")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("vendor")} className="hover:text-sand-700">Vendor{productSortIndicator("vendor")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("status")} className="hover:text-sand-700">Status{productSortIndicator("status")}</Link>
+                    </th>
                     <th className="px-5 py-3" />
                   </tr>
                 </thead>
@@ -742,22 +786,14 @@ export default async function CampaignDetailPage({
                       </td>
                       {campaign.paymentScheme === "DP_PELUNASAN" && (
                         <td className="px-5 py-3">
-                          {product.dpEfektif.sumber === "PRODUK" ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
-                              Kustom:{" "}
-                              {product.dpEfektif.tipe === "NOMINAL"
-                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
-                                : `${product.dpEfektif.percent ?? 50}%`}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-2.5 py-1 text-xs font-bold text-sand-600">
-                              Ikuti Batch PO (
-                              {product.dpEfektif.tipe === "NOMINAL"
-                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
-                                : `${product.dpEfektif.percent ?? 50}%`}
-                              )
-                            </span>
-                          )}
+                          <span
+                            title={product.dpEfektif.sumber === "PRODUK" ? "DP kustom Produk ini" : "Ikuti DP Batch PO"}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${product.dpEfektif.sumber === "PRODUK" ? "bg-brand-50 text-brand-700" : "bg-sand-100 text-sand-600"}`}
+                          >
+                            {product.dpEfektif.tipe === "NOMINAL"
+                              ? formatRupiah(product.dpEfektif.nominal ?? "0")
+                              : `${product.dpEfektif.percent ?? 50}%`}
+                          </span>
                         </td>
                       )}
                       <td className="px-5 py-3 text-sand-700">
@@ -813,7 +849,7 @@ export default async function CampaignDetailPage({
                     ? "pointer-events-none opacity-40"
                     : "text-brand-700 hover:underline"
                 }
-                href={`/pre-orders/${id}?tab=produk&page=${products.meta.page - 1}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${sp.productStatus ? `&productStatus=${sp.productStatus}` : ""}`}
+                href={productPageHref(products.meta.page - 1)}
               >
                 ← Sebelumnya
               </Link>
@@ -826,7 +862,7 @@ export default async function CampaignDetailPage({
                     ? "pointer-events-none opacity-40"
                     : "text-brand-700 hover:underline"
                 }
-                href={`/pre-orders/${id}?tab=produk&page=${products.meta.page + 1}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${sp.productStatus ? `&productStatus=${sp.productStatus}` : ""}`}
+                href={productPageHref(products.meta.page + 1)}
               >
                 Berikutnya →
               </Link>
@@ -927,7 +963,7 @@ export default async function CampaignDetailPage({
             <div className="col-span-2 flex items-end gap-2 md:col-span-3 xl:col-span-6">
               <button
                 type="submit"
-                className="min-h-9 rounded-lg bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
+                className="min-h-9 rounded-full bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
               >
                 Terapkan
               </button>

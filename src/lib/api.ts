@@ -98,7 +98,8 @@ export const api = {
 
   /**
    * Ambil SELURUH baris dari endpoint berpaginasi, bukan hanya halaman
-   * pertama (default backend `limit=20`, maksimum 100/request). Dipakai
+   * pertama (default backend `limit=10` sejak v2.3.9 FR-42.6, maksimum
+   * 100/request). Dipakai
    * untuk sumber dropdown/filter yang wajib menampilkan semua opsi, mis.
    * daftar Batch PO pada filter dashboard (v2.3.7 FR-37.26) — bukan untuk
    * tabel besar yang memang seharusnya dipaginasi di UI.

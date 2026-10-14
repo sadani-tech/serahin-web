@@ -88,10 +88,15 @@ export function PembeliHistoryModal({ buyerId, onClose }: { buyerId: string; onC
                         <p className="font-medium text-sand-900">{order.campaign.namaProduk}</p>
                         <OrderBadge status={order.status} />
                       </div>
-                      <p className="mt-1 text-xs text-sand-500">
-                        {formatTanggal(order.createdAt)} · {order.items.reduce((sum, item) => sum + item.jumlah, 0)} item
-                      </p>
-                      <p className="mt-1 text-sm font-bold text-sand-700">{formatRupiah(order.total)}</p>
+                      <p className="mt-1 text-xs text-sand-500">{formatTanggal(order.createdAt)}</p>
+                      <ul className="mt-1.5 space-y-0.5">
+                        {order.items.map((item) => (
+                          <li key={item.id} className="text-xs text-sand-600">
+                            {item.jumlah}× {item.nama}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-1.5 text-sm font-bold text-sand-700">{formatRupiah(order.total)}</p>
                     </li>
                   ))}
                 </ul>

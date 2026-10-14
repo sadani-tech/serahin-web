@@ -82,7 +82,7 @@ export default async function ArchivePage({
                     <Link
                       href={
                         variant.productSlug
-                          ? `/s/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}`
+                          ? `/store/${campaign.seller.slug}/produk/${variant.productSlug}?variant=${encodeURIComponent(variant.id)}`
                           : `/po/${campaign.formToken}`
                       }
                       className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-brand-600 px-3 text-sm font-extrabold text-brand-700"

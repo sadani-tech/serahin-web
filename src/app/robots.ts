@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
           "/refund-policy",
           "/privacy",
           "/data-deletion",
-          "/s/",
+          "/store/",
           "/katalog/",
           "/catalog/",
           "/arsip",
