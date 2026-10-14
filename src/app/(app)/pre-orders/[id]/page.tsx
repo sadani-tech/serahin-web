@@ -209,6 +209,8 @@ export default async function CampaignDetailPage({
     page?: string;
     limit?: string;
     created?: string;
+    sort?: string;
+    order?: string;
   }>;
 }) {
   const { id } = await params;
@@ -229,6 +231,8 @@ export default async function CampaignDetailPage({
   }
 
   const productPage = Math.max(1, Number(sp.page ?? 1) || 1);
+  const productSort = ["name", "kategori", "harga", "kuota", "vendor", "status"].includes(sp.sort ?? "") ? sp.sort : undefined;
+  const productOrder = sp.order === "desc" ? "desc" : "asc";
   const products =
     tab === "produk"
       ? await api.get<ProductPage>(`/pre-orders/${id}/products`, {
@@ -236,8 +240,32 @@ export default async function CampaignDetailPage({
           limit: 10,
           q: sp.q,
           status: sp.productStatus,
+          sort: productSort,
+          order: productSort ? productOrder : undefined,
         })
       : null;
+
+  // Link header tabel Produk yang bisa diklik untuk sort (FR-38.50 sisa
+  // cakupan) — server-paginated, jadi urutan dikirim lewat query param, bukan
+  // sort client-side seperti tabel lain (lihat hooks/useSort.ts).
+  function productSortHref(field: string) {
+    const nextOrder = productSort === field && productOrder === "asc" ? "desc" : "asc";
+    const params = new URLSearchParams({ tab: "produk", sort: field, order: nextOrder });
+    if (sp.q) params.set("q", sp.q);
+    if (sp.productStatus) params.set("productStatus", sp.productStatus);
+    return `/pre-orders/${id}?${params.toString()}`;
+  }
+  function productSortIndicator(field: string) {
+    if (productSort !== field) return null;
+    return productOrder === "asc" ? " ▲" : " ▼";
+  }
+  function productPageHref(page: number) {
+    const params = new URLSearchParams({ tab: "produk", page: String(page) });
+    if (sp.q) params.set("q", sp.q);
+    if (sp.productStatus) params.set("productStatus", sp.productStatus);
+    if (productSort) { params.set("sort", productSort); params.set("order", productOrder); }
+    return `/pre-orders/${id}?${params.toString()}`;
+  }
 
   // DP Batch PO — dipakai sebagai referensi "ikuti Batch PO" pada form dan
   // badge DP kustom Produk (v2.3.7 §3.18).
@@ -695,15 +723,27 @@ export default async function CampaignDetailPage({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                    <th className="px-5 py-3">Produk</th>
-                    <th className="px-5 py-3">Kategori</th>
-                    <th className="px-5 py-3">Harga</th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("name")} className="hover:text-sand-700">Produk{productSortIndicator("name")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("kategori")} className="hover:text-sand-700">Kategori{productSortIndicator("kategori")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("harga")} className="hover:text-sand-700">Harga{productSortIndicator("harga")}</Link>
+                    </th>
                     {campaign.paymentScheme === "DP_PELUNASAN" && (
                       <th className="px-5 py-3">DP</th>
                     )}
-                    <th className="px-5 py-3">Kuota</th>
-                    <th className="px-5 py-3">Vendor</th>
-                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("kuota")} className="hover:text-sand-700">Kuota{productSortIndicator("kuota")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("vendor")} className="hover:text-sand-700">Vendor{productSortIndicator("vendor")}</Link>
+                    </th>
+                    <th className="px-5 py-3">
+                      <Link href={productSortHref("status")} className="hover:text-sand-700">Status{productSortIndicator("status")}</Link>
+                    </th>
                     <th className="px-5 py-3" />
                   </tr>
                 </thead>
@@ -809,7 +849,7 @@ export default async function CampaignDetailPage({
                     ? "pointer-events-none opacity-40"
                     : "text-brand-700 hover:underline"
                 }
-                href={`/pre-orders/${id}?tab=produk&page=${products.meta.page - 1}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${sp.productStatus ? `&productStatus=${sp.productStatus}` : ""}`}
+                href={productPageHref(products.meta.page - 1)}
               >
                 ← Sebelumnya
               </Link>
@@ -822,7 +862,7 @@ export default async function CampaignDetailPage({
                     ? "pointer-events-none opacity-40"
                     : "text-brand-700 hover:underline"
                 }
-                href={`/pre-orders/${id}?tab=produk&page=${products.meta.page + 1}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${sp.productStatus ? `&productStatus=${sp.productStatus}` : ""}`}
+                href={productPageHref(products.meta.page + 1)}
               >
                 Berikutnya →
               </Link>
