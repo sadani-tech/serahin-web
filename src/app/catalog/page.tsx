@@ -249,6 +249,11 @@ export default async function CatalogPage({
                           <div className="pcard__body">
                             <p className="pcard__seller">{campaign.seller.businessName} · {campaign.namaProduk}</p>
                             <h3 className="pcard__name">{variant.namaVarian}</h3>
+                            {variant.label && (
+                              <span className="mt-1 inline-flex w-fit items-center rounded-full bg-accent-100 px-2 py-1 text-[0.6rem] font-extrabold uppercase tracking-wide text-accent-800 ring-1 ring-accent-200">
+                                {variant.label}
+                              </span>
+                            )}
                             <div className="pcard__row">
                               <p className="pcard__price">{formatRupiah(variant.harga)}</p>
                               <span className={`pcard__meta${variant.sisa > 0 && variant.sisa <= 10 ? " pcard__meta--low" : ""}`}>
