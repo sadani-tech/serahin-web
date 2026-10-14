@@ -9,8 +9,9 @@ import { formatRupiah } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
-import { SerahinLogo } from "@/components/brand";
 import { RichText } from "@/components/RichText";
+import { IconSprite } from "@/components/revamp/IconSprite";
+import { RevampHeader } from "@/components/revamp/RevampHeader";
 import { PortalPaymentForm } from "./PortalPaymentForm";
 import { PortalSettlementForm } from "./PortalSettlementForm";
 
@@ -26,7 +27,7 @@ type PortalOrder = {
     warna: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
-  settlement: { stage: boolean; unsettledItemIds: string[] };
+  settlement: { stage: boolean; unsettledItemIds: string[]; pendingItemIds: string[] };
   campaign: {
     namaProduk: string;
     paymentScheme: PaymentScheme;
@@ -119,7 +120,12 @@ export default async function PortalPage({
       : billing.sisa;
 
   // Pembeli boleh mengirim pembayaran sendiri bila masih ada tagihan tahap
-  // aktif dan tidak ada pembayaran yang sedang menunggu verifikasi.
+  // aktif dan tidak ada pembayaran yang sedang menunggu verifikasi. Dipakai
+  // untuk tahap DP/full-payment (satu pembayaran per order) — TIDAK dipakai
+  // untuk gate kartu pelunasan per-item di bawah (lihat bisaLunasSebagian):
+  // field agregat billing.menungguVerifikasi tidak tahu item mana yang
+  // pending, jadi kalau dipakai di sana, satu item pending salah
+  // memblokir SELURUH item lain yang belum pernah diajukan sama sekali.
   const bisaBayar =
     !dibatalkan &&
     !ditolak &&
@@ -127,27 +133,45 @@ export default async function PortalPage({
     paymentDue > 0 &&
     billing.menungguVerifikasi === 0;
 
-  return (
-    <div className="bg-serahin-dots relative min-h-full py-10">
-      <div
-        aria-hidden="true"
-        className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
-      />
-      <div className="relative mx-auto min-w-0 max-w-2xl space-y-6 px-4">
-        {/* Header */}
-        <div className="flex flex-col items-center text-center">
-          <SerahinLogo size="md" layout="stacked" />
-          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 ring-1 ring-brand-200">
-            Status Pesanan
-          </span>
-          <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-sand-900">
-            {campaign.namaProduk}
-          </h1>
-          <p className="mt-1.5 text-sm font-semibold text-sand-600">
-            {order.items.length} varian · {totalQty} unit
-          </p>
-        </div>
+  // Item mana pun yang belum lunas DAN tidak sedang menunggu verifikasi
+  // boleh diajukan pelunasannya — tidak diblokir oleh item lain yang
+  // kebetulan sedang pending.
+  const bisaLunasSebagian =
+    !dibatalkan &&
+    !ditolak &&
+    !lanjutGateway &&
+    order.settlement.stage &&
+    order.settlement.unsettledItemIds.length > 0;
 
+  return (
+    <div className="bg-cream-soft min-h-full">
+      <IconSprite />
+
+      {/* Header + hero pakai chrome revamp (sama dengan /po/[token]).
+          PortalPaymentForm/PortalSettlementForm di bawah SENGAJA ada di LUAR
+          .rv-scope — form itu interaktif (upload bukti, pilih metode kirim,
+          preview pelunasan per-item) yang styling-nya Tailwind murni lewat
+          komponen @/components/ui (Button/Field/Input — sudah pill/rounded
+          konsisten tema revamp). Bila dibungkus .rv-scope, reset
+          `.rv-scope button{background:none}` di revamp.css (unlayered,
+          selalu menang atas utility Tailwind ber-@layer) akan menghapus bg
+          semua tombol polos di form ini — bug yang sama persis dengan yang
+          sudah diperbaiki di AuthForm/SellerAuthForm/404. IconSprite di atas
+          tetap berlaku untuk <Icon> di luar .rv-scope karena
+          <use href="#i-..."> SVG resolve ID di seluruh dokumen, tidak terikat
+          ancestor. */}
+      <div className="rv-scope js is-loaded">
+        <RevampHeader navLinks={[]} loggedIn={false} />
+        <section className="po-hero" aria-labelledby="portal-title">
+          <div className="po-hero__inner">
+            <p className="po-hero__status"><span className="k-hero__dot" aria-hidden="true" />Status Pesanan</p>
+            <h1 className="po-hero__title" id="portal-title">{campaign.namaProduk}</h1>
+            <p className="po-hero__price">{order.items.length} varian · {totalQty} unit</p>
+          </div>
+        </section>
+      </div>
+
+      <main className="relative mx-auto min-w-0 max-w-2xl space-y-6 px-4 pb-10 pt-7 sm:px-6">
         {/* Status */}
         <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white text-center shadow-lg">
           <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
@@ -174,9 +198,9 @@ export default async function PortalPage({
         </div>
 
         {/* Rincian item (FR-3.4) */}
-        <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-sand-200 bg-white shadow-sm">
           <div className="border-b border-sand-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-sand-900">
+            <h2 className="font-head text-base font-semibold text-sand-900">
               Rincian pesanan
             </h2>
           </div>
@@ -192,10 +216,10 @@ export default async function PortalPage({
                     <img
                       src={it.variant.gambarUrl}
                       alt={it.variant.namaVarian}
-                      className="h-10 w-10 rounded object-cover ring-1 ring-sand-200"
+                      className="h-12 w-12 rounded-xl object-cover ring-1 ring-sand-200"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded bg-sand-100 text-xs text-sand-400">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sand-100 text-xs text-sand-400">
                       —
                     </div>
                   )}
@@ -222,9 +246,9 @@ export default async function PortalPage({
         </div>
 
         {/* Ringkasan pembayaran */}
-        <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-sand-200 bg-white shadow-sm">
           <div className="border-b border-sand-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-sand-900">
+            <h2 className="font-head text-base font-semibold text-sand-900">
               Ringkasan pembayaran
             </h2>
             <p className="text-xs text-sand-500">
@@ -244,7 +268,7 @@ export default async function PortalPage({
               <dt className="text-xs uppercase tracking-wide text-sand-500">
                 Terbayar
               </dt>
-              <dd className="mt-1 font-semibold text-emerald-600">
+              <dd className="mt-1 font-semibold text-brand-700">
                 {formatRupiah(billing.dibayar)}
               </dd>
             </div>
@@ -253,7 +277,7 @@ export default async function PortalPage({
                 Sisa
               </dt>
               <dd
-                className={`mt-1 font-semibold ${billing.sisa > 0 ? "text-rose-600" : "text-emerald-600"}`}
+                className={`mt-1 font-semibold ${billing.sisa > 0 ? "text-rose-600" : "text-brand-700"}`}
               >
                 {billing.sisa > 0 ? formatRupiah(billing.sisa) : "Lunas"}
               </dd>
@@ -300,9 +324,9 @@ export default async function PortalPage({
 
         {/* v2.1 — pembayaran gateway masih berjalan: tawarkan lanjutkan */}
         {lanjutGateway && (
-          <div className="rounded-xl border border-brand-200 bg-white shadow-sm">
+          <div className="rounded-2xl border border-brand-200 bg-white shadow-sm">
             <div className="border-b border-sand-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-sand-900">
+              <h2 className="font-head text-base font-semibold text-sand-900">
                 Selesaikan pembayaran
               </h2>
               <p className="text-xs text-sand-500">
@@ -312,7 +336,7 @@ export default async function PortalPage({
             </div>
             <div className="space-y-3 px-5 py-4">
               {qrCodeDataUrl && (
-                <div className="flex flex-col items-center gap-2 rounded-lg bg-sand-50 px-4 py-4 ring-1 ring-inset ring-sand-200">
+                <div className="flex flex-col items-center gap-2 rounded-xl bg-sand-50 px-4 py-4 ring-1 ring-inset ring-sand-200">
                   {/* eslint-disable-next-line @next/next/no-img-element -- generated data URI, not an optimizable remote asset */}
                   <img
                     src={qrCodeDataUrl}
@@ -327,7 +351,7 @@ export default async function PortalPage({
                 </div>
               )}
               {lanjutGateway.vaNumber && (
-                <p className="rounded-lg bg-sand-50 px-4 py-2 text-sm ring-1 ring-inset ring-sand-200">
+                <p className="rounded-xl bg-sand-50 px-4 py-2 text-sm ring-1 ring-inset ring-sand-200">
                   Nomor Virtual Account:{" "}
                   <span className="font-bold text-sand-900">
                     {lanjutGateway.vaNumber}
@@ -337,7 +361,7 @@ export default async function PortalPage({
               {lanjutGateway.paymentUrl && (
                 <a
                   href={lanjutGateway.paymentUrl}
-                  className="inline-flex w-full items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-700"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-brand hover:bg-brand-700"
                 >
                   Lanjutkan pembayaran
                 </a>
@@ -351,10 +375,10 @@ export default async function PortalPage({
         )}
 
         {/* Pembayaran mandiri pembeli (pelunasan) */}
-        {bisaBayar && order.settlement.stage && order.settlement.unsettledItemIds.length > 0 && (
-          <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+        {bisaLunasSebagian && (
+          <div className="rounded-2xl border border-sand-200 bg-white shadow-sm">
             <div className="border-b border-sand-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-sand-900">
+              <h2 className="font-head text-base font-semibold text-sand-900">
                 Lakukan pelunasan
               </h2>
               <p className="text-xs text-sand-500">
@@ -363,7 +387,7 @@ export default async function PortalPage({
             </div>
             <div className="px-5 py-4">
               {campaign.deskripsiPelunasan && (
-                <div className="mb-4 min-w-0 overflow-hidden rounded-lg bg-sand-50 p-4 ring-1 ring-inset ring-sand-200">
+                <div className="mb-4 min-w-0 overflow-hidden rounded-xl bg-sand-50 p-4 ring-1 ring-inset ring-sand-200">
                   <RichText
                     html={campaign.deskripsiPelunasan}
                     className="break-words"
@@ -374,6 +398,7 @@ export default async function PortalPage({
                 token={token}
                 items={order.items}
                 unsettledItemIds={order.settlement.unsettledItemIds}
+                pendingItemIds={order.settlement.pendingItemIds}
                 paymentChannel={order.paymentChannel}
                 gatewayAvailable={Boolean(order.gatewayEnabled)}
                 manualTransfer={order.manualTransfer}
@@ -386,9 +411,9 @@ export default async function PortalPage({
         )}
 
         {bisaBayar && !order.settlement.stage && (
-          <div className="rounded-xl border border-sand-200 bg-white shadow-sm">
+          <div className="rounded-2xl border border-sand-200 bg-white shadow-sm">
             <div className="border-b border-sand-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-sand-900">
+              <h2 className="font-head text-base font-semibold text-sand-900">
                 Kirim pembayaran
               </h2>
               <p className="text-xs text-sand-500">
@@ -414,7 +439,7 @@ export default async function PortalPage({
           </div>
         )}
 
-        <div className="rounded-xl border border-brand-200 bg-brand-50 p-5 text-center">
+        <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5 text-center">
           <p className="text-sm font-semibold text-brand-900">
             Ingin melihat semua pesanan dan profil Anda?
           </p>
@@ -430,9 +455,9 @@ export default async function PortalPage({
           Halaman ini hanya untuk melihat status. Untuk perubahan, hubungi
           penjual. Jangan bagikan tautan ini ke orang lain.
         </p>
+      </main>
 
-        <PublicFooter />
-      </div>
+      <PublicFooter />
     </div>
   );
 }

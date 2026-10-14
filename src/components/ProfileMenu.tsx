@@ -21,16 +21,15 @@ const roleLabel: Record<UserRole, string> = {
 
 const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   ADMIN: [
-    { href: "/dashboard", label: "Dashboard Admin" },
+    { href: "/dashboard", label: "Dashboard" },
     { href: "/penjual", label: "Penjual" },
   ],
   SELLER: [
-    { href: "/seller/dashboard", label: "Dashboard Seller" },
-    { href: "/rekening", label: "Rekening Seller" },
-    { href: "/seller/profile", label: "Profile Bisnis" },
+    { href: "/seller/dashboard", label: "Dashboard" },
+    { href: "/seller/profile", label: "Pengaturan" },
   ],
   BUYER: [
-    { href: "/account", label: "Pesanan Saya" },
+    { href: "/account", label: "Pesanan" },
     { href: "/account/profile", label: "Profile" },
   ],
 };
@@ -62,7 +61,7 @@ export function ProfileMenu({ user, align = "right" }: { user: ProfileUser; alig
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-11 items-center gap-2 rounded-xl border border-sand-200 bg-white px-2 py-1.5 text-left shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+        className="flex min-h-11 items-center gap-2 rounded-full border border-sand-200 bg-white px-2 py-1.5 text-left shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
       >
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- avatar Buyer dari S3/CDN eksternal
@@ -106,16 +105,16 @@ export function ProfileMenu({ user, align = "right" }: { user: ProfileUser; alig
           </div>
           <div className="p-2">
             {roleLinks[user.role].map((item) => (
-              <Link key={item.href} role="menuitem" href={item.href} onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-xl px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
+              <Link key={item.href} role="menuitem" href={item.href} onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-full px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
                 {item.label}
               </Link>
             ))}
-            <Link role="menuitem" href="/catalog" onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-xl px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
+            <Link role="menuitem" href="/catalog" onClick={() => setOpen(false)} className="flex min-h-10 items-center rounded-full px-3 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700">
               Katalog
             </Link>
           </div>
           <form action={logoutAction} className="border-t border-sand-100 p-2">
-            <button role="menuitem" type="submit" className="flex min-h-10 w-full items-center rounded-xl px-3 text-sm font-extrabold text-rose-700 hover:bg-rose-50">
+            <button role="menuitem" type="submit" className="flex min-h-10 w-full items-center rounded-full px-3 text-sm font-extrabold text-rose-700 hover:bg-rose-50">
               Keluar
             </button>
           </form>

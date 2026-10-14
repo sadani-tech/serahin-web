@@ -49,12 +49,19 @@ export const dynamic = "force-dynamic";
 
 type Tab = "info" | "produk" | "pesanan" | "timeline";
 
+// Label HARUS sama persis dengan CAMPAIGN_STATUS_LABEL (lib/domain.ts) untuk
+// milestone yang punya padanan status Batch PO (v2.3.9 FR-42.12) — Seller
+// ganti status "Siap Kirim" lewat StatusControl, lalu entri timeline yang
+// otomatis dibuat (STATUS_MILESTONE di backend: SIAP_KIRIM -> PACKING) harus
+// menampilkan label yang sama, bukan "Packing", supaya tidak terlihat seperti
+// dua hal berbeda. SHIPMENT/DELIVERED tidak punya padanan CampaignStatus
+// (hanya bisa ditambah manual lewat TimelineForm), jadi tetap label sendiri.
 const MILESTONE_LABEL: Record<string, string> = {
   OPEN: "Open",
   CLOSED: "Closed",
   PRODUCTION: "Produksi",
   SHIPMENT: "Shipment",
-  PACKING: "Packing",
+  PACKING: "Siap Kirim",
   DELIVERED: "Deliver",
   COMPLETED: "Selesai",
 };
@@ -323,25 +330,27 @@ export default async function CampaignDetailPage({
               {dpLabel(campaign) ? ` (${dpLabel(campaign)})` : ""}
             </p>
             {campaign.needsProducts && (
-              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                {campaign.productWarning} Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.
+              <div className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">{campaign.productWarning}</p>
+                <p className="mt-1 text-sm text-amber-800">Tambahkan atau perbarui Produk sebelum membuka pemesanan publik.</p>
                 <Link
                   href={`/pre-orders/${id}?tab=produk`}
-                  className="ml-2 underline"
+                  className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-amber-600 px-3 text-sm font-bold text-white hover:bg-amber-700"
                 >
                   Tambah Produk
                 </Link>
-              </p>
+              </div>
             )}
             {campaign.needsBankAccount && (
-              <p className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-                Anda belum mengisi rekening transfer, atau belum ada rekening
-                utama. Pembeli transfer manual tidak akan melihat tujuan
-                pembayaran yang jelas.
-                <Link href="/rekening" className="ml-2 underline">
+              <div className="mt-3 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">
+                  Anda belum mengisi rekening transfer, atau belum ada rekening utama.
+                </p>
+                <p className="mt-1 text-sm text-amber-800">Pembeli transfer manual tidak akan melihat tujuan pembayaran yang jelas.</p>
+                <Link href="/rekening" className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-amber-600 px-3 text-sm font-bold text-white hover:bg-amber-700">
                   Atur rekening
                 </Link>
-              </p>
+              </div>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -626,11 +635,6 @@ export default async function CampaignDetailPage({
               />
             }
           />
-          {campaign.needsProducts && (
-            <p className="mx-5 mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              {campaign.productWarning}
-            </p>
-          )}
           <form className="flex flex-wrap items-end gap-3 border-b border-sand-100 px-5 py-4">
             <input type="hidden" name="tab" value="produk" />
             <label className="flex-1 text-xs font-medium text-sand-500">
@@ -656,7 +660,7 @@ export default async function CampaignDetailPage({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+              className="rounded-full bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               Terapkan
             </button>
@@ -742,22 +746,14 @@ export default async function CampaignDetailPage({
                       </td>
                       {campaign.paymentScheme === "DP_PELUNASAN" && (
                         <td className="px-5 py-3">
-                          {product.dpEfektif.sumber === "PRODUK" ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
-                              Kustom:{" "}
-                              {product.dpEfektif.tipe === "NOMINAL"
-                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
-                                : `${product.dpEfektif.percent ?? 50}%`}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-2.5 py-1 text-xs font-bold text-sand-600">
-                              Ikuti Batch PO (
-                              {product.dpEfektif.tipe === "NOMINAL"
-                                ? formatRupiah(product.dpEfektif.nominal ?? "0")
-                                : `${product.dpEfektif.percent ?? 50}%`}
-                              )
-                            </span>
-                          )}
+                          <span
+                            title={product.dpEfektif.sumber === "PRODUK" ? "DP kustom Produk ini" : "Ikuti DP Batch PO"}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${product.dpEfektif.sumber === "PRODUK" ? "bg-brand-50 text-brand-700" : "bg-sand-100 text-sand-600"}`}
+                          >
+                            {product.dpEfektif.tipe === "NOMINAL"
+                              ? formatRupiah(product.dpEfektif.nominal ?? "0")
+                              : `${product.dpEfektif.percent ?? 50}%`}
+                          </span>
                         </td>
                       )}
                       <td className="px-5 py-3 text-sand-700">
@@ -927,7 +923,7 @@ export default async function CampaignDetailPage({
             <div className="col-span-2 flex items-end gap-2 md:col-span-3 xl:col-span-6">
               <button
                 type="submit"
-                className="min-h-9 rounded-lg bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
+                className="min-h-9 rounded-full bg-brand-600 px-3 text-xs font-medium text-white hover:bg-brand-700 sm:min-h-0 sm:py-1.5 sm:text-sm"
               >
                 Terapkan
               </button>

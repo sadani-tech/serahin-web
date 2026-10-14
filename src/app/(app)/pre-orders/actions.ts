@@ -104,7 +104,7 @@ export async function createPreorder(
   // `redirect()` HARUS di luar try/catch — Next.js melempar error khusus
   // (NEXT_REDIRECT) untuk redirect, dan catch generik di atas akan
   // menangkapnya sebagai "Gagal membuat Batch PO" walau backend sukses
-  // (v2.3.7 §3.20, bug yang sama dengan FR-38.49 draft v2.4.2, dahulu v2.3.8/v2.4.1).
+  // (v2.3.7 §3.20, bug yang sama dengan FR-38.49 draft v2.4.3, dahulu v2.3.8/v2.4.1/v2.4.2).
   revalidatePath("/pre-orders");
   redirect(`/pre-orders/${created.id}?tab=produk&created=1`);
 }
@@ -215,6 +215,63 @@ export async function updatePreorderProduct(
     return {
       error: e instanceof ApiError ? e.message : "Gagal menyimpan Produk",
     };
+  }
+  revalidatePath(`/pre-orders/${campaignId}`);
+  redirect(`/pre-orders/${campaignId}?tab=produk`);
+}
+
+type CatalogProductOption = {
+  id: string;
+  nama: string;
+  sku: string | null;
+  kategori: string | null;
+  ukuran: string | null;
+  material: string | null;
+  images: string[];
+  warna: string[];
+  deskripsi: string | null;
+};
+
+/** Produk Center (Katalog) milik Seller yang belum ditempel ke Batch PO ini — dipakai tab "Pilih dari Produk Center". */
+export async function searchAvailableCatalogProducts(
+  campaignId: string,
+  q?: string,
+): Promise<CatalogProductOption[]> {
+  return api.get<CatalogProductOption[]>(
+    `/pre-orders/${campaignId}/catalog-products-available`,
+    q ? { q } : undefined,
+  );
+}
+
+/** Tempel satu Produk dari Produk Center ke Batch PO ini — field per-PO saja (harga/kuota/HPP/dll), TIDAK membuat ProductVariant baru. */
+export async function attachCatalogProduct(
+  campaignId: string,
+  productVariantId: string,
+  _prev: PreorderFormState,
+  formData: FormData,
+): Promise<PreorderFormState> {
+  const array = (name: string) => {
+    try {
+      const value = JSON.parse(String(formData.get(name) ?? "[]"));
+      return Array.isArray(value) ? value.map(String).map((item) => item.trim()).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  };
+  try {
+    await api.post(`/pre-orders/${campaignId}/products/${productVariantId}/attach`, {
+      harga: Number(formData.get("harga") ?? 0),
+      hpp: getFormDataNumber(formData, "hpp"),
+      kuotaMaks: Number(formData.get("kuotaMaks") ?? 0),
+      vendorId: String(formData.get("vendorId") ?? "").trim() || undefined,
+      label: String(formData.get("label") ?? "").trim() || undefined,
+      images: array("imagesJson"),
+      dpTipe: getFormDataValue(formData, "dpTipe") as "PERSEN" | "NOMINAL" | undefined,
+      dpPercent: getFormDataNumber(formData, "dpPercent"),
+      dpNominal: getFormDataNumber(formData, "dpNominal"),
+    });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menempelkan Produk" };
   }
   revalidatePath(`/pre-orders/${campaignId}`);
   redirect(`/pre-orders/${campaignId}?tab=produk`);

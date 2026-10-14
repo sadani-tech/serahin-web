@@ -1,25 +1,25 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
+import Link from "next/link";
+import { Icon } from "@/components/revamp/IconSprite";
 
 export function SellerPortalActions() {
-  const router = useRouter();
-
   return (
-    <div className="flex shrink-0 flex-wrap gap-2">
-      <Button type="button" onClick={() => router.push("/seller/login")}>
-        Login Seller
-      </Button>
-      <Button
+    <div className="btn-row">
+      <Link href="/seller/login" className="btn btn--primary btn--sm">
+        <span>Masuk sebagai Seller</span>
+        <span className="btn__icon"><Icon name="arrow" /></span>
+      </Link>
+      <button
         type="button"
-        variant="secondary"
+        className="btn btn--ghost btn--sm"
         onClick={() => {
           document.getElementById("seller-application")?.scrollIntoView({ behavior: "smooth" });
         }}
       >
-        Ajukan Registrasi
-      </Button>
+        <span>Ajukan Registrasi</span>
+        <span className="btn__icon"><Icon name="arrow" /></span>
+      </button>
     </div>
   );
 }

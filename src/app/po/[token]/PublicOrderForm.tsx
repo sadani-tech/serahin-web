@@ -113,6 +113,7 @@ export function PublicOrderForm({
     undefined,
   );
   const checkoutKey = useRef("");
+  const acceptPoliciesRef = useRef<HTMLInputElement>(null);
   // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
   const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
     gatewayEnabled ? "GATEWAY" : "MANUAL",
@@ -458,7 +459,7 @@ export function PublicOrderForm({
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Pilih produk</p>
-            <h2 id="catalog-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">
+            <h2 id="catalog-heading" className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">
               Katalog varian
             </h2>
           </div>
@@ -719,7 +720,7 @@ export function PublicOrderForm({
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl p-5 sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Keranjang</p>
-          <h2 id="summary-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
+          <h2 id="summary-heading" className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
           {adaItem ? (
             <ul className="mt-4 space-y-3 border-y border-sand-100 py-4">
               {rows.map((r) => (
@@ -753,7 +754,7 @@ export function PublicOrderForm({
         <div className="mx-auto max-w-2xl space-y-5 p-5 sm:p-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Checkout</p>
-            <h2 id={`${idPrefix}-checkout-heading`} className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Konfirmasi dan bayar</h2>
+            <h2 id={`${idPrefix}-checkout-heading`} className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Konfirmasi dan bayar</h2>
             <p className="mt-1 text-sm text-sand-500">Pilihan produk di atas langsung menjadi pesananmu. Tidak perlu mengisi form produk lagi.</p>
           </div>
 
@@ -778,6 +779,11 @@ export function PublicOrderForm({
                 ).map(([value, judul, sub]) => (
                   <label
                     key={value}
+                    onClick={(e) => {
+                      if (orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)) return;
+                      e.preventDefault();
+                      setMetodeBayar(value);
+                    }}
                     className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${
                       metodeBayar === value
                         ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
@@ -789,9 +795,9 @@ export function PublicOrderForm({
                       name="metodeBayarRadio"
                       value={value}
                       checked={metodeBayar === value}
-                      onChange={() => setMetodeBayar(value)}
+                      readOnly
                       disabled={orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)}
-                      className="mt-0.5 h-4 w-4 accent-brand-600"
+                      className="pointer-events-none mt-0.5 h-4 w-4 accent-brand-600"
                     />
                     <span>
                       <span className="block font-bold text-sand-800">{judul}</span>
@@ -844,6 +850,10 @@ export function PublicOrderForm({
                     {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[]).map((opt) => (
                       <label
                         key={opt}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setMetode(opt);
+                        }}
                         className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                           metode === opt
                             ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
@@ -855,8 +865,8 @@ export function PublicOrderForm({
                           name="metodePengirimanRadio"
                           value={opt}
                           checked={metode === opt}
-                          onChange={() => setMetode(opt)}
-                          className="h-4 w-4 accent-brand-600"
+                          readOnly
+                          className="h-4 w-4 pointer-events-none accent-brand-600"
                         />
                         <span className="font-medium text-sand-800">{METODE_PENGIRIMAN_LABEL[opt]}</span>
                       </label>
@@ -918,8 +928,17 @@ export function PublicOrderForm({
             <p className="mt-1 text-right text-xs text-sand-500">{paymentRule}</p>
           </div>
           <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
-            <label className="flex items-start gap-3">
+            <label
+              className="flex items-start gap-3"
+              onClick={(e) => {
+                if (orderingDisabled || (e.target as HTMLElement).closest("a")) return;
+                e.preventDefault();
+                const input = acceptPoliciesRef.current;
+                if (input) input.checked = !input.checked;
+              }}
+            >
               <input
+                ref={acceptPoliciesRef}
                 type="checkbox"
                 name="acceptPolicies"
                 value="1"
@@ -991,7 +1010,7 @@ export function PublicOrderForm({
                 type="button"
                 onClick={() => setColorModalFor(null)}
                 aria-label="Tutup"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sand-400 hover:bg-sand-100 hover:text-sand-700"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
                   <line x1="18" y1="6" x2="6" y2="18" />

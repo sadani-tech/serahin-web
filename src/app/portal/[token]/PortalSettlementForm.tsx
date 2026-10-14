@@ -31,6 +31,7 @@ export function PortalSettlementForm({
   token,
   items,
   unsettledItemIds,
+  pendingItemIds,
   paymentChannel,
   gatewayAvailable = false,
   manualTransfer,
@@ -41,6 +42,11 @@ export function PortalSettlementForm({
   token: string;
   items: SettlementItem[];
   unsettledItemIds: string[];
+  /** Item yang sedang punya pengajuan pelunasan menunggu verifikasi Admin —
+   * ditampilkan dengan badge "Menunggu verifikasi" (tidak bisa dicentang
+   * lagi), BEDA dari item lain yang belum pernah diajukan sama sekali
+   * (tetap bisa dicentang langsung). */
+  pendingItemIds: string[];
   paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
   gatewayAvailable?: boolean;
   manualTransfer?: {
@@ -188,19 +194,36 @@ export function PortalSettlementForm({
         </p>
         <div className="divide-y divide-sand-100 rounded-xl border border-sand-200">
           {items.map((item) => {
-            const unsettled = unsettledItemIds.includes(item.id);
+            const isPending = pendingItemIds.includes(item.id);
+            // Selectable hanya item yang belum lunas DAN tidak sedang
+            // menunggu verifikasi — item lain yang kebetulan sedang pending
+            // tidak boleh memblokir item ini dari daftar pilihan.
+            const unsettled = unsettledItemIds.includes(item.id) && !isPending;
+            const lunas = !unsettledItemIds.includes(item.id);
             const checked = selected.has(item.id);
             return (
               <label
                 key={item.id}
+                // iOS: beberapa in-app browser (mis. WebView WhatsApp) tidak
+                // meneruskan tap pada <label> ke <input> anaknya, sehingga
+                // checklist terasa tidak merespons sama sekali. onClick di
+                // label ini menangani toggle secara eksplisit (preventDefault
+                // mencegah toggle native ganda di browser yang forwarding-nya
+                // normal); input dibuat pointer-events-none supaya tidak
+                // pernah jadi sumber event kedua.
+                onClick={(e) => {
+                  if (!unsettled) return;
+                  e.preventDefault();
+                  toggleItem(item.id);
+                }}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm ${unsettled ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
               >
                 <input
                   type="checkbox"
                   checked={unsettled ? checked : true}
                   disabled={!unsettled}
-                  onChange={() => unsettled && toggleItem(item.id)}
-                  className="h-4 w-4 accent-brand-600"
+                  readOnly
+                  className="h-4 w-4 pointer-events-none accent-brand-600"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium text-sand-800">
@@ -211,7 +234,12 @@ export function PortalSettlementForm({
                     {item.jumlah} × {formatRupiah(item.hargaSaatPesan)}
                   </span>
                 </span>
-                {!unsettled && (
+                {isPending && (
+                  <span className="shrink-0 rounded-full bg-sun-100 px-2 py-0.5 text-[10px] font-extrabold text-sun-800">
+                    Menunggu verifikasi
+                  </span>
+                )}
+                {lunas && (
                   <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
                     Lunas
                   </span>
@@ -266,6 +294,10 @@ export function PortalSettlementForm({
               .map((opt) => (
                 <label
                   key={opt}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMetode(opt);
+                  }}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                     metode === opt ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500" : "border-sand-200 hover:border-sand-300"
                   }`}
@@ -275,8 +307,8 @@ export function PortalSettlementForm({
                     name="metodePengirimanRadio"
                     value={opt}
                     checked={metode === opt}
-                    onChange={() => setMetode(opt)}
-                    className="h-4 w-4 accent-brand-600"
+                    readOnly
+                    className="h-4 w-4 pointer-events-none accent-brand-600"
                   />
                   <span className="font-medium text-sand-800">{METODE_PENGIRIMAN_LABEL[opt]}</span>
                 </label>

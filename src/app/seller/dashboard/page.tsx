@@ -35,7 +35,7 @@ export default async function SellerDashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-extrabold uppercase tracking-[.16em] text-brand-700">Seller dashboard</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900 sm:text-3xl">{profile.businessName}</h1><p className="mt-1 text-sm text-sand-500">Ringkasan operasional Batch PO dan pembayaran toko Anda.</p></div>
-        <div className="flex gap-2"><LinkButton href={`/catalog?seller=${encodeURIComponent(profile.slug)}`} variant="secondary">Lihat storefront</LinkButton><LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton></div>
+        <div className="flex gap-2"><LinkButton href={`/catalog?seller=${encodeURIComponent(profile.slug)}`} variant="secondary">Lihat Toko</LinkButton><LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton></div>
       </div>
 
       {/* Filter (v2.3.7 — sebelumnya cuma ada di dashboard Admin) */}
@@ -68,7 +68,7 @@ export default async function SellerDashboardPage({
             <Input type="date" name="dateTo" defaultValue={sp.dateTo ?? ""} className="w-full py-1.5 sm:w-auto" />
           </div>
           <div className="col-span-2 flex items-center gap-3 sm:col-auto">
-            <button type="submit" className="flex-1 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all hover:bg-brand-700 active:translate-y-px sm:flex-none">
+            <button type="submit" className="flex-1 rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-brand transition-all hover:bg-brand-700 active:translate-y-px sm:flex-none">
               Terapkan
             </button>
             {adaFilter && (

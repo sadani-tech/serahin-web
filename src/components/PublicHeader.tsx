@@ -45,20 +45,20 @@ export function PublicHeader({
             <>
               <Link
                 href="/catalog"
-                className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
+                className="hidden min-h-11 items-center rounded-full px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
               >
                 Katalog
               </Link>
               <Link
                 href="/#faq"
-                className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
+                className="hidden min-h-11 items-center rounded-full px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
               >
                 FAQ
               </Link>
-              <Link href="/arsip" className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 xl:inline-flex">Arsip</Link>
+              <Link href="/arsip" className="hidden min-h-11 items-center rounded-full px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 xl:inline-flex">Arsip</Link>
               <Link
                 href="/contact"
-                className="hidden min-h-11 items-center rounded-xl px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
+                className="hidden min-h-11 items-center rounded-full px-3 text-sm font-bold text-sand-600 hover:bg-brand-50 hover:text-brand-700 lg:inline-flex"
               >
                 Kontak
               </Link>
@@ -67,19 +67,23 @@ export function PublicHeader({
           {showCart && (
             <Link
               href="/cart"
-              className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-2 text-sand-700 hover:bg-brand-50 hover:text-brand-700"
+              className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition hover:scale-105 hover:bg-brand-100"
               aria-label={`Keranjang, ${count} item`}
               title="Keranjang"
             >
-              <CartIcon className="h-6 w-6 text-brand-700" />
-              {count > 0 && <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5 text-[11px] text-white">{count > 99 ? "99+" : count}</span>}
+              <CartIcon className="h-5 w-5" />
+              {count > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full border-2 border-white bg-accent-600 px-1 py-0.5 text-[10px] font-extrabold leading-none text-white">
+                  {count > 99 ? "99+" : count}
+                </span>
+              )}
             </Link>
           )}
           {loggedIn && role ? (
             <ProfileMenu user={{ name, email, role, avatarUrl }} />
           ) : (
-            <Link href="/account/login" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700">
-              Masuk Buyer
+            <Link href="/account/login" className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand hover:bg-brand-700">
+              Masuk
             </Link>
           )}
         </nav>

@@ -23,14 +23,14 @@ export default function GlobalErrorBoundary({
 
   return (
     <StatusPage
-      code="Oops"
-      title="Terjadi kesalahan"
-      description="Ada gangguan saat memuat halaman ini. Coba lagi sebentar lagi — kalau masih terjadi, tim kami siap membantu."
+      code="Sebentar"
+      title="Halaman ini sedang kami siapkan ulang"
+      description="Muat ulang halaman ini untuk melanjutkan. Kalau masih belum bisa diakses, tim support Serahin siap membantu."
       actions={
         <>
-          <Button onClick={reset}>Coba lagi</Button>
-          <LinkButton href="/" variant="secondary">
-            Kembali ke Beranda
+          <Button onClick={reset}>Muat Ulang</Button>
+          <LinkButton href="/contact" variant="secondary">
+            Hubungi Kami
           </LinkButton>
         </>
       }

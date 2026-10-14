@@ -102,7 +102,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
 };
 
 const buttonBase =
-  "inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-bold transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-y-0";
+  "inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-y-0";
 
 function Spinner() {
   return (
@@ -189,7 +189,7 @@ export function DeleteIconButton({
       disabled={disabled || loading}
       title={title}
       aria-label={title}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sand-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sand-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {loading ? (
         <Spinner />
@@ -256,7 +256,7 @@ export function IconButton({
       disabled={disabled || loading}
       title={title}
       aria-label={title}
-      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${iconButtonVariants[variant]} ${className}`}
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${iconButtonVariants[variant]} ${className}`}
     >
       {loading ? <Spinner /> : children}
     </button>

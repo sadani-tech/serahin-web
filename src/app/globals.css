@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./revamp.css";
 
 /* Landing page visual system merged from serahin-landing-page (v2.3.2). */
 :root {
@@ -656,6 +657,30 @@
     0 12px 24px -6px rgb(45 51 40 / 0.1), 0 4px 8px -4px rgb(45 51 40 / 0.06);
   --shadow-brand: 0 6px 16px -4px rgb(61 121 64 / 0.32);
   --shadow-accent: 0 6px 16px -4px rgb(245 114 35 / 0.3);
+
+  /* ---- Revamp UI publik (landing/katalog/produk/auth/pengajuan Seller,
+     libraries/serahin-docs/design/serahin) — font heading + beberapa token
+     warna tambahan yang tidak ada padanan 1:1 di palet sand/brand/sun di
+     atas. Dashboard & halaman lama tetap pakai token sand/brand/sun biasa. */
+  --font-head:
+    var(--font-kulim-park), "Trebuchet MS", system-ui, sans-serif;
+
+  --color-ink: #1e1e1e;
+  --color-ink-2: #444a45;
+  --color-ink-3: #8a8f8b;
+  --color-mist: #f3f7f4;
+  --color-mint: #e8f4e9;
+  --color-rline: #dde6de;
+  --color-ryellow: #ffe674;
+  --color-ryellow-soft: #fff6c9;
+  --color-ryellow-deep: #f6d54a;
+  --color-rgreen: #2b6233;
+  --color-rgreen-700: #22502a;
+  --color-rgreen-200: #bbdab8;
+  --color-rgreen-100: #d9ebd7;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root {
@@ -669,6 +694,17 @@ body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+}
+
+/* Token-only revamp pass (Seller/Admin/Buyer dashboard): judul di dalam
+   konten dashboard terotentikasi pakai Kulim Park, sama seperti halaman
+   publik revamp — tanpa menyentuh struktur tabel/filter/form apa pun.
+   Discoped ke `.dashboard-main` (dipasang di AppShell dan di layout grup
+   `(dashboard)` Buyer) supaya tidak bocor ke halaman publik lain yang sudah
+   punya pengaturan font sendiri. */
+.dashboard-main h1,
+.dashboard-main h2 {
+  font-family: var(--font-head);
 }
 
 html {

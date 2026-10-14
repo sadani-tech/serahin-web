@@ -34,7 +34,7 @@ const links: NavLink[] = [
   },
   {
     href: "/seller/dashboard",
-    label: "Dashboard Seller",
+    label: "Dashboard",
     exact: true,
     roles: ["SELLER"],
     group: "Operasional",
@@ -57,6 +57,17 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/produk",
+    label: "Produk",
+    roles: ["SELLER"],
+    group: "Operasional",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 8l-9-5-9 5 9 5 9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
+      </svg>
+    ),
+  },
+  {
     href: "/pesanan",
     label: "Pesanan",
     roles: ["SELLER"],
@@ -66,7 +77,7 @@ const links: NavLink[] = [
         <path d="M6 2h12l2 5H4l2-5Z" /><path d="M5 7v15h14V7" /><path d="M9 11h6M9 15h6" />
       </svg>
     ),
-  },  
+  },
   {
     href: "/penjual",
     label: "Penjual",
@@ -168,6 +179,56 @@ const links: NavLink[] = [
       </svg>
     ),
   },
+  {
+    href: "/seller/profile",
+    label: "Pengaturan",
+    roles: ["SELLER"],
+    group: "Pengaturan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 5a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09A1.65 1.65 0 0015 5a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09A1.65 1.65 0 0019.4 15z" />
+      </svg>
+    ),
+  },
+  // Bantuan (v2.3.9 FR-42.19) — acuan konsep pengelompokan dari
+  // libraries/serahin-docs/references/sidebar-feature.jpg (bukan skema warna).
+  {
+    href: "/panduan",
+    label: "Panduan Pengguna",
+    roles: ["SELLER"],
+    group: "Bantuan",
+    exact: true,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/panduan/aplikasi",
+    label: "Panduan Aplikasi",
+    roles: ["ADMIN", "SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="5" y="2" width="14" height="20" rx="2" />
+        <line x1="12" y1="18" x2="12.01" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    href: "/kritik-saran",
+    label: "Kritik & Saran",
+    roles: ["ADMIN", "SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+      </svg>
+    ),
+  },
 ];
 
 function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
@@ -177,7 +238,7 @@ function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
 // Urutan section sidebar desktop (v2.3.9 FR-42.4) — murni tampilan, tidak
 // memengaruhi rute/izin. Group yang tidak ada di daftar ini (seharusnya tidak
 // terjadi, semua NavLink sudah diberi `group`) jatuh ke "Lainnya" di akhir.
-const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Data", "Pengaturan"];
+const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Bantuan", "Pengaturan"];
 
 function groupSidebarLinks(items: NavLink[]) {
   const byGroup = new Map<string, NavLink[]>();
@@ -211,7 +272,7 @@ export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
                 const active = isActive(link.href, link.exact);
                 return (
                   <li key={link.href}>
-                    <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
+                    <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-full px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
                       <span className={active ? "text-sun-300" : "text-sand-400"}>{link.icon}</span>
                       {link.label}
                     </Link>
@@ -235,7 +296,7 @@ const utilityLinks: NavLink[] = [
     href: "/import",
     label: "Import",
     roles: ["ADMIN", "SELLER"],
-    group: "Data",
+    group: "Pengaturan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -246,7 +307,7 @@ const utilityLinks: NavLink[] = [
     href: "/export",
     label: "Export",
     roles: ["ADMIN", "SELLER"],
-    group: "Data",
+    group: "Pengaturan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
@@ -290,7 +351,7 @@ export function NavLinks({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
           <Link
             key={link.href}
             href={link.href}
-            className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"
@@ -319,7 +380,7 @@ export function NavIconActions({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }
             href={link.href}
             title={link.label}
             aria-label={link.label}
-            className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-500 hover:bg-brand-50 hover:text-brand-700"
@@ -343,7 +404,7 @@ export function MobileMenuButton({
   return (
     <button
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-xl text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 lg:hidden"
+      className="flex h-9 w-9 items-center justify-center rounded-full text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 lg:hidden"
       aria-label={open ? "Tutup menu" : "Buka menu"}
     >
       {open ? (
@@ -398,7 +459,7 @@ export function MobileDrawer({
           <SerahinLogo size="sm" />
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-sand-400 hover:bg-sand-100 hover:text-sand-700"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="h-4 w-4">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -419,7 +480,7 @@ export function MobileDrawer({
                       <Link
                         href={link.href}
                         onClick={onClose}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                        className={`flex items-center gap-3 rounded-full px-3 py-3 text-sm font-medium transition-colors ${
                           active
                             ? "bg-brand-600 text-white shadow-brand"
                             : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
@@ -486,7 +547,7 @@ export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
                 }`}
               >
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
+                  className={`flex h-6 w-6 items-center justify-center rounded-full transition-all ${
                     active ? "bg-brand-600 text-white scale-110" : ""
                   }`}
                 >
@@ -505,7 +566,7 @@ export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
             }`}
           >
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full transition-all ${
                 menuOpen ? "bg-brand-600 text-white scale-110" : ""
               }`}
             >
@@ -536,7 +597,7 @@ export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
                   active ? "text-brand-700" : "text-sand-500"
                 }`}
               >
-                <span className={`rounded-xl p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
+                <span className={`rounded-full p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
                   {link.icon}
                 </span>
                 {link.label}
