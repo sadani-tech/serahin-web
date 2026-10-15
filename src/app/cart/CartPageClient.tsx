@@ -24,22 +24,6 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   const [gatewayMethods, setGatewayMethods] = useState<Array<{ code: string; name: string; fee?: number; imageUrl?: string }>>([]);
   const [gatewayAvailable, setGatewayAvailable] = useState(false);
   const [manualTransferEnabled, setManualTransferEnabled] = useState(true);
-  const [manualTransfer, setManualTransfer] = useState<{
-    id: string;
-    accountType: "BANK" | "EWALLET";
-    bankName: string;
-    accountNumber: string;
-    accountHolderName: string;
-  } | null>(null);
-  const [manualTransfers, setManualTransfers] = useState<Array<{
-    id: string;
-    accountType: "BANK" | "EWALLET";
-    bankName: string;
-    accountNumber: string;
-    accountHolderName: string;
-    isPrimary: boolean;
-  }>>([]);
-  const [selectedBankAccountId, setSelectedBankAccountId] = useState("");
   const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
   const [paymentBilling, setPaymentBilling] = useState<{
     billingType: "DOWN_PAYMENT" | "FULL_PAYMENT";
@@ -71,21 +55,6 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
           amount: number;
           gatewayEnabled: boolean;
           manualTransferEnabled: boolean;
-          manualTransfer: {
-            id: string;
-            accountType: "BANK" | "EWALLET";
-            bankName: string;
-            accountNumber: string;
-            accountHolderName: string;
-          } | null;
-          manualTransfers: Array<{
-            id: string;
-            accountType: "BANK" | "EWALLET";
-            bankName: string;
-            accountNumber: string;
-            accountHolderName: string;
-            isPrimary: boolean;
-          }>;
           methods: Array<{ code: string; name: string; fee?: number; imageUrl?: string }>;
           billingType: "DOWN_PAYMENT" | "FULL_PAYMENT";
           downPaymentType: "PERCENTAGE" | "FIXED_AMOUNT" | null;
@@ -99,13 +68,6 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         setGatewayMethods(data.methods);
         setGatewayAvailable(gatewayUsable);
         setManualTransferEnabled(data.manualTransferEnabled);
-        setManualTransfer(data.manualTransfer);
-        setManualTransfers(data.manualTransfers ?? []);
-        setSelectedBankAccountId((current) =>
-          data.manualTransfers?.some((account) => account.id === current)
-            ? current
-            : data.manualTransfer?.id ?? "",
-        );
         setGatewayMethod((current) =>
           data.methods.some((method) => method.code === current)
             ? current
@@ -152,7 +114,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       }
       const response = await fetch("/api/cart/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checkoutKey: checkoutKey.current, salesEventId: cart.salesEventId, paymentMethod, paymentMethodCode: paymentMethod === "GATEWAY" ? gatewayMethod || undefined : undefined, selectedBankAccountId: paymentMethod === "MANUAL" ? selectedBankAccountId || undefined : undefined, acceptPolicies: accepted, whatsappConsent: whatsapp }),
+        body: JSON.stringify({ checkoutKey: checkoutKey.current, salesEventId: cart.salesEventId, paymentMethod, paymentMethodCode: paymentMethod === "GATEWAY" ? gatewayMethod || undefined : undefined, acceptPolicies: accepted, whatsappConsent: whatsapp }),
       });
       const data = await response.json().catch(() => ({ message: "Respons server tidak valid. Silakan coba lagi." })) as { message?: string; paymentUrl?: string | null; tokenAkses?: string; needsConfirm?: boolean; warning?: string };
       if (response.status === 401 || response.status === 403) {
@@ -324,24 +286,11 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         </div>
       )}
 
-      {/* v2.3.9: nomor rekening & nama pemilik tidak perlu ditampilkan di
-          sini — akan tampil jelas di halaman pembayaran setelah Pesanan
-          dibuat. Pilihan rekening hanya ditampilkan bila Seller punya lebih
-          dari satu rekening aktif (perlu dipilih sebelum checkout); bila
-          cuma satu, backend otomatis memakai rekening utama. */}
-      {authenticated && paymentMethod === "MANUAL" && manualTransfer && manualTransfers.length > 1 && (
-        <div className="cart-page__bank">
-          <p className="cart-page__bank-label">Pilih rekening tujuan</p>
-          <Select value={selectedBankAccountId} onChange={(event) => setSelectedBankAccountId(event.target.value)} className="mt-2 min-h-10 w-full text-sm font-semibold">
-            {manualTransfers.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.accountType === "EWALLET" ? "E-wallet" : "Bank"} · {account.bankName}{account.isPrimary ? " (utama)" : ""}
-              </option>
-            ))}
-          </Select>
-          <p className="cart-page__bank-note">Detail nomor rekening akan muncul di halaman pembayaran.</p>
-        </div>
-      )}
+      {/* v2.4.1: tidak lagi menawarkan pilihan rekening tujuan di sini —
+          backend otomatis memakai rekening utama Seller (atau rekening
+          tertua bila belum ada yang ditandai utama), dan Buyer tetap
+          melihat seluruh rekening aktif Seller di halaman pembayaran
+          setelah Pesanan dibuat untuk transfer ke rekening manapun. */}
 
       <label className="cart-page__policy" onClick={(e) => { if ((e.target as HTMLElement).closest("a")) return; e.preventDefault(); setAccepted((v) => !v); }}>
         <input type="checkbox" checked={accepted} readOnly />
