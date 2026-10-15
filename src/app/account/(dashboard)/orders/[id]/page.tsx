@@ -33,6 +33,10 @@ type BuyerOrder = {
   nextAction: string;
   rejectionReason: string | null;
   review: { id: string; rating: number | null; quote: string; status: "DRAFT" | "PUBLISHED"; nameAnonymized: boolean; createdAt: string } | null;
+  checkoutGroupOrder: {
+    checkoutGroupId: string;
+    checkoutGroup: { orders: Array<{ orderId: string; order: { salesEvent: { title: string } } }> };
+  } | null;
 };
 
 const MILESTONE_LABEL: Record<string, string> = {
@@ -74,11 +78,11 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
   const canCancel =
     (!order.cancellationRequestStatus || order.cancellationRequestStatus === "REJECTED") &&
     !NOT_CANCELLABLE_STATUS.includes(order.status);
-  return <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-    <Link href="/account" className="text-sm font-bold text-brand-700">← Pesanan</Link>
-    <div className="mt-4 rounded-2xl border border-sand-200 bg-white p-6">
+  return <main className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
+    <Link href="/account" className="text-sm font-bold text-sand-500 hover:text-brand-700">← Pesanan</Link>
+    <div className="mt-4 rounded-2xl border border-sand-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap justify-between gap-3">
-        <div><h1 className="text-2xl font-extrabold text-sand-900">{order.salesEvent.title}</h1><p className="text-sm text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">Pesanan</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900 sm:text-3xl">{order.salesEvent.title}</h1><p className="mt-1 text-sm text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p></div>
         <div className="flex h-fit items-center gap-2">
           {adaPembayaranTerverifikasi && (
             <a href={`/api/buyer/orders/${id}/invoice`} target="_blank" rel="noreferrer" className="rounded-full border border-brand-300 px-3 py-1 text-xs font-bold text-brand-700 hover:bg-brand-50">
@@ -88,6 +92,23 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
           <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-800">{ORDER_STATUS_LABEL[order.status] ?? order.status}</span>
         </div>
       </div>
+      {order.checkoutGroupOrder && (
+        <section className="mt-5 rounded-2xl border border-brand-200 bg-brand-50 p-4">
+          <p className="text-xs font-extrabold uppercase tracking-wider text-brand-800">Bagian dari checkout gabungan</p>
+          <p className="mt-1 text-sm text-brand-700">
+            Pesanan ini dibayar bersama {order.checkoutGroupOrder.checkoutGroup.orders.length} Batch PO lain dari Seller yang sama dalam satu bukti transfer:{" "}
+            {order.checkoutGroupOrder.checkoutGroup.orders.map((sibling, index) => (
+              <span key={sibling.orderId}>
+                {index > 0 && ", "}
+                <Link href={`/account/orders/${sibling.orderId}`} className="font-bold underline">{sibling.order.salesEvent.title}</Link>
+              </span>
+            ))}
+            .
+          </p>
+          <Link href={`/account/checkout-groups/${order.checkoutGroupOrder.checkoutGroupId}`} className="mt-2 inline-flex text-sm font-extrabold text-brand-800 underline">Lihat checkout gabungan →</Link>
+        </section>
+      )}
+
       <section className={`mt-5 rounded-2xl p-4 ${order.nextAction === "REUPLOAD_PAYMENT" ? "bg-rose-50 text-rose-900" : "bg-brand-50 text-brand-900"}`}>
         <p className="text-xs font-extrabold uppercase tracking-wider">Tindakan berikutnya</p>
         <p className="mt-1 text-lg font-extrabold">{NEXT_ACTION_LABEL[order.nextAction] ?? "Lihat status pesanan"}</p>

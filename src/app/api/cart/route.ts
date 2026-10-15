@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
   catch (error) { return failure(error); }
 }
 
-export async function DELETE() {
-  try { return NextResponse.json(await api.del("/buyer/cart")); }
+export async function DELETE(request: NextRequest) {
+  try {
+    const salesEventId = request.nextUrl.searchParams.get("salesEventId");
+    return NextResponse.json(await api.del(`/buyer/cart${salesEventId ? `?salesEventId=${encodeURIComponent(salesEventId)}` : ""}`));
+  }
   catch (error) { return failure(error); }
 }

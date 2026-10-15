@@ -12,7 +12,7 @@ export type PublicCatalogCampaign = {
   gatewayEnabled: boolean;
   status: string;
   bukaPesanan: boolean;
-  seller: { slug: string; businessName: string };
+  seller: { id: string | null; slug: string; businessName: string };
   variants: PublicVariantOption[];
 };
 
@@ -42,6 +42,25 @@ export function getPublicCatalog(query: {
   archive?: boolean;
 }) {
   return api.get<PublicCatalogResponse>("/public/catalog", query);
+}
+
+/** v2.4.1 FR-39.20 — profil toko untuk Portal Toko (`/store/[sellerSlug]`). */
+export type PublicStoreProfile = {
+  id: string;
+  slug: string;
+  businessName: string;
+  description: string | null;
+  logoUrl: string | null;
+  registeredAt: string;
+  openCampaignCount: number;
+  activeProductCount: number;
+  completedOrderCount: number;
+  ratingAverage: number | null;
+  ratingCount: number;
+};
+
+export function getPublicStoreProfile(sellerSlug: string) {
+  return api.get<PublicStoreProfile>(`/public/store/${sellerSlug}`);
 }
 
 export type PublicTestimonial = {
