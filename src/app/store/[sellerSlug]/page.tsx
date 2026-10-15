@@ -8,7 +8,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { CatalogQuickAdd } from "@/components/CatalogQuickAdd";
 import { getPublicCatalog, getPublicStoreProfile } from "@/lib/public-catalog";
 import { getSession } from "@/lib/session";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatTanggal } from "@/lib/format";
 import { ApiError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -57,21 +57,52 @@ export default async function StorePage({ params }: { params: Params }) {
       <RevampHeader navLinks={NAV_LINKS} loggedIn={Boolean(session)} role={session?.role} />
       <main id="main">
         <section className="k-hero" style={{ paddingBottom: 0 }}>
-          <div className="k-hero__inner" style={{ alignItems: "center", gap: "1.25rem", display: "flex", flexWrap: "wrap" }}>
+          <div className="k-hero__inner" style={{ alignItems: "flex-start", gap: "1.25rem", display: "flex", flexWrap: "wrap" }}>
             {profile.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo toko bisa dari S3/CDN eksternal
-              <img src={profile.logoUrl} alt={profile.businessName} style={{ width: 72, height: 72, borderRadius: "9999px", objectFit: "cover", flexShrink: 0 }} />
+              <img src={profile.logoUrl} alt={profile.businessName} style={{ width: 84, height: 84, borderRadius: "9999px", objectFit: "cover", flexShrink: 0 }} />
             ) : (
-              <div style={{ width: 72, height: 72, borderRadius: "9999px", background: "var(--brand-100, #dcfce7)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.5rem", flexShrink: 0 }}>
+              <div style={{ width: 84, height: 84, borderRadius: "9999px", background: "var(--brand-100, #dcfce7)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.75rem", flexShrink: 0 }}>
                 {profile.businessName.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <div>
+            <div style={{ flex: "1 1 20rem" }}>
               <h1 id="k-title" style={{ marginBottom: "0.25rem" }}>{profile.businessName}</h1>
               {profile.description && <p className="lead" style={{ maxWidth: "48rem" }}>{profile.description}</p>}
-              <p style={{ fontSize: "0.875rem", color: "var(--sand-500, #78716c)", marginTop: "0.25rem" }}>
-                {profile.openCampaignCount} Batch PO sedang dibuka
-              </p>
+
+              <dl
+                style={{
+                  display: "flex", flexWrap: "wrap", gap: "1.25rem 2rem", marginTop: "0.9rem",
+                  paddingTop: "0.9rem", borderTop: "1px solid var(--sand-200, #e7e5e4)",
+                }}
+              >
+                <div>
+                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Rating</dt>
+                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>
+                    {profile.ratingCount > 0 ? (
+                      <>★ {profile.ratingAverage?.toFixed(1)} <span style={{ color: "var(--sand-500, #78716c)", fontWeight: 500 }}>({profile.ratingCount})</span></>
+                    ) : (
+                      <span style={{ color: "var(--sand-500, #78716c)", fontWeight: 500 }}>Belum ada rating</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Pesanan selesai</dt>
+                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{profile.completedOrderCount}</dd>
+                </div>
+                <div>
+                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Produk</dt>
+                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{profile.activeProductCount}</dd>
+                </div>
+                <div>
+                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Batch PO dibuka</dt>
+                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{profile.openCampaignCount}</dd>
+                </div>
+                <div>
+                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Bergabung</dt>
+                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{formatTanggal(profile.registeredAt)}</dd>
+                </div>
+              </dl>
             </div>
           </div>
         </section>

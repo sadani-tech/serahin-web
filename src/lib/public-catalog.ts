@@ -51,7 +51,12 @@ export type PublicStoreProfile = {
   businessName: string;
   description: string | null;
   logoUrl: string | null;
+  registeredAt: string;
   openCampaignCount: number;
+  activeProductCount: number;
+  completedOrderCount: number;
+  ratingAverage: number | null;
+  ratingCount: number;
 };
 
 export function getPublicStoreProfile(sellerSlug: string) {
