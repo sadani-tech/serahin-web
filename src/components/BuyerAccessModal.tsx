@@ -49,8 +49,12 @@ export function BuyerAccessModal({
           </p>
         </div>
         <div className="space-y-3 px-6 py-6 sm:px-8">
-          <Link href={`/api/auth/switch?${query}`} className="flex min-h-12 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand transition hover:bg-brand-700">Masuk sebagai Buyer</Link>
-          <Link href={`/api/auth/switch?mode=register&${query}`} className="flex min-h-12 w-full items-center justify-center rounded-xl border border-brand-300 bg-white px-4 text-sm font-extrabold text-brand-700 transition hover:bg-brand-50">Daftar akun Buyer</Link>
+          {/* !text-white / !text-brand-700: di dalam .rv-scope (mis. halaman
+              /cart), reset `.rv-scope a { color: inherit }` punya spesifisitas
+              lebih tinggi dari utility Tailwind biasa dan menimpa warna teks
+              link jadi hitam — dipaksa menang pakai modifier !important. */}
+          <Link href={`/api/auth/switch?${query}`} className="flex min-h-12 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold !text-white shadow-brand transition hover:bg-brand-700">Masuk sebagai Buyer</Link>
+          <Link href={`/api/auth/switch?mode=register&${query}`} className="flex min-h-12 w-full items-center justify-center rounded-xl border border-brand-300 bg-white px-4 text-sm font-extrabold !text-brand-700 transition hover:bg-brand-50">Daftar akun Buyer</Link>
           <GoogleBuyerSignIn callbackUrl={callbackUrl} />
           <button type="button" onClick={onClose} className="min-h-10 w-full text-sm font-bold text-sand-500 hover:text-sand-800">Kembali memilih produk</button>
         </div>
