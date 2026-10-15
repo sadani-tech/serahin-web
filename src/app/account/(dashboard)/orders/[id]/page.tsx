@@ -78,11 +78,11 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
   const canCancel =
     (!order.cancellationRequestStatus || order.cancellationRequestStatus === "REJECTED") &&
     !NOT_CANCELLABLE_STATUS.includes(order.status);
-  return <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-    <Link href="/account" className="text-sm font-bold text-brand-700">← Pesanan</Link>
-    <div className="mt-4 rounded-2xl border border-sand-200 bg-white p-6">
+  return <main className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
+    <Link href="/account" className="text-sm font-bold text-sand-500 hover:text-brand-700">← Pesanan</Link>
+    <div className="mt-4 rounded-2xl border border-sand-200 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap justify-between gap-3">
-        <div><h1 className="text-2xl font-extrabold text-sand-900">{order.salesEvent.title}</h1><p className="text-sm text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-700">Pesanan</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900 sm:text-3xl">{order.salesEvent.title}</h1><p className="mt-1 text-sm text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p></div>
         <div className="flex h-fit items-center gap-2">
           {adaPembayaranTerverifikasi && (
             <a href={`/api/buyer/orders/${id}/invoice`} target="_blank" rel="noreferrer" className="rounded-full border border-brand-300 px-3 py-1 text-xs font-bold text-brand-700 hover:bg-brand-50">
