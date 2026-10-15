@@ -2022,7 +2022,7 @@
 .rv-scope .cart-page__conflict { margin-top: 20px; padding: 16px; border-radius: var(--r-md); background: var(--yellow-soft); border: 1px solid var(--yellow-deep); font-size: .88rem; color: #6b5200; }
 .rv-scope .cart-page__conflict strong { display: block; font-weight: 800; }
 .rv-scope .cart-page__conflict-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
-.rv-scope .cart-page__pill-btn { min-height: 40px; padding: 0 16px; border-radius: 999px; font-size: .82rem; font-weight: 700; background: #fff; border: 1px solid var(--yellow-deep); color: var(--ink); cursor: pointer; }
+.rv-scope .cart-page__pill-btn { min-height: 44px; padding: 0 16px; border-radius: 999px; font-size: .82rem; font-weight: 700; background: #fff; border: 1px solid var(--yellow-deep); color: var(--ink); cursor: pointer; }
 .rv-scope .cart-page__pill-btn--primary { background: var(--green); color: #fff; border-color: var(--green); }
 
 .rv-scope .cart-page__items { margin-top: 20px; display: grid; gap: 14px; }
