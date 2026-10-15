@@ -56,58 +56,47 @@ export default async function StorePage({ params }: { params: Params }) {
       <IconSprite />
       <RevampHeader navLinks={NAV_LINKS} loggedIn={Boolean(session)} role={session?.role} />
       <main id="main">
-        <section className="k-hero" style={{ paddingBottom: 0 }}>
-          <div className="k-hero__inner" style={{ alignItems: "flex-start", gap: "1.25rem", display: "flex", flexWrap: "wrap" }}>
+        <section className="store-hero">
+          <div className="store-hero__inner">
             {profile.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo toko bisa dari S3/CDN eksternal
-              <img src={profile.logoUrl} alt={profile.businessName} style={{ width: 84, height: 84, borderRadius: "9999px", objectFit: "cover", flexShrink: 0 }} />
+              <img src={profile.logoUrl} alt={profile.businessName} className="store-avatar" />
             ) : (
-              <div style={{ width: 84, height: 84, borderRadius: "9999px", background: "var(--brand-100, #dcfce7)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.75rem", flexShrink: 0 }}>
-                {profile.businessName.slice(0, 1).toUpperCase()}
-              </div>
+              <div className="store-avatar" aria-hidden="true">{profile.businessName.slice(0, 1).toUpperCase()}</div>
             )}
-            <div style={{ flex: "1 1 20rem" }}>
-              <h1 id="k-title" style={{ marginBottom: "0.25rem" }}>{profile.businessName}</h1>
-              {profile.description && <p className="lead" style={{ maxWidth: "48rem" }}>{profile.description}</p>}
+            <div className="store-hero__body">
+              <h1 id="k-title" className="store-hero__name">{profile.businessName}</h1>
+              {profile.description && <p className="store-hero__desc">{profile.description}</p>}
 
-              <dl
-                style={{
-                  display: "flex", flexWrap: "wrap", gap: "1.25rem 2rem", marginTop: "0.9rem",
-                  paddingTop: "0.9rem", borderTop: "1px solid var(--sand-200, #e7e5e4)",
-                }}
-              >
+              <dl className="store-stats">
                 <div>
-                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Rating</dt>
-                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>
-                    {profile.ratingCount > 0 ? (
-                      <>★ {profile.ratingAverage?.toFixed(1)} <span style={{ color: "var(--sand-500, #78716c)", fontWeight: 500 }}>({profile.ratingCount})</span></>
-                    ) : (
-                      <span style={{ color: "var(--sand-500, #78716c)", fontWeight: 500 }}>Belum ada rating</span>
-                    )}
+                  <dt>Rating</dt>
+                  <dd className={profile.ratingCount > 0 ? undefined : "is-muted"}>
+                    {profile.ratingCount > 0 ? <>★ {profile.ratingAverage?.toFixed(1)} <small>({profile.ratingCount})</small></> : "Belum ada rating"}
                   </dd>
                 </div>
                 <div>
-                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Pesanan selesai</dt>
-                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{profile.completedOrderCount}</dd>
+                  <dt>Pesanan selesai</dt>
+                  <dd>{profile.completedOrderCount}</dd>
                 </div>
                 <div>
-                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Produk</dt>
-                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{profile.activeProductCount}</dd>
+                  <dt>Produk</dt>
+                  <dd>{profile.activeProductCount}</dd>
                 </div>
                 <div>
-                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Batch PO dibuka</dt>
-                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{profile.openCampaignCount}</dd>
+                  <dt>Batch PO dibuka</dt>
+                  <dd>{profile.openCampaignCount}</dd>
                 </div>
                 <div>
-                  <dt style={{ fontSize: "0.7rem", color: "var(--sand-500, #78716c)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Bergabung</dt>
-                  <dd style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem" }}>{formatTanggal(profile.registeredAt)}</dd>
+                  <dt>Bergabung</dt>
+                  <dd>{formatTanggal(profile.registeredAt)}</dd>
                 </div>
               </dl>
             </div>
           </div>
         </section>
 
-        <section className="k-shop" aria-label={`Produk yang sedang dijual ${profile.businessName}`}>
+        <section className="store-products" aria-label={`Produk yang sedang dijual ${profile.businessName}`}>
           <div className="k-shop__inner">
             {cards.length === 0 ? (
               <p className="k-empty">Belum ada Batch PO yang sedang dibuka dari toko ini. Coba lagi nanti.</p>
