@@ -12,7 +12,7 @@ export type PublicCatalogCampaign = {
   gatewayEnabled: boolean;
   status: string;
   bukaPesanan: boolean;
-  seller: { slug: string; businessName: string };
+  seller: { id: string | null; slug: string; businessName: string };
   variants: PublicVariantOption[];
 };
 

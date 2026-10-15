@@ -269,7 +269,7 @@ export default async function CatalogPage({
                                   <CatalogQuickAdd
                                     role={session?.role}
                                     detailHref={detailHref}
-                                    event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }}
+                                    event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerId: campaign.seller.id, sellerName: campaign.seller.businessName, endsAt: campaign.tanggalTutup }}
                                     item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
                                   />
                                 </>
