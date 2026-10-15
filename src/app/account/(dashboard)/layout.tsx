@@ -19,6 +19,7 @@ export default async function AccountDashboardLayout({ children }: { children: R
           {isBuyer && (
             <div className="ml-auto flex items-center gap-2">
               <Link href="/account" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Pesanan</Link>
+              <Link href="/account/checkout-groups" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Checkout Gabungan</Link>
               <Link href="/account/profile" className="hidden rounded-lg px-2 py-2 text-sm font-bold text-sand-700 hover:bg-brand-50 hover:text-brand-700 sm:block">Profil</Link>
               <AccountCartLink />
               <ProfileMenu user={{ name: user.name, email: user.email, role: "BUYER", avatarUrl }} />

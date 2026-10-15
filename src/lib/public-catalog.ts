@@ -44,6 +44,20 @@ export function getPublicCatalog(query: {
   return api.get<PublicCatalogResponse>("/public/catalog", query);
 }
 
+/** v2.4.1 FR-39.20 — profil toko untuk Portal Toko (`/store/[sellerSlug]`). */
+export type PublicStoreProfile = {
+  id: string;
+  slug: string;
+  businessName: string;
+  description: string | null;
+  logoUrl: string | null;
+  openCampaignCount: number;
+};
+
+export function getPublicStoreProfile(sellerSlug: string) {
+  return api.get<PublicStoreProfile>(`/public/store/${sellerSlug}`);
+}
+
 export type PublicTestimonial = {
   id: string;
   customerName: string;

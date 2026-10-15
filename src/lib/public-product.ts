@@ -25,7 +25,7 @@ export type PublicProduct = {
   seoDescription: string | null;
   gatewayEnabled: boolean;
   orderable: boolean;
-  seller: { slug: string; businessName: string; description: string | null; logoUrl: string | null };
+  seller: { id: string; slug: string; businessName: string; description: string | null; logoUrl: string | null };
   variants: Array<{
     id: string;
     name: string;

@@ -56,6 +56,31 @@ export async function completeRefund(orderId: string, catatan?: string): Promise
   }
 }
 
+// v2.4.1 FR-39.16: verifikasi/tolak Checkout Group (checkout gabungan lintas
+// Batch PO dalam satu Seller) — satu keputusan untuk seluruh Order anggota.
+export async function verifyCheckoutGroup(id: string): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    await api.post(`/orders/checkout-groups/${id}/verify`);
+    revalidatePath("/verifikasi");
+    revalidatePath("/dashboard");
+    revalidatePath("/seller/dashboard");
+    return { ok: true };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal memverifikasi checkout gabungan." };
+  }
+}
+
+export async function rejectCheckoutGroup(id: string, alasan: string): Promise<{ ok?: boolean; error?: string }> {
+  if (!alasan.trim()) return { error: "Alasan penolakan wajib diisi." };
+  try {
+    await api.post(`/orders/checkout-groups/${id}/reject`, { reason: alasan.trim() });
+    revalidatePath("/verifikasi");
+    return { ok: true };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal menolak checkout gabungan." };
+  }
+}
+
 export async function reviewPayments(
   ids: string[],
   keputusan: "TERVERIFIKASI" | "DITOLAK",

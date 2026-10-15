@@ -4,6 +4,7 @@ import { Card, EmptyState, Select } from "@/components/ui";
 import { VerificationTable, type VerificationRow } from "./VerificationTable";
 import { PaymentVerificationTable, type PaymentVerificationRow } from "./PaymentVerificationTable";
 import { CancellationTable, type CancellationRow } from "./CancellationTable";
+import { CheckoutGroupVerificationTable, type CheckoutGroupVerificationRow } from "./CheckoutGroupVerificationTable";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +14,18 @@ type Params = { tab?: string; campaignId?: string; variantId?: string; paymentTy
 
 export default async function VerificationPage({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
-  const tab = sp.tab === "payments" ? "payments" : sp.tab === "pembatalan" ? "pembatalan" : "orders";
+  const tab = sp.tab === "payments" ? "payments" : sp.tab === "pembatalan" ? "pembatalan" : sp.tab === "checkout-gabungan" ? "checkout-gabungan" : "orders";
   const page = Math.max(1, Number(sp.page) || 1);
-  const [campaigns, queue] = await Promise.all([
+  const [campaigns, queue, checkoutGroups] = await Promise.all([
     api.list<Campaign>("/pre-orders"),
     tab === "payments"
       ? api.get<Envelope<PaymentVerificationRow>>("/payments/pending", { campaignId: sp.campaignId, paymentType: sp.paymentType, search: sp.q, page, limit: 10 })
       : tab === "pembatalan"
         ? api.get<Envelope<CancellationRow>>("/pesanan-verifikasi/pembatalan", { campaignId: sp.campaignId, page, limit: 10 })
-        : api.get<Envelope<VerificationRow>>("/pesanan-verifikasi", { campaignId: sp.campaignId, variantId: sp.variantId, page, limit: 10 }),
+        : tab === "checkout-gabungan"
+          ? Promise.resolve({ data: [], meta: { page: 1, totalPages: 1, total: 0 } } as Envelope<VerificationRow>)
+          : api.get<Envelope<VerificationRow>>("/pesanan-verifikasi", { campaignId: sp.campaignId, variantId: sp.variantId, page, limit: 10 }),
+    tab === "checkout-gabungan" ? api.get<CheckoutGroupVerificationRow[]>("/orders/checkout-groups", { status: "PENDING_VERIFICATION" }) : Promise.resolve([] as CheckoutGroupVerificationRow[]),
   ]);
   const selectedCampaign = campaigns.find((campaign) => campaign.id === sp.campaignId);
   const ordersQueue = queue as Envelope<VerificationRow>;
@@ -30,14 +34,15 @@ export default async function VerificationPage({ searchParams }: { searchParams:
   const tabQuery = (next: string) => ({ tab: next, ...(sp.campaignId ? { campaignId: sp.campaignId } : {}) });
 
   return <div className="space-y-6">
-    <div><h1 className="text-2xl font-bold text-sand-900">Verifikasi</h1><p className="mt-1 text-sm text-sand-500">Tinjau pesanan baru, pembayaran manual, dan pengajuan pembatalan yang membutuhkan keputusan.</p></div>
-    <div className="flex gap-2 border-b border-sand-200">
+    <div><h1 className="text-2xl font-bold text-sand-900">Verifikasi</h1><p className="mt-1 text-sm text-sand-500">Tinjau pesanan baru, pembayaran manual, checkout gabungan, dan pengajuan pembatalan yang membutuhkan keputusan.</p></div>
+    <div className="flex flex-wrap gap-2 border-b border-sand-200">
       <Link href={{ pathname: "/verifikasi", query: tabQuery("orders") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "orders" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pesanan baru</Link>
       <Link href={{ pathname: "/verifikasi", query: tabQuery("payments") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "payments" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pembayaran</Link>
+      <Link href={{ pathname: "/verifikasi", query: tabQuery("checkout-gabungan") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "checkout-gabungan" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Checkout Gabungan</Link>
       <Link href={{ pathname: "/verifikasi", query: tabQuery("pembatalan") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "pembatalan" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pembatalan</Link>
     </div>
 
-    <Card className="p-4"><form className="flex flex-wrap items-end gap-3">
+    {tab !== "checkout-gabungan" && <Card className="p-4"><form className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="tab" value={tab} />
       {tab === "payments" && <label className="min-w-56 flex-1 text-sm">Cari Buyer atau pesanan<input name="q" defaultValue={sp.q ?? ""} placeholder="Nama, email, telepon, ID pesanan" className="mt-1 block min-h-11 w-full rounded-xl border border-sand-300 px-3 text-sm" /></label>}
       <label className="text-sm">Batch PO<Select name="campaignId" defaultValue={sp.campaignId ?? ""} className="mt-1 block"><option value="">Semua Batch PO</option>{campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.namaProduk}</option>)}</Select></label>
@@ -45,17 +50,24 @@ export default async function VerificationPage({ searchParams }: { searchParams:
       {tab === "payments" && <label className="text-sm">Jenis pembayaran<Select name="paymentType" defaultValue={sp.paymentType ?? ""} className="mt-1 block"><option value="">Semua jenis</option><option value="DOWN_PAYMENT">DP</option><option value="SETTLEMENT">Pelunasan</option><option value="FULL_PAYMENT">Lunas</option></Select></label>}
       <button className="min-h-11 rounded-full bg-brand-600 px-4 text-sm font-bold text-white shadow-brand">Terapkan</button>
       {(sp.campaignId || sp.variantId || sp.paymentType || sp.q) && <Link className="py-2 text-sm text-sand-500" href={`/verifikasi?tab=${tab}`}>Reset</Link>}
-    </form></Card>
+    </form></Card>}
 
-    <Card>{queue.data.length
-      ? tab === "payments" ? <PaymentVerificationTable rows={paymentsQueue.data} /> : tab === "pembatalan" ? <CancellationTable rows={cancellationQueue.data} /> : <VerificationTable rows={ordersQueue.data} />
-      : <EmptyState title="Antrean kosong" description={tab === "payments" ? "Tidak ada pembayaran manual yang menunggu verifikasi." : tab === "pembatalan" ? "Tidak ada pengajuan pembatalan." : "Tidak ada pesanan baru untuk filter ini."} />}
-    </Card>
-    {queue.meta.totalPages > 1 && <div className="flex justify-between text-sm">
-      <PageLink disabled={page <= 1} sp={sp} page={page - 1}>Sebelumnya</PageLink>
-      <span>Halaman {page} dari {queue.meta.totalPages} · {queue.meta.total} data</span>
-      <PageLink disabled={page >= queue.meta.totalPages} sp={sp} page={page + 1}>Berikutnya</PageLink>
-    </div>}
+    {tab === "checkout-gabungan"
+      ? <Card>{checkoutGroups.length
+          ? <CheckoutGroupVerificationTable rows={checkoutGroups} />
+          : <EmptyState title="Antrean kosong" description="Tidak ada checkout gabungan yang menunggu verifikasi." />}
+        </Card>
+      : <>
+          <Card>{queue.data.length
+            ? tab === "payments" ? <PaymentVerificationTable rows={paymentsQueue.data} /> : tab === "pembatalan" ? <CancellationTable rows={cancellationQueue.data} /> : <VerificationTable rows={ordersQueue.data} />
+            : <EmptyState title="Antrean kosong" description={tab === "payments" ? "Tidak ada pembayaran manual yang menunggu verifikasi." : tab === "pembatalan" ? "Tidak ada pengajuan pembatalan." : "Tidak ada pesanan baru untuk filter ini."} />}
+          </Card>
+          {queue.meta.totalPages > 1 && <div className="flex justify-between text-sm">
+            <PageLink disabled={page <= 1} sp={sp} page={page - 1}>Sebelumnya</PageLink>
+            <span>Halaman {page} dari {queue.meta.totalPages} · {queue.meta.total} data</span>
+            <PageLink disabled={page >= queue.meta.totalPages} sp={sp} page={page + 1}>Berikutnya</PageLink>
+          </div>}
+        </>}
   </div>;
 }
 

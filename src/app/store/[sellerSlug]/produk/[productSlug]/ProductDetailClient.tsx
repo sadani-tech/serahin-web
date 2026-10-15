@@ -46,6 +46,7 @@ export function ProductDetailClient({
       salesEventId: offering.salesEventId,
       eventTitle: offering.eventTitle,
       formToken: offering.formToken,
+      sellerId: product.seller.id,
       sellerName: product.seller.businessName,
       endsAt: offering.endsAt,
     }, {
