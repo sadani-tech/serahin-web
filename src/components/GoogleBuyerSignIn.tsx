@@ -114,7 +114,7 @@ export function GoogleBuyerSignIn({ callbackUrl = "/account" }: { callbackUrl?: 
         <button
           type="submit"
           disabled={pending}
-          className="flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white shadow-brand transition hover:bg-brand-700 disabled:opacity-60"
+          className="flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold !text-white shadow-brand transition hover:bg-brand-700 disabled:opacity-60"
         >
           {pending ? "Menyimpan…" : "Lanjutkan"}
         </button>

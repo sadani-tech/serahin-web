@@ -732,6 +732,21 @@ html {
   background-size: 18px 18px;
 }
 
+/* Latar dashboard Buyer/Seller/Admin — titik halus .bg-serahin-dots di atas,
+   plus sorotan radial kuning-hijau lembut yang sama seperti hero katalog
+   utama (.k-hero di revamp.css), supaya dashboard terasa satu tema dengan
+   halaman publik, bukan cuma latar krem polos. Dipasang sekali di latar
+   `fixed` supaya tidak berulang per section saat discroll. */
+.bg-serahin-dashboard {
+  background-color: var(--color-cream);
+  background-image:
+    radial-gradient(900px 420px at 50% 0%, rgb(255 230 116 / 0.35), transparent 60%),
+    radial-gradient(700px 360px at 100% 0%, rgb(61 121 64 / 0.12), transparent 55%),
+    radial-gradient(circle at center, rgb(61 121 64 / 0.09) 1.5px, transparent 1.6px);
+  background-size: auto, auto, 18px 18px;
+  background-attachment: fixed, fixed, fixed;
+}
+
 /* Pita gradien brand — aksen tipis di puncak kartu/halaman penting. */
 .bg-serahin-ribbon {
   background-image: linear-gradient(

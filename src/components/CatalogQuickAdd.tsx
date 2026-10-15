@@ -8,7 +8,7 @@ import { useCart } from "@/components/CartProvider";
  */
 export function CatalogQuickAdd({ detailHref, event, item, role }: {
   detailHref: string;
-  event: { salesEventId: string; eventTitle: string; formToken: string; sellerName: string; endsAt: string };
+  event: { salesEventId: string; eventTitle: string; formToken: string; sellerId?: string | null; sellerName: string; endsAt: string };
   item: { variantId: string; name: string; price: number; image?: string | null; colors?: string[]; quotaRemaining: number };
   role?: string;
 }) {
