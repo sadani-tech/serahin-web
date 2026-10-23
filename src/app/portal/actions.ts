@@ -145,9 +145,9 @@ export async function submitPortalSettlement(
 }
 
 /**
- * v2.1 — pembeli memulai pembayaran otomatis (gateway) dari portal. Backend
- * membuat charge di payment-service dan mengembalikan paymentUrl; kita arahkan
- * pembeli ke sana. Metode pengiriman (v1.8) tetap wajib pada tahap pelunasan.
+ * Pembeli memulai pembayaran otomatis dari portal. Provider hosted diarahkan
+ * ke paymentUrl; GDC QRIS/VA kembali ke portal agar instruksinya langsung
+ * terlihat. Metode pengiriman tetap wajib pada tahap pelunasan.
  */
 export async function startPortalGatewayPayment(
   token: string,
@@ -190,9 +190,9 @@ export async function startPortalGatewayPayment(
     }
   }
 
-  let paymentUrl: string | undefined;
+  let paymentUrl: string | null | undefined;
   try {
-    const res = await api.post<{ paymentUrl?: string }>(
+    const res = await api.post<{ paymentUrl?: string | null }>(
       `/public/order/${token}/payment/gateway`,
       body,
     );
@@ -206,6 +206,6 @@ export async function startPortalGatewayPayment(
     };
   }
 
-  if (!paymentUrl) return { error: "Gagal memulai pembayaran." };
-  redirect(paymentUrl);
+  revalidatePath(`/portal/${token}`);
+  redirect(paymentUrl || `/portal/${token}`);
 }

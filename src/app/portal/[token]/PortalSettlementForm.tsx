@@ -258,7 +258,7 @@ export function PortalSettlementForm({
           {gateway ? (
             <p className={`mt-1 text-sm ${gatewayAvailable ? "" : "font-bold text-rose-700"}`}>
               {gatewayAvailable
-                ? "Nominal mengikuti produk yang dipilih, diproses melalui payment gateway."
+                ? "Nominal mengikuti produk yang dipilih. Instruksi QRIS atau Virtual Account GDC akan tampil di portal ini."
                 : "Payment gateway sedang tidak tersedia. Coba lagi beberapa saat atau hubungi Seller."}
             </p>
           ) : manualAccountReady ? (
@@ -371,7 +371,7 @@ export function PortalSettlementForm({
       )}
       {gateway && (
         <p className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
-          Anda akan diarahkan ke halaman pembayaran (QRIS / Virtual Account / e-wallet / kartu).
+          Instruksi QRIS atau Virtual Account akan ditampilkan setelah tagihan dibuat.
         </p>
       )}
 
