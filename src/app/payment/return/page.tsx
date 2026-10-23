@@ -14,10 +14,9 @@ export const metadata: Metadata = {
 
 type ReconcileResult = { status: string; orderToken: string | null };
 
-// Duitku mengarahkan browser ke sini setelah pembeli membayar, dengan query
-// ?merchantOrderId=&resultCode=&reference=. Kita verifikasi ulang ke backend
-// (yang men-sync langsung ke provider) — query hanya petunjuk, bukan sumber
-// kebenaran.
+// Return URL untuk provider yang memakai hosted checkout. GDC QRIS/VA biasanya
+// tetap di portal, tetapi halaman ini dipertahankan sebagai fallback kontrak
+// payment-service. Query hanya petunjuk; backend tetap sinkron ke provider.
 export default async function PaymentReturnPage({
   searchParams,
 }: {

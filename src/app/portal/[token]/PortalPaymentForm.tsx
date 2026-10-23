@@ -157,7 +157,7 @@ export function PortalPaymentForm({
         {gateway ? (
           <p className={`mt-1 text-sm ${gatewayAvailable ? "" : "font-bold text-rose-700"}`}>
             {gatewayAvailable
-              ? "Metode pembayaran mengikuti pilihan saat checkout dan diproses melalui payment gateway."
+              ? "Pembayaran diproses otomatis melalui GDC. Instruksi QRIS atau Virtual Account akan tampil di portal ini."
               : "Payment gateway sedang tidak tersedia. Coba lagi beberapa saat atau hubungi Seller."}
           </p>
         ) : manualAccountReady ? (
@@ -284,9 +284,8 @@ export function PortalPaymentForm({
 
       {gateway ? (
         <p className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
-          Anda akan diarahkan ke halaman pembayaran (QRIS / Virtual Account /
-          e-wallet / kartu). Pembayaran terverifikasi otomatis — tanpa unggah
-          bukti.
+          Instruksi QRIS atau Virtual Account akan ditampilkan setelah tagihan
+          dibuat. Pembayaran terverifikasi otomatis tanpa unggah bukti.
         </p>
       ) : (
         <FileUploadField
@@ -304,7 +303,7 @@ export function PortalPaymentForm({
       >
         {pending
           ? gateway
-            ? "Mengarahkan…"
+            ? "Membuat tagihan…"
             : "Mengirim…"
           : gateway
             ? "Bayar Sekarang"
