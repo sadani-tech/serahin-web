@@ -63,3 +63,12 @@ dan periksa payment-service. Jangan mengubah status payment dari frontend.
 URL API development, payment-service, dan notify secret hanya berada di
 environment deployment. Jangan memasukkan nilai `.env` terisi ke commit.
 
+## Catatan lintas produk — 24 Oktober 2026
+
+Import data Manifly ke database production Manifly tidak mengubah deployment,
+konfigurasi frontend, atau database Serahin. Tidak ada checkout Serahin yang
+dijalankan sebagai bagian dari operasi tersebut. Hasil uji checkout/callback
+Serahin yang tercatat di atas tetap hanya berlaku untuk environment yang
+disebutkan di catatan tersebut; jangan menganggapnya sebagai smoke test
+production Serahin.
+
