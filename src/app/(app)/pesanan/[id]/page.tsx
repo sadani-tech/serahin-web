@@ -337,7 +337,7 @@ export default async function OrderDetailPage({
                           </>
                         )}
                       </p>
-                      {p.channel === "GATEWAY" && <div className="mt-2 space-y-0.5 text-xs text-sand-500"><p>Gateway: <strong>{p.gatewayProvider ?? "Paywuz"}</strong> · status <strong>{p.gatewayStatus ?? "PENDING"}</strong> · attempt #{p.attemptNumber ?? 1}</p><p className="font-mono">{p.gatewayOrderId}{p.gatewayReference ? ` · ref ${p.gatewayReference}` : ""}</p></div>}
+                      {p.channel === "GATEWAY" && <div className="mt-2 space-y-0.5 text-xs text-sand-500"><p>Gateway: <strong>{p.gatewayProvider?.toUpperCase() ?? "—"}</strong> · status <strong>{p.gatewayStatus ?? "PENDING"}</strong> · attempt #{p.attemptNumber ?? 1}</p><p className="font-mono">{p.gatewayOrderId}{p.gatewayReference ? ` · ref ${p.gatewayReference}` : ""}</p></div>}
                     </div>
                     <div className="flex flex-wrap items-center gap-2"><PaymentActions paymentId={p.id} status={p.statusVerifikasi} />{session?.role === "ADMIN" && p.gatewayOrderId && <><form action={reconcileGatewayPayment.bind(null,id,p.gatewayOrderId)}><button className="min-h-9 rounded-lg border border-brand-300 px-3 text-xs font-bold text-brand-700">Sinkronkan ulang</button></form><Link href={`/payments/${p.id}/audit`} className="min-h-9 rounded-lg border border-sand-300 px-3 py-2 text-xs font-bold text-sand-700">Log gateway</Link></>}</div>
                   </div>

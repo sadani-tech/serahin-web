@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ProductImage } from "@/components/ProductImage";
-import { useCart } from "@/components/CartProvider";
+import { useCart, type CartDraft } from "@/components/CartProvider";
 import { ToastFeedback } from "@/components/Toast";
 import { BuyerAccessModal } from "@/components/BuyerAccessModal";
 import { Select } from "@/components/ui";
@@ -16,28 +16,14 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   buyerProfile?: { name: string; email: string | null; phone: string | null } | null;
 }) {
   const router = useRouter();
-  const { cart, ready, authenticated, syncConflict, setQuantity, setColor, removeItem, clear, sync } = useCart();
+  const { carts, activeEventId, setActiveEvent, ready, authenticated, setQuantity, setColor, removeItem, clearOne } = useCart();
+  const cart = carts.find((c) => c.salesEventId === activeEventId) ?? null;
+  const siblingsSameSeller = cart ? carts.filter((c) => c.sellerId && c.sellerId === cart.sellerId) : [];
   const [paymentMethod, setPaymentMethod] = useState<"GATEWAY" | "MANUAL">("GATEWAY");
   const [gatewayMethod, setGatewayMethod] = useState("");
   const [gatewayMethods, setGatewayMethods] = useState<Array<{ code: string; name: string; fee?: number; imageUrl?: string }>>([]);
   const [gatewayAvailable, setGatewayAvailable] = useState(false);
   const [manualTransferEnabled, setManualTransferEnabled] = useState(true);
-  const [manualTransfer, setManualTransfer] = useState<{
-    id: string;
-    accountType: "BANK" | "EWALLET";
-    bankName: string;
-    accountNumber: string;
-    accountHolderName: string;
-  } | null>(null);
-  const [manualTransfers, setManualTransfers] = useState<Array<{
-    id: string;
-    accountType: "BANK" | "EWALLET";
-    bankName: string;
-    accountNumber: string;
-    accountHolderName: string;
-    isPrimary: boolean;
-  }>>([]);
-  const [selectedBankAccountId, setSelectedBankAccountId] = useState("");
   const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
   const [paymentBilling, setPaymentBilling] = useState<{
     billingType: "DOWN_PAYMENT" | "FULL_PAYMENT";
@@ -50,6 +36,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   // WhatsApp belum terintegrasi — consent dikunci false sampai fitur tersedia.
   const whatsapp = false;
   const [pending, setPending] = useState(false);
+  const [groupPending, setGroupPending] = useState(false);
   const [error, setError] = useState("");
   const [showAccessModal, setShowAccessModal] = useState(false);
   const checkoutPanel = useRef<HTMLElement>(null);
@@ -61,28 +48,13 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   useEffect(() => {
     if (!authenticated || !cart) return;
     const timer = window.setTimeout(async () => {
-      const response = await fetch("/api/cart/payment-methods").catch(() => null);
+      const response = await fetch(`/api/cart/payment-methods?salesEventId=${encodeURIComponent(cart.salesEventId)}`).catch(() => null);
       if (!response?.ok) return;
       try {
         const data = await response.json() as {
           amount: number;
           gatewayEnabled: boolean;
           manualTransferEnabled: boolean;
-          manualTransfer: {
-            id: string;
-            accountType: "BANK" | "EWALLET";
-            bankName: string;
-            accountNumber: string;
-            accountHolderName: string;
-          } | null;
-          manualTransfers: Array<{
-            id: string;
-            accountType: "BANK" | "EWALLET";
-            bankName: string;
-            accountNumber: string;
-            accountHolderName: string;
-            isPrimary: boolean;
-          }>;
           methods: Array<{ code: string; name: string; fee?: number; imageUrl?: string }>;
           billingType: "DOWN_PAYMENT" | "FULL_PAYMENT";
           downPaymentType: "PERCENTAGE" | "FIXED_AMOUNT" | null;
@@ -96,13 +68,6 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         setGatewayMethods(data.methods);
         setGatewayAvailable(gatewayUsable);
         setManualTransferEnabled(data.manualTransferEnabled);
-        setManualTransfer(data.manualTransfer);
-        setManualTransfers(data.manualTransfers ?? []);
-        setSelectedBankAccountId((current) =>
-          data.manualTransfers?.some((account) => account.id === current)
-            ? current
-            : data.manualTransfer?.id ?? "",
-        );
         setGatewayMethod((current) =>
           data.methods.some((method) => method.code === current)
             ? current
@@ -118,7 +83,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       }
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [authenticated, cart]);
+  }, [authenticated, cart?.salesEventId]);
 
   useEffect(() => {
     if (!authenticated || !resumeCheckout || !cart) return;
@@ -138,8 +103,6 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
     }
     setPending(true); setError("");
     try {
-      if (syncConflict) throw new Error("Pilih keranjang yang ingin digunakan sebelum checkout.");
-      await sync();
       const keyStorage = `serahin:cart:checkout-key:${cart.salesEventId}`;
       if (checkoutCartId.current !== cart.salesEventId) {
         checkoutCartId.current = cart.salesEventId;
@@ -151,7 +114,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       }
       const response = await fetch("/api/cart/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checkoutKey: checkoutKey.current, paymentMethod, paymentMethodCode: paymentMethod === "GATEWAY" ? gatewayMethod || undefined : undefined, selectedBankAccountId: paymentMethod === "MANUAL" ? selectedBankAccountId || undefined : undefined, acceptPolicies: accepted, whatsappConsent: whatsapp }),
+        body: JSON.stringify({ checkoutKey: checkoutKey.current, salesEventId: cart.salesEventId, paymentMethod, paymentMethodCode: paymentMethod === "GATEWAY" ? gatewayMethod || undefined : undefined, acceptPolicies: accepted, whatsappConsent: whatsapp }),
       });
       const data = await response.json().catch(() => ({ message: "Respons server tidak valid. Silakan coba lagi." })) as { message?: string; paymentUrl?: string | null; tokenAkses?: string; needsConfirm?: boolean; warning?: string };
       if (response.status === 401 || response.status === 403) {
@@ -170,8 +133,27 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
     }
   }
 
+  async function checkoutGabungan(selectedIds: string[]) {
+    if (!authenticated) { setShowAccessModal(true); return; }
+    if (!accepted) { setError("Setujui kebijakan Serahin untuk melanjutkan checkout gabungan."); return; }
+    setGroupPending(true); setError("");
+    try {
+      const response = await fetch("/api/checkout-groups", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ salesEventIds: selectedIds, acceptPolicies: true }),
+      });
+      const data = await response.json().catch(() => ({})) as { message?: string; checkoutGroupId?: string };
+      if (response.status === 401 || response.status === 403) { setGroupPending(false); setShowAccessModal(true); return; }
+      if (!response.ok || !data.checkoutGroupId) throw new Error(data.message ?? "Checkout gabungan belum berhasil.");
+      router.push(`/account/checkout-groups/${data.checkoutGroupId}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Checkout gabungan belum berhasil.");
+      setGroupPending(false);
+    }
+  }
+
   if (!ready) return <div className="cart-page"><p className="cart-page__loading">Memuat keranjang…</p></div>;
-  if (!cart) return <div className="cart-page"><div className="cart-page__empty">
+  if (!carts.length || !cart) return <div className="cart-page"><div className="cart-page__empty">
     <h1>Keranjang masih kosong</h1>
     <p>Pilih produk dari Batch PO aktif untuk mulai memesan.</p>
     <Link href="/catalog" className="btn btn--primary btn--sm"><span>Jelajahi katalog</span><span className="btn__icon"><svg className="icon" aria-hidden="true"><use href="#i-arrow" /></svg></span></Link>
@@ -179,24 +161,37 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
 
   return <div className="cart-page"><div className="cart-page__layout">
     <section>
+      {carts.length > 1 && (
+        <div className="cart-page__tabs" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+          {carts.map((c) => (
+            <button
+              key={c.salesEventId}
+              type="button"
+              onClick={() => setActiveEvent(c.salesEventId)}
+              className="cart-page__pill-btn"
+              style={c.salesEventId === cart.salesEventId ? { fontWeight: 800, borderWidth: 2 } : undefined}
+            >
+              {c.eventTitle} ({c.items.reduce((s, i) => s + i.quantity, 0)})
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="cart-page__head">
         <div>
           <p className="cart-page__eyebrow">{cart.sellerName}</p>
           <h1 className="cart-page__title">Keranjang</h1>
           <p className="cart-page__meta">{cart.eventTitle} · tutup {formatTanggal(cart.endsAt)}</p>
         </div>
-        <button type="button" onClick={clear} className="cart-page__clear">Kosongkan</button>
+        <button type="button" onClick={() => clearOne(cart.salesEventId)} className="cart-page__clear">Kosongkan</button>
       </div>
 
-      {syncConflict && (
-        <div className="cart-page__conflict">
-          <strong>Keranjang akun berbeda dari keranjang perangkat ini.</strong>
-          <p>Pilih isi keranjang yang ingin digunakan. Tidak ada pesanan yang terhapus.</p>
-          <div className="cart-page__conflict-actions">
-            <button type="button" onClick={() => void sync("KEEP_REMOTE")} className="cart-page__pill-btn">Gunakan keranjang tersimpan</button>
-            <button type="button" onClick={() => void sync("REPLACE_WITH_LOCAL")} className="cart-page__pill-btn cart-page__pill-btn--primary">Gunakan keranjang perangkat</button>
-          </div>
-        </div>
+      {siblingsSameSeller.length > 1 && (
+        <CheckoutGabunganPanel
+          carts={siblingsSameSeller}
+          pending={groupPending}
+          onSubmit={checkoutGabungan}
+        />
       )}
 
       <div className="cart-page__items">{cart.items.map((item) => (
@@ -207,7 +202,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
             {item.colors?.length ? (
               <label className="cart-page__item-color">
                 Warna
-                <Select value={item.selectedColor ?? ""} onChange={(event) => setColor(item.variantId, item.selectedColor, event.target.value)} className="ml-2 min-h-9 text-sm">
+                <Select value={item.selectedColor ?? ""} onChange={(event) => setColor(cart.salesEventId, item.variantId, item.selectedColor, event.target.value)} className="ml-2 min-h-9 text-sm">
                   <option value="" disabled>Pilih warna</option>
                   {item.colors.map((color) => <option key={color} value={color}>{color}</option>)}
                 </Select>
@@ -218,10 +213,10 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
             <p className="cart-page__item-price">{formatRupiah(item.price)}</p>
             {item.invalidReason && <p className="cart-page__item-warn">{item.invalidReason}</p>}
             <div className="cart-page__item-row">
-              <button type="button" onClick={() => setQuantity(item.variantId, item.selectedColor, item.quantity - 1)} className="cart-page__qty-btn" aria-label="Kurangi jumlah">−</button>
+              <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.quantity - 1)} className="cart-page__qty-btn" aria-label="Kurangi jumlah">−</button>
               <span className="cart-page__qty-value">{item.quantity}</span>
-              <button type="button" onClick={() => setQuantity(item.variantId, item.selectedColor, item.quantity + 1)} className="cart-page__qty-btn" aria-label="Tambah jumlah">+</button>
-              <button type="button" onClick={() => removeItem(item.variantId, item.selectedColor)} className="cart-page__item-remove">Hapus</button>
+              <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.quantity + 1)} className="cart-page__qty-btn" aria-label="Tambah jumlah">+</button>
+              <button type="button" onClick={() => removeItem(cart.salesEventId, item.variantId, item.selectedColor)} className="cart-page__item-remove">Hapus</button>
             </div>
           </div>
         </article>
@@ -291,24 +286,11 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         </div>
       )}
 
-      {/* v2.3.9: nomor rekening & nama pemilik tidak perlu ditampilkan di
-          sini — akan tampil jelas di halaman pembayaran setelah Pesanan
-          dibuat. Pilihan rekening hanya ditampilkan bila Seller punya lebih
-          dari satu rekening aktif (perlu dipilih sebelum checkout); bila
-          cuma satu, backend otomatis memakai rekening utama. */}
-      {authenticated && paymentMethod === "MANUAL" && manualTransfer && manualTransfers.length > 1 && (
-        <div className="cart-page__bank">
-          <p className="cart-page__bank-label">Pilih rekening tujuan</p>
-          <Select value={selectedBankAccountId} onChange={(event) => setSelectedBankAccountId(event.target.value)} className="mt-2 min-h-10 w-full text-sm font-semibold">
-            {manualTransfers.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.accountType === "EWALLET" ? "E-wallet" : "Bank"} · {account.bankName}{account.isPrimary ? " (utama)" : ""}
-              </option>
-            ))}
-          </Select>
-          <p className="cart-page__bank-note">Detail nomor rekening akan muncul di halaman pembayaran.</p>
-        </div>
-      )}
+      {/* v2.4.1: tidak lagi menawarkan pilihan rekening tujuan di sini —
+          backend otomatis memakai rekening utama Seller (atau rekening
+          tertua bila belum ada yang ditandai utama), dan Buyer tetap
+          melihat seluruh rekening aktif Seller di halaman pembayaran
+          setelah Pesanan dibuat untuk transfer ke rekening manapun. */}
 
       <label className="cart-page__policy" onClick={(e) => { if ((e.target as HTMLElement).closest("a")) return; e.preventDefault(); setAccepted((v) => !v); }}>
         <input type="checkbox" checked={accepted} readOnly />
@@ -319,7 +301,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
 
       <button
         type="button"
-        disabled={pending || syncConflict || cart.items.some((item) => item.eligible === false) || (authenticated && paymentMethod === "GATEWAY" && !gatewayAvailable) || (authenticated && paymentMethod === "MANUAL" && !manualTransferEnabled)}
+        disabled={pending || cart.items.some((item) => item.eligible === false) || (authenticated && paymentMethod === "GATEWAY" && !gatewayAvailable) || (authenticated && paymentMethod === "MANUAL" && !manualTransferEnabled)}
         onClick={checkout}
         className="cart-page__submit"
       >
@@ -329,4 +311,43 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       {showAccessModal && <BuyerAccessModal callbackUrl="/cart?checkout=1" switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
     </aside>
   </div></div>;
+}
+
+/** v2.4.1 FR-39.5: checkout gabungan lintas Batch PO (manual transfer, satu
+ * bukti) untuk Batch PO yang berasal dari Seller yang sama dengan cart aktif. */
+function CheckoutGabunganPanel({ carts, pending, onSubmit }: { carts: CartDraft[]; pending: boolean; onSubmit: (salesEventIds: string[]) => void }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(carts.map((c) => c.salesEventId)));
+  const total = carts.filter((c) => selected.has(c.salesEventId)).reduce((sum, c) => sum + c.items.reduce((s, i) => s + i.price * i.quantity, 0), 0);
+  return (
+    <div className="cart-page__conflict" style={{ marginBottom: "1rem" }}>
+      <strong>Checkout gabungan tersedia — {carts[0]?.sellerName}</strong>
+      <p>Kamu punya {carts.length} keranjang Batch PO dari Seller ini. Gabungkan jadi satu pembayaran (satu bukti transfer).</p>
+      <ul style={{ margin: "0.5rem 0", paddingLeft: 0, listStyle: "none" }}>
+        {carts.map((c) => (
+          <li key={c.salesEventId} style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.25rem 0" }}>
+            <input
+              type="checkbox"
+              checked={selected.has(c.salesEventId)}
+              onChange={() => setSelected((current) => {
+                const next = new Set(current);
+                if (next.has(c.salesEventId)) next.delete(c.salesEventId); else next.add(c.salesEventId);
+                return next;
+              })}
+            />
+            <span>{c.eventTitle} ({c.items.reduce((s, i) => s + i.quantity, 0)} item)</span>
+          </li>
+        ))}
+      </ul>
+      <div className="cart-page__conflict-actions">
+        <button
+          type="button"
+          disabled={pending || selected.size < 2}
+          onClick={() => onSubmit([...selected])}
+          className="cart-page__pill-btn cart-page__pill-btn--primary"
+        >
+          {pending ? "Memproses…" : `Checkout Gabungan · ${formatRupiah(total)}`}
+        </button>
+      </div>
+    </div>
+  );
 }
