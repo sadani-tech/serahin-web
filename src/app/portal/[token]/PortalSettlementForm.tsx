@@ -5,6 +5,7 @@ import { Button, Field, FormError, Textarea } from "@/components/ui";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ToastFeedback } from "@/components/Toast";
 import { CopyButton } from "@/components/CopyButton";
+import { GatewayMethodSelect } from "@/components/GatewayMethodSelect";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -249,6 +250,8 @@ export function PortalSettlementForm({
           })}
         </div>
       </div>
+
+      <GatewayMethodSelect amount={bankAmount} enabled={gateway && gatewayAvailable && selected.size > 0} />
 
       {selected.size > 0 && (
         <div className={`rounded-xl px-3 py-2.5 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>

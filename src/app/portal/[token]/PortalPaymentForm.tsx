@@ -6,6 +6,7 @@ import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ToastFeedback } from "@/components/Toast";
 import { CopyButton } from "@/components/CopyButton";
+import { GatewayMethodSelect } from "@/components/GatewayMethodSelect";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -183,6 +184,8 @@ export function PortalPaymentForm({
           <p className="mt-1 text-sm font-bold text-rose-700">Rekening Seller belum tersedia. Hubungi Seller sebelum melakukan transfer.</p>
         )}
       </div>
+
+      <GatewayMethodSelect amount={Number(jumlah)} enabled={gateway && gatewayAvailable} />
 
       {isPelunasan && (
         <Field

@@ -106,6 +106,16 @@ function formatTanggal(value: string): string {
   }).format(date) + " WIB";
 }
 
+function paymentMethodLabel(code: string | null | undefined): string | null {
+  if (!code) return null;
+  const banks: Record<string, string> = {
+    VA_013: "Virtual Account Permata",
+    VA_002: "Virtual Account BRI",
+    VA_022: "Virtual Account CIMB Niaga",
+  };
+  return banks[code] ?? (code === "VA" ? "Virtual Account" : code);
+}
+
 export const metadata: Metadata = {
   title: "Status Pesanan — Serahin",
   robots: { index: false, follow: false },
@@ -499,7 +509,7 @@ export default async function PortalPage({
                       </div>
                       <p className="mt-1 text-xs text-sand-500">
                         {payment.channel === "GATEWAY"
-                          ? [payment.gatewayMethod, payment.gatewayProvider?.toUpperCase(), payment.attemptNumber ? `Percobaan #${payment.attemptNumber}` : null].filter(Boolean).join(" · ") || "Pembayaran online"
+                          ? [paymentMethodLabel(payment.gatewayMethod), payment.gatewayProvider?.toUpperCase(), payment.attemptNumber ? `Percobaan #${payment.attemptNumber}` : null].filter(Boolean).join(" · ") || "Pembayaran online"
                           : "Transfer manual"}
                         {` · ${formatTanggal(payment.tanggal)}`}
                       </p>
@@ -577,7 +587,7 @@ export default async function PortalPage({
               )}
               {lanjutGateway.vaNumber && (
                 <p className="rounded-xl bg-sand-50 px-4 py-2 text-sm ring-1 ring-inset ring-sand-200">
-                  Nomor Virtual Account:{" "}
+                  Nomor {paymentMethodLabel(gatewayPendingMethod) ?? "Virtual Account"}:{" "}
                   <span className="font-bold text-sand-900">
                     {lanjutGateway.vaNumber}
                   </span>
