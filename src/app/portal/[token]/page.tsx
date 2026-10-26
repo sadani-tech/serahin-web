@@ -6,14 +6,22 @@ import { api, ApiError } from "@/lib/api";
 import { OrderBadge } from "@/components/badges";
 import type { Billing } from "@/lib/billing";
 import { formatRupiah } from "@/lib/format";
-import { PAYMENT_SCHEME_LABEL, METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
-import type { OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
+import {
+  CAMPAIGN_STATUS_BADGE,
+  CAMPAIGN_STATUS_LABEL,
+  CAMPAIGN_STATUS_ORDER,
+  PAYMENT_SCHEME_LABEL,
+  METODE_PENGIRIMAN_LABEL,
+} from "@/lib/domain";
+import type { CampaignStatus, OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
 import { RichText } from "@/components/RichText";
 import { IconSprite } from "@/components/revamp/IconSprite";
 import { RevampHeader } from "@/components/revamp/RevampHeader";
 import { PortalPaymentForm } from "./PortalPaymentForm";
 import { PortalSettlementForm } from "./PortalSettlementForm";
+import { PaymentStatusRefresh } from "./PaymentStatusRefresh";
+import { getSession } from "@/lib/session";
 
 type PortalOrder = {
   status: OrderStatus;
@@ -30,12 +38,37 @@ type PortalOrder = {
   settlement: { stage: boolean; unsettledItemIds: string[]; pendingItemIds: string[] };
   campaign: {
     namaProduk: string;
+    status?: CampaignStatus;
+    productionStatus?: "NOT_STARTED" | "IN_PRODUCTION" | "READY_TO_SHIP" | "COMPLETED";
+    estimasiProduksi?: string | null;
+    estimasiPengiriman?: string | null;
     paymentScheme: PaymentScheme;
     deskripsiPelunasan: string | null;
     linkCheckoutShopee: string | null;
     nominalCheckoutShopee: number | null;
   };
   billing: Billing;
+  payments: Array<{
+    id: string;
+    jenis: string;
+    jumlah: number;
+    tanggal: string;
+    channel: "MANUAL_TRANSFER" | "GATEWAY";
+    statusVerifikasi: string;
+    gatewayStatus: string | null;
+    gatewayProvider: string | null;
+    gatewayMethod: string | null;
+    attemptNumber: number | null;
+    expiresAt: string | null;
+    paidAt: string | null;
+  }>;
+  shopeeCheckouts?: Array<{
+    id: string;
+    jumlah: number;
+    statusVerifikasi: string;
+    externalReference: string;
+    submittedAt: string;
+  }>;
   paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
   manualTransfer?: {
     bankName: string | null;
@@ -53,6 +86,7 @@ type PortalOrder = {
   // v2.1 — pembayaran otomatis (payment gateway)
   gatewayEnabled?: boolean;
   pendingGateway?: {
+    amount?: number;
     paymentUrl: string | null;
     vaNumber: string | null;
     qrString: string | null;
@@ -62,9 +96,34 @@ type PortalOrder = {
 
 export const dynamic = "force-dynamic";
 
+function formatTanggal(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Waktu tidak tersedia";
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
 export const metadata: Metadata = {
   title: "Status Pesanan — Serahin",
   robots: { index: false, follow: false },
+};
+
+const PRODUCTION_STATUS_LABEL: Record<NonNullable<PortalOrder["campaign"]["productionStatus"]>, string> = {
+  NOT_STARTED: "Belum dimulai",
+  IN_PRODUCTION: "Sedang dikerjakan",
+  READY_TO_SHIP: "Siap dikirim",
+  COMPLETED: "Produksi selesai",
+};
+
+const CAMPAIGN_STATUS_DESCRIPTION: Record<CampaignStatus, string> = {
+  DRAFT: "Batch PO belum dibuka untuk pemesanan.",
+  OPEN: "Batch PO sedang dibuka dan menerima pesanan.",
+  CLOSED: "Pemesanan Batch PO sudah ditutup.",
+  PRODUKSI: "Pesanan Batch PO sedang masuk tahap produksi.",
+  SIAP_KIRIM: "Produksi selesai dan pesanan sedang disiapkan untuk pengiriman.",
+  SELESAI: "Batch PO telah selesai.",
 };
 
 export default async function PortalPage({
@@ -76,6 +135,7 @@ export default async function PortalPage({
 }) {
   const { token } = await params;
   const { payment } = await searchParams;
+  const session = await getSession();
 
   let order: PortalOrder;
   try {
@@ -86,6 +146,8 @@ export default async function PortalPage({
   }
 
   const { campaign, billing } = order;
+  const campaignStatus = campaign.status ?? "DRAFT";
+  const productionStatus = campaign.productionStatus ?? "NOT_STARTED";
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
   const shopeePerUnit = campaign.nominalCheckoutShopee ?? 0;
   const shopeeTotal = order.metodePengiriman === "SHOPEE" ? shopeePerUnit * totalQty : 0;
@@ -106,6 +168,15 @@ export default async function PortalPage({
       order.pendingGateway?.qrString)
       ? order.pendingGateway
       : null;
+  const hasPendingGateway = order.payments.some(
+    (payment) => payment.channel === "GATEWAY" && payment.gatewayStatus === "PENDING",
+  );
+  const gatewayPendingAmount = order.pendingGateway?.amount ?? order.payments.find(
+    (payment) => payment.channel === "GATEWAY" && payment.gatewayStatus === "PENDING",
+  )?.jumlah;
+  const gatewayPendingMethod = order.payments.find(
+    (payment) => payment.channel === "GATEWAY" && payment.gatewayStatus === "PENDING",
+  )?.gatewayMethod;
   const qrCodeDataUrl = lanjutGateway?.qrString
     ? await QRCode.toDataURL(lanjutGateway.qrString, { margin: 1, width: 240 }).catch(() => null)
     : null;
@@ -161,7 +232,11 @@ export default async function PortalPage({
           <use href="#i-..."> SVG resolve ID di seluruh dokumen, tidak terikat
           ancestor. */}
       <div className="rv-scope js is-loaded">
-        <RevampHeader navLinks={[]} loggedIn={false} />
+        <RevampHeader
+          navLinks={[]}
+          loggedIn={Boolean(session)}
+          role={session?.role}
+        />
         <section className="po-hero" aria-labelledby="portal-title">
           <div className="po-hero__inner">
             <p className="po-hero__status"><span className="k-hero__dot" aria-hidden="true" />Status Pesanan</p>
@@ -194,6 +269,58 @@ export default async function PortalPage({
               Admin. Status akan diperbarui setelah diverifikasi.
             </p>
           )}
+          <section className="mt-5 border-t border-sand-100 pt-4 text-left" aria-labelledby="campaign-status-title">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="campaign-status-title" className="text-sm font-bold text-sand-900">
+                Status Batch PO
+              </h2>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${CAMPAIGN_STATUS_BADGE[campaignStatus]}`}>
+                {CAMPAIGN_STATUS_LABEL[campaignStatus]}
+              </span>
+            </div>
+            <p className="mt-1 text-sm leading-5 text-sand-600">
+              {CAMPAIGN_STATUS_DESCRIPTION[campaignStatus]}
+            </p>
+            {campaignStatus !== "DRAFT" && (
+              <ol className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Tahapan Batch PO">
+                {CAMPAIGN_STATUS_ORDER.map((status, index) => {
+                  const currentIndex = CAMPAIGN_STATUS_ORDER.indexOf(campaignStatus);
+                  const isComplete = index < currentIndex;
+                  const isCurrent = status === campaignStatus;
+                  return (
+                    <li
+                      key={status}
+                      aria-current={isCurrent ? "step" : undefined}
+                      className={`flex min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-semibold leading-4 ring-1 ring-inset ${
+                        isCurrent
+                          ? "bg-brand-50 text-brand-900 ring-brand-300"
+                          : isComplete
+                            ? "bg-brand-100/70 text-brand-800 ring-brand-200"
+                            : "bg-sand-50 text-sand-500 ring-sand-200"
+                      }`}
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/80 text-[10px] ring-1 ring-inset ring-current">
+                        {isComplete ? "✓" : index + 1}
+                      </span>
+                      <span>{CAMPAIGN_STATUS_LABEL[status]}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+              <span className="text-sand-500">Progres produksi:</span>
+              <span className="rounded-full bg-accent-50 px-2.5 py-1 font-semibold text-accent-800 ring-1 ring-inset ring-accent-200">
+                {PRODUCTION_STATUS_LABEL[productionStatus]}
+              </span>
+            </div>
+            {(campaign.estimasiProduksi || campaign.estimasiPengiriman) && (
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-sand-500">
+                {campaign.estimasiProduksi && <span>Estimasi produksi: {formatTanggal(campaign.estimasiProduksi)}</span>}
+                {campaign.estimasiPengiriman && <span>Estimasi pengiriman: {formatTanggal(campaign.estimasiPengiriman)}</span>}
+              </div>
+            )}
+          </section>
           </div>
         </div>
 
@@ -295,6 +422,12 @@ export default async function PortalPage({
               verifikasi Admin.
             </p>
           )}
+          {gatewayPendingAmount != null && gatewayPendingAmount > 0 && (
+            <p className="border-t border-sand-100 px-5 py-2 text-center text-xs text-sky-800">
+              {formatRupiah(gatewayPendingAmount)} menunggu pembayaran
+              {gatewayPendingMethod ? ` via ${gatewayPendingMethod}` : " melalui payment gateway"}.
+            </p>
+          )}
           {order.metodePengiriman && (
             <div className="border-t border-sand-100 px-5 py-3 text-sm">
               <p className="text-xs uppercase tracking-wide text-sand-500">
@@ -320,7 +453,85 @@ export default async function PortalPage({
               )}
             </div>
           )}
+          <PaymentStatusRefresh pending={hasPendingGateway} />
         </div>
+
+        {/* Riwayat semua percobaan/pembayaran agar Buyer bisa membedakan
+            tagihan yang masih pending dari pembayaran yang sudah lunas. */}
+        <section className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm" aria-labelledby="payment-history-title">
+          <div className="border-b border-sand-100 px-5 py-3">
+            <h2 id="payment-history-title" className="font-head text-base font-semibold text-sand-900">
+              Riwayat pembayaran
+            </h2>
+            <p className="text-xs text-sand-500">Lihat status, nominal, dan waktu setiap pembayaran.</p>
+          </div>
+          {order.payments.length > 0 || (order.shopeeCheckouts?.length ?? 0) > 0 ? (
+            <div className="divide-y divide-sand-100">
+              {order.payments.map((payment) => {
+                const status = payment.channel === "GATEWAY"
+                  ? payment.gatewayStatus ?? payment.statusVerifikasi
+                  : payment.statusVerifikasi;
+                const statusLabel: Record<string, string> = {
+                  PAID: "Berhasil dibayar",
+                  PENDING: "Menunggu pembayaran",
+                  MENUNGGU_PEMBAYARAN: "Menunggu pembayaran",
+                  FAILED: "Pembayaran gagal",
+                  EXPIRED: "Kedaluwarsa",
+                  TERVERIFIKASI: "Terverifikasi",
+                  MENUNGGU_VERIFIKASI: "Menunggu verifikasi",
+                  DITOLAK: "Ditolak",
+                  KEDALUWARSA: "Kedaluwarsa",
+                };
+                const statusTone = status === "PAID" || status === "TERVERIFIKASI"
+                  ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
+                  : status === "FAILED" || status === "EXPIRED" || status === "DITOLAK" || status === "KEDALUWARSA"
+                    ? "bg-rose-50 text-rose-800 ring-rose-200"
+                    : "bg-amber-50 text-amber-800 ring-amber-200";
+                return (
+                  <article key={payment.id} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-sand-900">{payment.jenis === "DP" ? "Uang muka (DP)" : payment.jenis === "LUNAS" ? "Pembayaran lunas" : "Pelunasan"}</h3>
+                        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${statusTone}`}>
+                          {statusLabel[status] ?? status}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-sand-500">
+                        {payment.channel === "GATEWAY"
+                          ? [payment.gatewayMethod, payment.gatewayProvider?.toUpperCase(), payment.attemptNumber ? `Percobaan #${payment.attemptNumber}` : null].filter(Boolean).join(" · ") || "Pembayaran online"
+                          : "Transfer manual"}
+                        {` · ${formatTanggal(payment.tanggal)}`}
+                      </p>
+                      {status === "PENDING" && payment.expiresAt && (
+                        <p className="mt-1 text-xs text-amber-700">Batas pembayaran: {formatTanggal(payment.expiresAt)}</p>
+                      )}
+                      {status === "PAID" && payment.paidAt && (
+                        <p className="mt-1 text-xs text-emerald-700">Dibayar: {formatTanggal(payment.paidAt)}</p>
+                      )}
+                    </div>
+                    <strong className="shrink-0 text-base text-sand-900">{formatRupiah(payment.jumlah)}</strong>
+                  </article>
+                );
+              })}
+              {order.shopeeCheckouts?.map((checkout) => (
+                <article key={checkout.id} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-sand-900">Checkout Shopee</h3>
+                      <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-bold text-orange-800 ring-1 ring-inset ring-orange-200">
+                        {checkout.statusVerifikasi === "TERVERIFIKASI" ? "Terverifikasi" : checkout.statusVerifikasi === "DITOLAK" ? "Ditolak" : "Menunggu verifikasi"}
+                      </span>
+                    </div>
+                    <p className="mt-1 break-all text-xs text-sand-500">Transaksi {checkout.externalReference} · {formatTanggal(checkout.submittedAt)}</p>
+                  </div>
+                  <strong className="shrink-0 text-base text-sand-900">{formatRupiah(checkout.jumlah)}</strong>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="px-5 py-6 text-sm text-sand-500">Belum ada pembayaran tercatat.</p>
+          )}
+        </section>
 
         {/* v2.1 — pembayaran gateway masih berjalan: tawarkan lanjutkan */}
         {lanjutGateway && (
@@ -335,6 +546,19 @@ export default async function PortalPage({
               </p>
             </div>
             <div className="space-y-3 px-5 py-4">
+              {lanjutGateway.amount != null && (
+                <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-center">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">
+                    Nominal yang harus dibayar
+                  </p>
+                  <p className="mt-1 text-2xl font-extrabold tabular-nums text-brand-900">
+                    {formatRupiah(lanjutGateway.amount)}
+                  </p>
+                  <p className="mt-1 text-xs text-brand-800">
+                    Pastikan nominal ini sesuai sebelum mengonfirmasi pembayaran.
+                  </p>
+                </div>
+              )}
               {qrCodeDataUrl && (
                 <div className="flex flex-col items-center gap-2 rounded-xl bg-sand-50 px-4 py-4 ring-1 ring-inset ring-sand-200">
                   {/* eslint-disable-next-line @next/next/no-img-element -- generated data URI, not an optimizable remote asset */}
@@ -366,9 +590,8 @@ export default async function PortalPage({
                   Lanjutkan pembayaran
                 </a>
               )}
-              <p className="text-center text-xs text-sand-400">
-                Halaman ini akan otomatis terbarui setelah pembayaran
-                terkonfirmasi.
+              <p className="text-center text-xs text-sand-500">
+                Halaman ini memeriksa status otomatis. Kamu juga bisa menekan tombol “Perbarui status” di ringkasan pembayaran.
               </p>
             </div>
           </div>
