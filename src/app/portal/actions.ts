@@ -193,12 +193,34 @@ export async function startPortalGatewayPayment(
     }
   }
 
+  const includeShopee = metode === "SHOPEE" && itemIds.length > 0;
+  const buktiShopee = formData.get("buktiShopee");
+  if (includeShopee && (!(buktiShopee instanceof File) || buktiShopee.size === 0)) {
+    return { error: "Bukti checkout Shopee wajib diunggah sebelum pelunasan." };
+  }
+
   let paymentUrl: string | null | undefined;
   try {
-    const res = await api.post<{ paymentUrl?: string | null }>(
-      `/public/order/${token}/payment/gateway`,
-      body,
-    );
+    let res: { paymentUrl?: string | null };
+    if (includeShopee && buktiShopee instanceof File) {
+      // Multipart: backend butuh bukti Shopee untuk mencatat kredit + memotong nominal QRIS/VA.
+      const fd = new FormData();
+      fd.set("idempotencyKey", body.idempotencyKey);
+      for (const id of itemIds) fd.append("itemIds", id);
+      if (body.paymentMethodCode) fd.set("paymentMethodCode", body.paymentMethodCode);
+      fd.set("metodePengiriman", "SHOPEE");
+      fd.set("includeShopee", "1");
+      fd.set("buktiShopee", buktiShopee);
+      res = await api.postForm<{ paymentUrl?: string | null }>(
+        `/public/order/${token}/payment/gateway`,
+        fd,
+      );
+    } else {
+      res = await api.post<{ paymentUrl?: string | null }>(
+        `/public/order/${token}/payment/gateway`,
+        body,
+      );
+    }
     paymentUrl = res.paymentUrl;
   } catch (e) {
     if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
