@@ -114,7 +114,7 @@ export function PublicOrderForm({
     undefined,
   );
   const checkoutKey = useRef("");
-  const acceptPoliciesRef = useRef<HTMLInputElement>(null);
+  const [acceptPolicies, setAcceptPolicies] = useState(false);
   // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
   const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
     gatewayEnabled ? "GATEWAY" : "MANUAL",
@@ -314,7 +314,7 @@ export function PublicOrderForm({
     : adaDpKustom
       ? "Sebagian produk memakai DP khusus — lihat rincian per produk di atas."
       : dpTipe === "NOMINAL"
-        ? `${formatRupiah(dpNominal ?? 0)} per unit × ${jumlahItem} unit.`
+        ? `DP nominal ${formatRupiah(dpNominal ?? 0)} berlaku per unit. Jika harga produk lebih rendah dari nominal DP, DP otomatis menjadi 50% dari harga produk.`
         : `${dpPercent ?? 50}% dari harga setiap unit produk.`;
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, string>();
@@ -931,21 +931,14 @@ export function PublicOrderForm({
             <p className="mt-1 text-right text-xs text-sand-500">{paymentRule}</p>
           </div>
           <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
-            <label
-              className="flex items-start gap-3"
-              onClick={(e) => {
-                if (orderingDisabled || (e.target as HTMLElement).closest("a")) return;
-                e.preventDefault();
-                const input = acceptPoliciesRef.current;
-                if (input) input.checked = !input.checked;
-              }}
-            >
+            <label className="flex cursor-pointer items-start gap-3">
               <input
-                ref={acceptPoliciesRef}
                 type="checkbox"
                 name="acceptPolicies"
                 value="1"
                 required
+                checked={acceptPolicies}
+                onChange={(event) => setAcceptPolicies(event.target.checked)}
                 disabled={orderingDisabled}
                 className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
               />
