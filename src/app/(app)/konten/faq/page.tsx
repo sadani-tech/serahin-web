@@ -16,7 +16,7 @@ type FaqRow = {
 export default async function FaqPage() {
   const [faqs, campaigns] = await Promise.all([
     api.list<FaqRow>("/cms/faq"),
-    api.list<{ id: string; namaProduk: string }>("/kampanye"),
+    api.list<{ id: string; namaProduk: string }>("/pre-orders"),
   ]);
 
   return (
@@ -33,7 +33,7 @@ export default async function FaqPage() {
         </h1>
         <p className="mt-1 text-sm text-sand-500">
           Pertanyaan yang sering diajukan. FAQ global tampil di semua form
-          publik; FAQ kampanye hanya di form kampanye terkait.
+          publik; FAQ Batch PO hanya tampil pada form PO terkait.
         </p>
       </div>
 

@@ -3,15 +3,16 @@
 import { verifyPayment, deletePayment } from "../actions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useApiTransition } from "@/hooks/useNavLoading";
+import type { PaymentVerification } from "@/lib/types";
 
 export function PaymentActions({
   paymentId,
   status,
 }: {
   paymentId: string;
-  status: "MENUNGGU_VERIFIKASI" | "TERVERIFIKASI" | "DITOLAK";
+  status: PaymentVerification;
 }) {
-  const { confirm } = useConfirm();
+  const { confirm, prompt } = useConfirm();
   const { pending, run } = useApiTransition();
 
   return (
@@ -28,7 +29,14 @@ export function PaymentActions({
       {status !== "DITOLAK" && (
         <button
           disabled={pending}
-          onClick={() => run(() => verifyPayment(paymentId, "DITOLAK"))}
+          onClick={async () => {
+            const alasan = await prompt({
+              title: "Tolak pembayaran",
+              label: "Alasan penolakan pembayaran",
+            });
+            if (!alasan) return;
+            run(() => verifyPayment(paymentId, "DITOLAK", undefined, alasan));
+          }}
           className="rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-400 disabled:opacity-50"
         >
           Tolak

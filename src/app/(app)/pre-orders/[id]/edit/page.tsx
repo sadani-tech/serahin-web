@@ -1,0 +1,111 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { api, ApiError } from "@/lib/api";
+import { PreorderForm, type VendorOption } from "../../PreorderForm";
+import { updatePreorder } from "../../actions";
+import { toDateTimeInput, toNumber } from "@/lib/format";
+import { computeVendorStats, type EvalInput } from "@/lib/vendor";
+import type { CampaignStatus, DpTipe, PaymentScheme } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+type CampaignDetail = {
+  vendors: { id: string; nama: string }[];
+  namaProduk: string;
+  deskripsi: string | null;
+  productSlug: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  deskripsiPelunasan: string | null;
+  linkCheckoutShopee: string | null;
+  nominalCheckoutShopee: number | null;
+  tanggalBuka: string;
+  tanggalTutup: string;
+  estimasiProduksi: string | null;
+  estimasiKirim: string | null;
+  paymentScheme: PaymentScheme;
+  dpTipe: DpTipe | null;
+  dpPercent: number | null;
+  dpNominal: string | null;
+  deadlinePelunasan: string | null;
+  status: CampaignStatus;
+};
+
+type VendorRow = {
+  id: string;
+  nama: string;
+  _count: { campaigns: number };
+  evaluations: EvalInput[];
+};
+
+export default async function EditCampaignPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  let campaign: CampaignDetail;
+  try {
+    campaign = await api.get<CampaignDetail>(`/pre-orders/${id}`);
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
+
+  const vendors = await api.list<VendorRow>("/vendor");
+  const vendorOptions: VendorOption[] = vendors.map((v) => {
+    const stats = computeVendorStats(v.evaluations);
+    return {
+      id: v.id,
+      nama: v.nama,
+      avgRating: stats.avgRating,
+      jumlahTelat: stats.jumlahTelat,
+      jumlahKampanye: v._count.campaigns,
+    };
+  });
+
+  const action = updatePreorder.bind(null, id);
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-6">
+        <Link
+          href={`/pre-orders/${id}`}
+          className="text-sm text-sand-500 hover:text-sand-700"
+        >
+          ← Kembali ke Batch PO
+        </Link>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
+          Edit Batch PO
+        </h1>
+      </div>
+
+      <PreorderForm
+        action={action}
+        submitLabel="Simpan Perubahan"
+        vendors={vendorOptions}
+        initial={{
+          vendorIds: campaign.vendors.map((vendor) => vendor.id),
+          namaProduk: campaign.namaProduk,
+          deskripsi: campaign.deskripsi ?? undefined,
+          productSlug: campaign.productSlug ?? undefined,
+          seoTitle: campaign.seoTitle ?? undefined,
+          seoDescription: campaign.seoDescription ?? undefined,
+          deskripsiPelunasan: campaign.deskripsiPelunasan ?? undefined,
+          linkCheckoutShopee: campaign.linkCheckoutShopee ?? undefined,
+          nominalCheckoutShopee: campaign.nominalCheckoutShopee ?? undefined,
+          tanggalBuka: toDateTimeInput(campaign.tanggalBuka),
+          tanggalTutup: toDateTimeInput(campaign.tanggalTutup),
+          estimasiProduksi: toDateTimeInput(campaign.estimasiProduksi),
+          estimasiKirim: toDateTimeInput(campaign.estimasiKirim),
+          paymentScheme: campaign.paymentScheme,
+          dpTipe: campaign.dpTipe ?? undefined,
+          dpPercent: campaign.dpPercent ?? undefined,
+          dpNominal: campaign.dpNominal ? toNumber(campaign.dpNominal) : undefined,
+          deadlinePelunasan: toDateTimeInput(campaign.deadlinePelunasan),
+        }}
+      />
+    </div>
+  );
+}

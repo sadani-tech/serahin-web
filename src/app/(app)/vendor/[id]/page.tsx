@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
+import { Card, CardHeader, EmptyState, LinkButton, StatItem } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
-import { formatTanggal } from "@/lib/format";
+import { formatTanggal, formatRupiah } from "@/lib/format";
 import {
   computeVendorStats,
   ratingStars,
@@ -16,6 +16,7 @@ import type {
   KesesuaianKualitas,
   KetepatanWaktu,
 } from "@/lib/types";
+import { VendorPaymentForm } from "./VendorPaymentForm";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,13 @@ export default async function VendorDetailPage({
     throw e;
   }
 
+  const [outstanding, payments] = await Promise.all([
+    api.get<{ tagihan: number; dibayar: number; utang: number }>(`/keuangan/vendor/${id}/utang`),
+    api.get<{ id: string; amount: string; paidAt: string; notes: string | null; salesEventId: string }[]>(
+      `/keuangan/vendor/${id}/payments`,
+    ),
+  ]);
+
   const stats = computeVendorStats(vendor.evaluations);
 
   return (
@@ -92,7 +100,7 @@ export default async function VendorDetailPage({
       <Card>
         <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
           <div className="px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-sand-500">Kampanye</p>
+            <p className="text-xs uppercase tracking-wide text-sand-500">Batch PO</p>
             <p className="mt-1 text-2xl font-semibold text-sand-900">
               {vendor.campaigns.length}
             </p>
@@ -107,7 +115,7 @@ export default async function VendorDetailPage({
           </div>
           <div className="px-5 py-4">
             <p className="text-xs uppercase tracking-wide text-sand-500">
-              Kampanye telat
+              Batch PO telat
             </p>
             <p className="mt-1 text-2xl font-semibold text-rose-600">
               {stats.jumlahTelat}
@@ -122,6 +130,44 @@ export default async function VendorDetailPage({
             </p>
           </div>
         </div>
+      </Card>
+
+      {/* Utang & Pembayaran Vendor (PRD v2.3.8 §3.1/3.2/5.2) */}
+      <Card>
+        <CardHeader
+          title="Utang & Pembayaran Vendor"
+          subtitle="Tagihan = qty item pesanan yang sudah diproses/dikirim × HPP item"
+          action={
+            <LinkButton href={`/api/keuangan/vendor/${id}/rekap`} variant="secondary" target="_blank">
+              Unduh Rekap PDF
+            </LinkButton>
+          }
+        />
+        <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-3 sm:divide-y-0">
+          <StatItem label="Total Tagihan" value={formatRupiah(outstanding.tagihan)} />
+          <StatItem label="Sudah Dibayar" value={formatRupiah(outstanding.dibayar)} accent="text-emerald-600" />
+          <StatItem
+            label="Sisa Utang"
+            value={formatRupiah(outstanding.utang)}
+            accent={outstanding.utang > 0 ? "text-amber-600" : "text-emerald-600"}
+          />
+        </div>
+        <div className="border-t border-sand-100 px-5 py-4">
+          <p className="mb-3 text-sm font-semibold text-sand-800">Catat pembayaran baru</p>
+          <VendorPaymentForm vendorId={id} campaigns={vendor.campaigns.map((c) => ({ id: c.id, namaProduk: c.namaProduk }))} />
+        </div>
+        {payments.length > 0 && (
+          <div className="divide-y divide-sand-100 border-t border-sand-100">
+            {payments.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+                <div>
+                  <p className="font-medium text-sand-900">{formatRupiah(p.amount)}</p>
+                  <p className="text-xs text-sand-500">{formatTanggal(p.paidAt)}{p.notes ? ` · ${p.notes}` : ""}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {vendor.catatanUmum && (
@@ -148,15 +194,15 @@ export default async function VendorDetailPage({
 
       {/* Riwayat kampanye */}
       <Card>
-        <CardHeader title="Riwayat kampanye" />
+        <CardHeader title="Riwayat Batch PO" />
         {vendor.campaigns.length === 0 ? (
-          <EmptyState title="Belum pernah dikaitkan ke kampanye" />
+          <EmptyState title="Belum pernah dikaitkan ke Batch PO" />
         ) : (
           <div className="divide-y divide-sand-100">
             {vendor.campaigns.map((c) => (
               <Link
                 key={c.id}
-                href={`/kampanye/${c.id}`}
+                href={`/pre-orders/${c.id}`}
                 className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-sand-50"
               >
                 <div>
@@ -187,7 +233,7 @@ export default async function VendorDetailPage({
                   </p>
                 </div>
                 <Link
-                  href={`/kampanye/${variant.campaign.id}`}
+                  href={`/pre-orders/${variant.campaign.id}`}
                   className="text-sm font-medium text-brand-700 hover:underline"
                 >
                   {variant.campaign.namaProduk}
@@ -204,7 +250,7 @@ export default async function VendorDetailPage({
         {vendor.evaluations.length === 0 ? (
           <EmptyState
             title="Belum ada evaluasi"
-            description="Isi evaluasi dari halaman kampanye setelah kampanye selesai."
+            description="Isi evaluasi dari halaman Batch PO setelah prosesnya selesai."
           />
         ) : (
           <div className="divide-y divide-sand-100">
@@ -212,7 +258,7 @@ export default async function VendorDetailPage({
               <div key={e.id} className="px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
-                    href={`/kampanye/${e.campaign.id}`}
+                    href={`/pre-orders/${e.campaign.id}`}
                     className="font-medium text-sand-900 hover:underline"
                   >
                     {e.campaign.namaProduk}

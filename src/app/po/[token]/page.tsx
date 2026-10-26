@@ -1,15 +1,17 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { api, ApiError } from "@/lib/api";
-import { formatRupiah, formatTanggal } from "@/lib/format";
+import { formatRupiah, formatWaktu } from "@/lib/format";
 import { PAYMENT_SCHEME_LABEL } from "@/lib/domain";
 import type { PaymentScheme } from "@/lib/types";
 import { RichText } from "@/components/RichText";
 import { PublicFaq } from "@/components/PublicFaq";
 import { PublicFooter } from "@/components/PublicFooter";
-import { SerahinLogo } from "@/components/brand";
 import { isRichTextEmpty } from "@/lib/sanitize";
+import { IconSprite, Icon } from "@/components/revamp/IconSprite";
+import { RevampHeader } from "@/components/revamp/RevampHeader";
 import { PublicOrderForm } from "./PublicOrderForm";
+import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -18,14 +20,42 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+const NAV_LINKS = [
+  { href: "/#kenapa", label: "Kenapa Serahin" },
+  { href: "/#fitur", label: "Fitur" },
+  { href: "/#cara-kerja", label: "Cara Kerja" },
+  { href: "/#testimonial", label: "Testimonial" },
+  { href: "/#faq", label: "FAQ" },
+];
+
 type FormInfo = {
   id: string;
   namaProduk: string;
   deskripsi: string | null;
   harga: number;
   paymentScheme: PaymentScheme;
+  dpTipe: "PERSEN" | "NOMINAL";
+  dpPercent: number | null;
+  dpNominal: number | null;
   tanggalTutup: string | null;
   bukaPesanan: boolean;
+  gatewayEnabled?: boolean;
+  manualTransferEnabled?: boolean;
+  manualTransfer?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  } | null;
+  manualTransfers?: {
+    id: string;
+    accountType: "BANK" | "EWALLET";
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+    isPrimary: boolean;
+  }[];
+  linkCheckoutShopee?: string | null;
+  nominalCheckoutShopee?: number | null;
   variants: {
     id: string;
     namaVarian: string;
@@ -40,15 +70,28 @@ type FormInfo = {
     material: string | null;
     sku: string | null;
     deskripsi: string | null;
+    // DP kustom Produk (v2.3.7 §3.18) — null berarti ikuti DP Batch PO
+    // (dpTipe/dpPercent/dpNominal di level campaign di atas).
+    dpTipe: "PERSEN" | "NOMINAL" | null;
+    dpPercent: number | null;
+    dpNominal: number | null;
+    terjual?: number;
   }[];
 };
 
 export default async function PublicFormPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ checkout?: string }>;
 }) {
   const { token } = await params;
+  const { checkout } = await searchParams;
+  const session = await getSession();
+  const buyerProfile = session?.role === "BUYER"
+    ? await api.get<{ name: string; email: string | null; phone: string | null }>("/auth/buyer/profile").catch(() => ({ name: session.name, email: session.email, phone: null }))
+    : null;
 
   let data: FormInfo;
   try {
@@ -69,52 +112,48 @@ export default async function PublicFormPage({
         ? formatRupiah(hargaTerendah)
         : `${formatRupiah(hargaTerendah)} – ${formatRupiah(hargaTertinggi)}`;
   const alasanTidakBisaPesan = !data.bukaPesanan
-    ? "Maaf, formulir pesanan untuk kampanye ini sedang tidak aktif."
+    ? "Maaf, formulir pesanan untuk Batch PO ini sedang tidak aktif."
     : !adaSisa
       ? "Semua varian sudah habis kuotanya."
       : undefined;
 
   return (
-    <div className="bg-serahin-dots relative min-h-full pb-10">
-      <div
-        aria-hidden="true"
-        className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
-      />
-      <main className="relative mx-auto max-w-6xl space-y-7 px-4 pt-7 sm:px-6 sm:pt-10">
-        <section className="mx-auto max-w-3xl text-center">
-          <SerahinLogo size="md" layout="stacked" />
-          <div className="mt-5 flex justify-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 ring-1 ring-brand-200">
-              Katalog Pre-Order
-            </span>
-          </div>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-sand-900 sm:text-4xl">
-            {data.namaProduk}
-          </h1>
-          <p className="mt-2 text-base font-bold text-brand-700 sm:text-lg">
-            {labelHarga} <span className="text-sand-400">·</span>{" "}
-            {PAYMENT_SCHEME_LABEL[data.paymentScheme]}
-          </p>
-          {data.tanggalTutup && (
-            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sun-100 px-3 py-1.5 text-xs font-bold text-sun-800 ring-1 ring-sun-600/25">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3.5 w-3.5"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <polyline points="12 7 12 12 15 14" />
-              </svg>
-              PO ditutup {formatTanggal(data.tanggalTutup)}
-            </p>
-          )}
-        </section>
+    <div className="bg-cream-soft min-h-full">
+      <IconSprite />
 
+      {/* Header pakai chrome revamp (sama dengan /catalog). PublicOrderForm
+          di bawah SENGAJA ada di LUAR .rv-scope — form itu 1000+ baris
+          interaktif (stepper qty, modal warna, metode bayar/kirim, upload
+          bukti) yang semuanya styling-nya Tailwind murni lewat komponen
+          @/components/ui (Button/Field/Input/Select — sudah pill/rounded
+          konsisten tema revamp sejak token-only pass dashboard). Bila
+          dibungkus .rv-scope, reset `.rv-scope button{background:none}` di
+          revamp.css (unlayered, selalu menang atas utility Tailwind
+          ber-@layer) akan menghapus bg semua tombol polos di form ini —
+          bug yang sama persis dengan yang baru diperbaiki di
+          AuthForm/SellerAuthForm. IconSprite di atas tetap berlaku untuk
+          <Icon> di luar .rv-scope karena <use href="#i-..."> SVG resolve ID
+          di seluruh dokumen, tidak terikat ancestor. */}
+      <div className="rv-scope js is-loaded">
+        <RevampHeader navLinks={NAV_LINKS} loggedIn={Boolean(session)} role={session?.role} />
+        <section className="po-hero" aria-labelledby="po-title">
+          <div className="po-hero__inner">
+            <p className="po-hero__status"><span className="k-hero__dot" aria-hidden="true" />Katalog Pre-Order</p>
+            <h1 className="po-hero__title" id="po-title">{data.namaProduk}</h1>
+            <p className="po-hero__price">
+              <strong>{labelHarga}</strong> <span>· {PAYMENT_SCHEME_LABEL[data.paymentScheme]}</span>
+            </p>
+            {data.tanggalTutup && (
+              <p className="po-hero__deadline">
+                <Icon name="calendar" />
+                PO ditutup {formatWaktu(data.tanggalTutup)}
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <main className="mx-auto max-w-6xl space-y-7 px-4 pb-10 pt-7 sm:px-6 sm:pt-10">
         {data.deskripsi && !isRichTextEmpty(data.deskripsi) && (
           <div className="mx-auto max-w-3xl rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
             <RichText html={data.deskripsi} />
@@ -124,8 +163,22 @@ export default async function PublicFormPage({
         <PublicOrderForm
           formToken={token}
           variants={data.variants}
+          gatewayEnabled={Boolean(data.gatewayEnabled)}
+          manualTransferEnabled={Boolean(data.manualTransferEnabled)}
+          manualTransfer={data.manualTransfer}
+          manualTransfers={data.manualTransfers}
+          linkCheckoutShopee={data.linkCheckoutShopee}
+          nominalCheckoutShopee={data.nominalCheckoutShopee}
+          paymentScheme={data.paymentScheme}
+          dpTipe={data.dpTipe}
+          dpPercent={data.dpPercent}
+          dpNominal={data.dpNominal}
           orderingDisabled={Boolean(alasanTidakBisaPesan)}
           unavailableMessage={alasanTidakBisaPesan}
+          buyerAuthenticated={session?.role === "BUYER"}
+          switchingAccount={Boolean(session && session.role !== "BUYER")}
+          buyerProfile={buyerProfile}
+          resumeCheckout={checkout === "1"}
         />
 
         <p className="mx-auto max-w-xl text-center text-xs text-sand-500">
@@ -134,8 +187,9 @@ export default async function PublicFormPage({
         </p>
 
         <PublicFaq campaignId={data.id} />
-        <PublicFooter />
       </main>
+
+      <PublicFooter />
     </div>
   );
 }

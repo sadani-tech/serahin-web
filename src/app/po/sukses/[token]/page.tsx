@@ -5,6 +5,9 @@ import { formatRupiah } from "@/lib/format";
 import { PublicFooter } from "@/components/PublicFooter";
 import { SerahinLogo } from "@/components/brand";
 import { PortalLinkBox } from "./PortalLinkBox";
+import { ClearDraft } from "./ClearDraft";
+import { ConversionEvent } from "@/components/ConversionEvent";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -16,21 +19,24 @@ export const metadata: Metadata = {
 type SuccessOrder = {
   namaPembeli: string;
   tokenAkses: string;
+  namaProduk: string;
   items: {
     id: string;
     jumlah: number;
     hargaSaatPesan: string;
     variant: { namaVarian: string };
   }[];
-  campaign: { namaProduk: string };
 };
 
 export default async function PublicOrderSuccessPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ campaign?: string }>;
 }) {
   const { token } = await params;
+  const { campaign } = await searchParams;
 
   let order: SuccessOrder;
   try {
@@ -48,6 +54,8 @@ export default async function PublicOrderSuccessPage({
 
   return (
     <div className="bg-serahin-dots relative min-h-full py-10">
+      <ConversionEvent name="order_submitted" value={total} itemCount={totalQty} />
+      <ClearDraft campaign={campaign} />
       <div
         aria-hidden="true"
         className="bg-serahin-sunburst pointer-events-none absolute inset-x-0 top-0 h-72"
@@ -73,12 +81,12 @@ export default async function PublicOrderSuccessPage({
             </h2>
           </div>
           <dl className="divide-y divide-sand-100 text-sm">
-            <Row label="Produk" value={order.campaign.namaProduk} />
-            {order.items.map((it) => (
+            <Row label="Produk" value={order.namaProduk} />
+            {order.items.map((it, i) => (
               <Row
-                key={it.id}
+                key={`${it.id}-${i}`}
                 label={it.variant.namaVarian}
-                value={`${it.jumlah} × ${formatRupiah(it.hargaSaatPesan)}`}
+                value={`${it.jumlah} × ${formatRupiah(Number(it.hargaSaatPesan))}`}
               />
             ))}
             <Row label="Total unit" value={`${totalQty} unit`} />
@@ -89,12 +97,13 @@ export default async function PublicOrderSuccessPage({
 
         <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-lg">
           <p className="mb-1 text-sm font-semibold text-sand-900">
-            Pantau status pesanan Anda
+            Pesanan sudah tersimpan di akunmu
           </p>
           <p className="mb-3 text-xs text-sand-500">
-            Simpan link ini. Anda bisa mengecek status pesanan kapan saja tanpa
-            login.
+            Buka Pesanan untuk melihat pembayaran dan status terbaru tanpa mencari link lagi.
           </p>
+          <Link href="/account" className="mb-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white">Lihat Pesanan</Link>
+          <p className="mb-2 text-xs font-bold text-sand-500">Tautan cadangan pesanan</p>
           <PortalLinkBox token={order.tokenAkses} />
         </div>
 

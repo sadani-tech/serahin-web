@@ -5,6 +5,7 @@ import { useOverlayWhilePending } from "@/hooks/useNavLoading";
 import { useRouter } from "next/navigation";
 import { rollbackImportAction } from "../actions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { ToastFeedback, useToast } from "@/components/Toast";
 
 export function RollbackButton({ importLogId }: { importLogId: string }) {
   const router = useRouter();
@@ -12,6 +13,7 @@ export function RollbackButton({ importLogId }: { importLogId: string }) {
   useOverlayWhilePending(pending);
   const [error, setError] = useState<string>();
   const { confirm } = useConfirm();
+  const toast = useToast();
 
   async function run() {
     const ok = await confirm({
@@ -24,7 +26,10 @@ export function RollbackButton({ importLogId }: { importLogId: string }) {
     startTransition(async () => {
       const res = await rollbackImportAction(importLogId);
       if (res?.error) setError(res.error);
-      else router.refresh();
+      else {
+        toast.success("Rollback import berhasil.");
+        router.refresh();
+      }
     });
   }
 
@@ -37,7 +42,7 @@ export function RollbackButton({ importLogId }: { importLogId: string }) {
       >
         {pending ? "Memproses…" : "Rollback"}
       </button>
-      {error && <p className="mt-1 max-w-xs text-xs text-rose-600">{error}</p>}
+      <ToastFeedback error={error} />
     </div>
   );
 }

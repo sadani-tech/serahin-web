@@ -5,21 +5,26 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SerahinLogo } from "@/components/brand";
 
-export type NavUser = { name?: string; email?: string } | null;
+export type NavUser = { name?: string; email?: string; role?: "ADMIN" | "BUYER" | "SELLER" } | null;
 
 type NavLink = {
   href: string;
   label: string;
   exact?: boolean;
   icon: React.ReactNode;
+  roles?: Array<"ADMIN" | "SELLER">;
+  /** Pengelompokan tampilan sidebar desktop saja (v2.3.9 FR-42.4) — tidak memengaruhi rute/izin. */
+  group?: string;
 };
 
 // Navigasi utama (tampil sebagai teks di header desktop).
 const links: NavLink[] = [
   {
-    href: "/",
+    href: "/dashboard",
     label: "Dashboard",
     exact: true,
+    roles: ["ADMIN"],
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
@@ -28,8 +33,22 @@ const links: NavLink[] = [
     ),
   },
   {
-    href: "/kampanye",
-    label: "Kampanye",
+    href: "/seller/dashboard",
+    label: "Dashboard",
+    exact: true,
+    roles: ["SELLER"],
+    group: "Operasional",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    href: "/pre-orders",
+    label: "Pre-Order",
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
@@ -38,8 +57,43 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/produk",
+    label: "Produk",
+    roles: ["SELLER"],
+    group: "Operasional",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 8l-9-5-9 5 9 5 9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
+      </svg>
+    ),
+  },
+  {
+    href: "/pesanan",
+    label: "Pesanan",
+    roles: ["SELLER"],
+    group: "Operasional",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M6 2h12l2 5H4l2-5Z" /><path d="M5 7v15h14V7" /><path d="M9 11h6M9 15h6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/penjual",
+    label: "Penjual",
+    roles: ["ADMIN"],
+    group: "Pembeli & Mitra",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6M9 18h6" />
+      </svg>
+    ),
+  },
+  {
     href: "/pembeli",
     label: "Pembeli",
+    roles: ["ADMIN", "SELLER"],
+    group: "Pembeli & Mitra",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
@@ -50,6 +104,8 @@ const links: NavLink[] = [
   {
     href: "/verifikasi",
     label: "Verifikasi",
+    roles: ["ADMIN", "SELLER"],
+    group: "Operasional",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
@@ -57,8 +113,31 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/rekening",
+    label: "Rekening",
+    roles: ["SELLER"],
+    group: "Keuangan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18M12 3 3 7v3h18V7l-9-4Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/broadcast",
+    label: "Broadcast",
+    roles: ["ADMIN", "SELLER"],
+    group: "Promosi & Konten",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M4 4h16v16H4z" /><path d="m4 6 8 6 8-6" /><path d="M8 16h8" />
+      </svg>
+    ),
+  },
+  {
     href: "/vendor",
     label: "Vendor",
+    group: "Pembeli & Mitra",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
@@ -68,6 +147,8 @@ const links: NavLink[] = [
   {
     href: "/konten",
     label: "Konten",
+    roles: ["ADMIN"],
+    group: "Promosi & Konten",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" />
@@ -75,13 +156,158 @@ const links: NavLink[] = [
       </svg>
     ),
   },
+  {
+    href: "/konten/faq",
+    label: "FAQ",
+    roles: ["SELLER"],
+    group: "Promosi & Konten",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="10" /><path d="M9.5 9a2.5 2.5 0 015 0c0 2-2.5 2-2.5 4" /><path d="M12 17h.01" />
+      </svg>
+    ),
+  },
+  {
+    href: "/data-privacy",
+    label: "Privasi Data",
+    roles: ["ADMIN"],
+    group: "Pengaturan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
+    href: "/seller/profile",
+    label: "Pengaturan",
+    roles: ["SELLER"],
+    group: "Pengaturan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 005 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 005 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 5a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09A1.65 1.65 0 0015 5a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09A1.65 1.65 0 0019.4 15z" />
+      </svg>
+    ),
+  },
+  // Bantuan (v2.3.9 FR-42.19) — acuan konsep pengelompokan dari
+  // libraries/serahin-docs/references/sidebar-feature.jpg (bukan skema warna).
+  {
+    href: "/panduan",
+    label: "Panduan Pengguna",
+    roles: ["SELLER"],
+    group: "Bantuan",
+    exact: true,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/panduan/aplikasi",
+    label: "Panduan Aplikasi",
+    roles: ["ADMIN", "SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="5" y="2" width="14" height="20" rx="2" />
+        <line x1="12" y1="18" x2="12.01" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    href: "/kritik-saran",
+    label: "Kritik & Saran",
+    roles: ["ADMIN", "SELLER"],
+    group: "Bantuan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+      </svg>
+    ),
+  },
 ];
+
+function visibleLinks(items: NavLink[], role?: "ADMIN" | "BUYER" | "SELLER") {
+  return items.filter((link) => !link.roles || (role !== undefined && link.roles.includes(role as "ADMIN" | "SELLER")));
+}
+
+// Urutan section sidebar desktop (v2.3.9 FR-42.4) — murni tampilan, tidak
+// memengaruhi rute/izin. Group yang tidak ada di daftar ini (seharusnya tidak
+// terjadi, semua NavLink sudah diberi `group`) jatuh ke "Lainnya" di akhir.
+const SIDEBAR_GROUP_ORDER = ["Operasional", "Pembeli & Mitra", "Keuangan", "Promosi & Konten", "Bantuan", "Pengaturan"];
+
+function groupSidebarLinks(items: NavLink[]) {
+  const byGroup = new Map<string, NavLink[]>();
+  for (const link of items) {
+    const group = link.group ?? "Lainnya";
+    if (!byGroup.has(group)) byGroup.set(group, []);
+    byGroup.get(group)!.push(link);
+  }
+  const order = [...SIDEBAR_GROUP_ORDER, ...[...byGroup.keys()].filter((g) => !SIDEBAR_GROUP_ORDER.includes(g))];
+  return order.filter((group) => byGroup.has(group)).map((group) => ({ group, items: byGroup.get(group)! }));
+}
+
+export function DashboardSidebar({ role }: { role: "ADMIN" | "SELLER" }) {
+  const isActive = useActiveLink();
+  const sections = groupSidebarLinks([...visibleLinks(links, role), ...visibleLinks(utilityLinks, role)]);
+  return (
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sand-200 bg-white lg:flex">
+      <div aria-hidden="true" className="bg-serahin-ribbon h-1 w-full" />
+      <div className="border-b border-sand-100 px-5 py-5">
+        <SerahinLogo href={role === "SELLER" ? "/seller/dashboard" : "/dashboard"} size="sm" />
+        <p className="mt-3 text-[10px] font-extrabold uppercase tracking-[.18em] text-brand-700">
+          {role === "SELLER" ? "Seller workspace" : "Admin internal"}
+        </p>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi dashboard">
+        {sections.map(({ group, items }) => (
+          <div key={group} className="mb-6 last:mb-0">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-sand-400">{group}</p>
+            <ul className="space-y-1">
+              {items.map((link) => {
+                const active = isActive(link.href, link.exact);
+                return (
+                  <li key={link.href}>
+                    <Link href={link.href} className={`flex min-h-11 items-center gap-3 rounded-full px-3 text-sm font-bold transition ${active ? "bg-brand-600 text-white shadow-brand" : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"}`}>
+                      <span className={active ? "text-sun-300" : "text-sand-400"}>{link.icon}</span>
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+      <div className="border-t border-sand-100 px-5 py-4 text-xs leading-5 text-sand-400">
+        Serahin · Sistem Manajemen Pre-Order
+      </div>
+    </aside>
+  );
+}
 
 // Aksi utilitas — hanya ikon di header (kanan atas), tetap muncul di menu mobile.
 const utilityLinks: NavLink[] = [
   {
     href: "/import",
     label: "Import",
+    roles: ["ADMIN", "SELLER"],
+    group: "Pengaturan",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+    ),
+  },
+  {
+    href: "/export",
+    label: "Export",
+    roles: ["ADMIN", "SELLER"],
+    group: "Pengaturan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
@@ -89,11 +315,13 @@ const utilityLinks: NavLink[] = [
     ),
   },
   {
-    href: "/export",
-    label: "Export",
+    href: "/keuangan",
+    label: "Keuangan",
+    roles: ["ADMIN", "SELLER"],
+    group: "Keuangan",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+        <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
       </svg>
     ),
   },
@@ -111,18 +339,19 @@ function useActiveLink() {
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 }
 
-export function NavLinks() {
+export function NavLinks({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
   const isActive = useActiveLink();
+  const roleLinks = visibleLinks(links, role);
 
   return (
-    <nav className="hidden items-center gap-0.5 md:flex">
-      {links.map((link) => {
+    <nav className="hidden items-center gap-0.5 lg:flex">
+      {roleLinks.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
           <Link
             key={link.href}
             href={link.href}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-full px-2.5 py-1.5 text-sm font-medium transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-600 hover:bg-brand-50 hover:text-brand-700"
@@ -137,12 +366,13 @@ export function NavLinks() {
 }
 
 // Ikon aksi utilitas (Import / Export) di kanan header — desktop.
-export function NavIconActions() {
+export function NavIconActions({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
   const isActive = useActiveLink();
+  const roleLinks = visibleLinks(utilityLinks, role);
 
   return (
-    <div className="hidden items-center gap-1 md:flex">
-      {utilityLinks.map((link) => {
+    <div className="hidden items-center gap-1 lg:flex">
+      {roleLinks.map((link) => {
         const active = isActive(link.href, link.exact);
         return (
           <Link
@@ -150,7 +380,7 @@ export function NavIconActions() {
             href={link.href}
             title={link.label}
             aria-label={link.label}
-            className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
               active
                 ? "bg-brand-600 text-white shadow-brand"
                 : "text-sand-500 hover:bg-brand-50 hover:text-brand-700"
@@ -174,7 +404,7 @@ export function MobileMenuButton({
   return (
     <button
       onClick={onClick}
-      className="flex h-9 w-9 items-center justify-center rounded-xl text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 md:hidden"
+      className="flex h-9 w-9 items-center justify-center rounded-full text-sand-600 transition hover:bg-brand-50 hover:text-brand-700 lg:hidden"
       aria-label={open ? "Tutup menu" : "Buka menu"}
     >
       {open ? (
@@ -194,14 +424,13 @@ export function MobileDrawer({
   open,
   onClose,
   user,
-  logoutAction,
 }: {
   open: boolean;
   onClose: () => void;
   user: NavUser;
-  logoutAction: () => Promise<void>;
 }) {
   const isActive = useActiveLink();
+  const roleLinks = visibleLinks(drawerLinks, user?.role);
 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
@@ -214,14 +443,14 @@ export function MobileDrawer({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-sand-900/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+        className={`fixed inset-0 z-40 bg-sand-900/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
 
       {/* Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -230,7 +459,7 @@ export function MobileDrawer({
           <SerahinLogo size="sm" />
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-sand-400 hover:bg-sand-100 hover:text-sand-700"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="h-4 w-4">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -238,37 +467,39 @@ export function MobileDrawer({
           </button>
         </div>
 
-        {/* Nav links */}
+        {/* Nav links — dikelompokkan per section, sama seperti sidebar desktop (v2.3.9 FR-42.4) */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-sand-400">
-            Menu
-          </p>
-          <ul className="space-y-0.5">
-            {drawerLinks.map((link) => {
-              const active = isActive(link.href, link.exact);
-              return (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={onClose}
-                    className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-brand-600 text-white shadow-brand"
-                        : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
-                    }`}
-                  >
-                    <span className={active ? "text-sun-300" : "text-sand-400"}>
-                      {link.icon}
-                    </span>
-                    {link.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          {groupSidebarLinks(roleLinks).map(({ group, items }) => (
+            <div key={group} className="mb-5 last:mb-0">
+              <p className="mb-2 px-3 text-xs font-bold uppercase tracking-widest text-sand-400">{group}</p>
+              <ul className="space-y-0.5">
+                {items.map((link) => {
+                  const active = isActive(link.href, link.exact);
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        onClick={onClose}
+                        className={`flex items-center gap-3 rounded-full px-3 py-3 text-sm font-medium transition-colors ${
+                          active
+                            ? "bg-brand-600 text-white shadow-brand"
+                            : "text-sand-700 hover:bg-brand-50 hover:text-brand-700"
+                        }`}
+                      >
+                        <span className={active ? "text-sun-300" : "text-sand-400"}>
+                          {link.icon}
+                        </span>
+                        {link.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
-        {/* User + logout */}
+        {/* Ringkasan actor; logout tersedia pada dropdown avatar di header. */}
         <div className="border-t border-sand-200 p-4">
           {user && (
             <div className="mb-3 flex items-center gap-3 rounded-xl bg-cream px-3 py-2.5">
@@ -283,35 +514,29 @@ export function MobileDrawer({
               </div>
             </div>
           )}
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Keluar
-            </button>
-          </form>
         </div>
       </aside>
     </>
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ role }: { role?: "ADMIN" | "BUYER" | "SELLER" }) {
   const isActive = useActiveLink();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const roleBottomLinks = visibleLinks(bottomNavLinks, role);
+  const roleMoreLinks = visibleLinks(moreLinks, role);
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMenuOpen(false), 0);
+    return () => window.clearTimeout(timer);
+  }, [pathname]);
 
   return (
     <>
-      <nav className="safe-bottom fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur md:hidden">
+      <nav className="safe-bottom fixed bottom-0 inset-x-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur lg:hidden">
         <div className="flex items-stretch">
-          {bottomNavLinks.map((link) => {
+          {roleBottomLinks.map((link) => {
             const active = isActive(link.href, link.exact);
             return (
               <Link
@@ -322,7 +547,7 @@ export function BottomNav() {
                 }`}
               >
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
+                  className={`flex h-6 w-6 items-center justify-center rounded-full transition-all ${
                     active ? "bg-brand-600 text-white scale-110" : ""
                   }`}
                 >
@@ -341,7 +566,7 @@ export function BottomNav() {
             }`}
           >
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-lg transition-all ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full transition-all ${
                 menuOpen ? "bg-brand-600 text-white scale-110" : ""
               }`}
             >
@@ -356,12 +581,12 @@ export function BottomNav() {
 
       {/* More panel */}
       <div
-        className={`fixed inset-x-0 bottom-[57px] z-20 border-t border-sand-200 bg-white shadow-lg transition-all duration-200 md:hidden ${
+        className={`fixed inset-x-0 bottom-[57px] z-20 border-t border-sand-200 bg-white shadow-lg transition-all duration-200 lg:hidden ${
           menuOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0 pointer-events-none"
         }`}
       >
         <div className="grid grid-cols-3 gap-px bg-sand-100 p-px">
-          {moreLinks.map((link) => {
+          {roleMoreLinks.map((link) => {
             const active = isActive(link.href, link.exact);
             return (
               <Link
@@ -372,7 +597,7 @@ export function BottomNav() {
                   active ? "text-brand-700" : "text-sand-500"
                 }`}
               >
-                <span className={`rounded-xl p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
+                <span className={`rounded-full p-2 ${active ? "bg-brand-600 text-white" : "bg-sand-100 text-sand-600"}`}>
                   {link.icon}
                 </span>
                 {link.label}
@@ -390,7 +615,7 @@ export function BottomNav() {
 
       {menuOpen && (
         <div
-          className="fixed inset-0 z-10 md:hidden"
+          className="fixed inset-0 z-10 lg:hidden"
           onClick={() => setMenuOpen(false)}
         />
       )}

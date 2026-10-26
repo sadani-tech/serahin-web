@@ -2,6 +2,7 @@ import {
   CampaignStatus,
   MetodePengiriman,
   OrderStatus,
+  PaymentChannel,
   PaymentType,
   PaymentVerification,
   PaymentScheme,
@@ -12,6 +13,7 @@ import {
 // ---------------------------------------------------------------------------
 
 export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
+  DRAFT: "Draft",
   OPEN: "Open",
   CLOSED: "Closed",
   PRODUKSI: "Produksi",
@@ -19,7 +21,11 @@ export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
   SELESAI: "Selesai",
 };
 
-/** Urutan linear status kampanye untuk validasi & tampilan progress. */
+/**
+ * Urutan linear status kampanye untuk validasi & tampilan progress. DRAFT
+ * sengaja TIDAK dimasukkan (v2.3.9 FR-42.15) — status awal otomatis sebelum
+ * Produk ditambahkan, bukan target yang bisa dipilih manual.
+ */
 export const CAMPAIGN_STATUS_ORDER: CampaignStatus[] = [
   "OPEN",
   "CLOSED",
@@ -29,6 +35,7 @@ export const CAMPAIGN_STATUS_ORDER: CampaignStatus[] = [
 ];
 
 export const CAMPAIGN_STATUS_BADGE: Record<CampaignStatus, string> = {
+  DRAFT: "bg-sand-100 text-sand-600 ring-sand-500/25",
   OPEN: "bg-brand-100 text-brand-800 ring-brand-600/25",
   CLOSED: "bg-sun-100 text-sun-800 ring-sun-600/25",
   PRODUKSI: "bg-accent-500 text-sand-900 ring-accent-600/30",
@@ -107,12 +114,20 @@ export const PAYMENT_VERIFICATION_LABEL: Record<PaymentVerification, string> = {
   MENUNGGU_VERIFIKASI: "Menunggu Verifikasi",
   TERVERIFIKASI: "Terverifikasi",
   DITOLAK: "Ditolak",
+  KEDALUWARSA: "Kedaluwarsa",
 };
 
 export const PAYMENT_VERIFICATION_BADGE: Record<PaymentVerification, string> = {
   MENUNGGU_VERIFIKASI: "bg-sun-100 text-sun-800 ring-sun-600/25",
   TERVERIFIKASI: "bg-brand-100 text-brand-800 ring-brand-600/25",
   DITOLAK: "bg-rose-100 text-rose-800 ring-rose-600/25",
+  KEDALUWARSA: "bg-sand-200 text-sand-600 ring-sand-500/25",
+};
+
+// v2.1 — kanal pembayaran.
+export const PAYMENT_CHANNEL_LABEL: Record<PaymentChannel, string> = {
+  MANUAL_TRANSFER: "Transfer Manual",
+  GATEWAY: "Pembayaran Otomatis",
 };
 
 export const PAYMENT_SCHEME_LABEL: Record<PaymentScheme, string> = {

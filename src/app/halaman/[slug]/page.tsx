@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { api, ApiError } from "@/lib/api";
 import { RichText } from "@/components/RichText";
-import { PublicFooter } from "@/components/PublicFooter";
-import { SerahinLogo } from "@/components/brand";
+import { IconSprite } from "@/components/revamp/IconSprite";
+import { RevampHeader } from "@/components/revamp/RevampHeader";
+import { RevampFooter } from "@/components/revamp/RevampFooter";
 import { formatTanggal } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -46,27 +47,26 @@ export default async function PublicStaticPage({
   if (!page) notFound();
 
   return (
-    <div className="bg-serahin-dots min-h-full py-10">
-      <div className="mx-auto max-w-2xl px-4">
-        <Link
-          href="/"
-          className="inline-flex"
-        >
-          <SerahinLogo size="sm" />
-        </Link>
-        <article className="mt-4 rounded-2xl border border-sand-200 bg-white p-6 shadow-lg sm:p-8">
-          <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
-            {page.judul}
-          </h1>
-          <p className="mt-1 text-xs text-sand-400">
-            Diperbarui {formatTanggal(page.updatedAt)}
-          </p>
-          <div className="mt-6">
-            <RichText html={page.konten} />
-          </div>
-        </article>
-        <PublicFooter />
-      </div>
+    <div className="rv-scope js is-loaded">
+      <IconSprite />
+      <RevampHeader navLinks={[]} />
+      <main className="legal-page">
+        <div className="legal-page__inner">
+          <Link href="/" className="legal-page__back">
+            ← Kembali ke beranda
+          </Link>
+          <article className="legal-page__card legal-page__card--standalone">
+            <h1 className="legal-page__title font-head">{page.judul}</h1>
+            <p className="legal-page__updated">
+              Diperbarui {formatTanggal(page.updatedAt)}
+            </p>
+            <div className="mt-6">
+              <RichText html={page.konten} />
+            </div>
+          </article>
+        </div>
+      </main>
+      <RevampFooter />
     </div>
   );
 }

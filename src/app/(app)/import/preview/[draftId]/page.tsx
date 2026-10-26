@@ -102,7 +102,7 @@ export default async function ImportPreviewPage({
       {/* Kampanye (Mode A) */}
       {v.kampanye && (
         <Card>
-          <CardHeader title="Kampanye" />
+          <CardHeader title="Batch PO" />
           <div className="px-5 py-4 text-sm">
             {v.kampanye.errors.length > 0 && (
               <p className="mb-2 text-rose-600">

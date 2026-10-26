@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { useOverlayWhilePending } from "@/hooks/useNavLoading";
-import { Button, FormError } from "@/components/ui";
+import { Button, FormError, Select } from "@/components/ui";
 import { formatRupiah } from "@/lib/format";
 import { confirmLegacy, type LegacyConfirmState } from "../../../legacy-actions";
 
@@ -112,13 +112,13 @@ export function LegacyPreview({
                 </td>
                 <td className="px-3 py-2 align-top">
                   {r.needsManualVarian ? (
-                    <select
+                    <Select
                       name={`varian_${r.index}`}
                       value={resolusi[r.index] ?? ""}
                       onChange={(e) =>
                         setResolusi((s) => ({ ...s, [r.index]: e.target.value }))
                       }
-                      className="rounded-lg border border-amber-300 px-2 py-1 text-sm"
+                      className="!border-amber-300 !py-1 text-sm"
                     >
                       <option value="">— pilih varian —</option>
                       {variants.map((v) => (
@@ -127,7 +127,7 @@ export function LegacyPreview({
                         </option>
                       ))}
                       <option value="SKIP">Lewati baris ini</option>
-                    </select>
+                    </Select>
                   ) : (
                     <span className="text-sand-700">
                       {variantNama.get(r.variantId ?? "") ?? r.varianInput}

@@ -1,9 +1,10 @@
 // Tipe enum domain (mirror Prisma) — frontend tidak lagi meng-generate Prisma;
 // backend NestJS adalah pemilik skema. Nilai harus sinkron dengan prisma/schema.
 
-export type UserRole = "ADMIN";
+export type UserRole = "ADMIN" | "BUYER" | "SELLER";
 
 export type CampaignStatus =
+  | "DRAFT"
   | "OPEN"
   | "CLOSED"
   | "PRODUKSI"
@@ -32,7 +33,11 @@ export type MetodePengiriman = "SHOPEE" | "EKSPEDISI";
 export type PaymentVerification =
   | "MENUNGGU_VERIFIKASI"
   | "TERVERIFIKASI"
-  | "DITOLAK";
+  | "DITOLAK"
+  | "KEDALUWARSA";
+
+// v2.1 — kanal pembayaran (transfer manual vs payment gateway).
+export type PaymentChannel = "MANUAL_TRANSFER" | "GATEWAY";
 
 export type SumberPesanan = "MANUAL" | "FORM_PUBLIK" | "IMPORT";
 
@@ -51,7 +56,9 @@ export type KesesuaianKualitas = "SESUAI" | "TIDAK_SESUAI";
 /** Pengguna terautentikasi (dari JWT). */
 export type SessionUser = {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
   role: UserRole;
+  actorType?: UserRole;
+  sellerId?: string;
 };

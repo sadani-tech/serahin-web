@@ -1,23 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Card, EmptyState, Input, Select } from "@/components/ui";
-import { OrderBadge } from "@/components/badges";
-import { formatTanggal } from "@/lib/format";
-import { ORDER_STATUS_LABEL } from "@/lib/domain";
+import { Card, EmptyState, IconButton, Input, Select } from "@/components/ui";
+import { formatRupiah, formatTanggal } from "@/lib/format";
 import { useOverlayWhilePending } from "@/hooks/useNavLoading";
-import type { OrderStatus } from "@/lib/types";
+import { PembeliHistoryModal } from "@/components/PembeliHistoryModal";
 
+// Satu baris per akun Buyer (v2.3.9 FR-42.3) — sebelumnya satu baris per
+// pesanan, sehingga satu Buyer dengan banyak pesanan muncul berulang kali.
 export type PembeliRow = {
   id: string;
   namaPembeli: string;
+  email: string | null;
+  phone: string | null;
   kontak: string;
-  status: OrderStatus;
+  isActive: boolean;
   createdAt: string;
-  campaign: { id: string; namaProduk: string };
-  items: { jumlah: number }[];
+  orderCount: number;
+  totalPurchase: number;
+  lastTransactionAt: string | null;
 };
 
 export type PembeliMeta = {
@@ -30,7 +32,6 @@ export type PembeliMeta = {
 export type PembeliFilters = {
   search: string;
   campaignId: string;
-  status: string;
   sort: string;
   order: "asc" | "desc";
 };
@@ -42,6 +43,10 @@ interface Props {
   filters: PembeliFilters;
 }
 
+function SortHeader({ label, sortKey, active, order, onSort }: { label: string; sortKey: string; active: boolean; order: "asc" | "desc"; onSort: (key: string) => void }) {
+  return <th className="px-5 py-3 font-medium"><button type="button" onClick={() => onSort(sortKey)} className="inline-flex items-center gap-1 hover:text-sand-700">{label}<span className="text-sand-400">{active ? (order === "asc" ? "▲" : "▼") : "↕"}</span></button></th>;
+}
+
 export default function PembeliTable({ rows, meta, campaigns, filters }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,6 +55,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
   useOverlayWhilePending(pending);
 
   const [search, setSearch] = useState(filters.search);
+  const [historyId, setHistoryId] = useState<string | null>(null);
 
   // Bangun URL baru dari param sekarang + patch. Perubahan filter/sort selalu
   // mereset ke halaman 1 (kecuali patch memang mengubah `page`).
@@ -71,32 +77,13 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
 
   const resetFilters = () => {
     setSearch("");
-    updateQuery({ search: undefined, campaignId: undefined, status: undefined });
+    updateQuery({ search: undefined, campaignId: undefined });
   };
 
-  const hasFilter =
-    !!filters.search || !!filters.campaignId || !!filters.status;
+  const hasFilter = !!filters.search || !!filters.campaignId;
 
   const start = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
   const end = Math.min(meta.page * meta.limit, meta.total);
-
-  const SortHeader = ({ label, k }: { label: string; k: string }) => {
-    const active = filters.sort === k;
-    return (
-      <th className="px-5 py-3 font-medium">
-        <button
-          type="button"
-          onClick={() => toggleSort(k)}
-          className="inline-flex items-center gap-1 hover:text-sand-700"
-        >
-          {label}
-          <span className="text-sand-400">
-            {active ? (filters.order === "asc" ? "▲" : "▼") : "↕"}
-          </span>
-        </button>
-      </th>
-    );
-  };
 
   return (
     <div className="space-y-4">
@@ -130,7 +117,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
 
           <div className="w-full md:w-56">
             <label className="mb-1 block text-xs font-medium text-sand-500">
-              Kampanye diikuti
+              Batch PO diikuti
             </label>
             <Select
               value={filters.campaignId}
@@ -138,29 +125,10 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
                 updateQuery({ campaignId: e.target.value || undefined })
               }
             >
-              <option value="">— semua kampanye —</option>
+              <option value="">— semua Batch PO —</option>
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.namaProduk}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="w-full md:w-48">
-            <label className="mb-1 block text-xs font-medium text-sand-500">
-              Status
-            </label>
-            <Select
-              value={filters.status}
-              onChange={(e) =>
-                updateQuery({ status: e.target.value || undefined })
-              }
-            >
-              <option value="">— semua status —</option>
-              {(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => (
-                <option key={s} value={s}>
-                  {ORDER_STATUS_LABEL[s]}
                 </option>
               ))}
             </Select>
@@ -194,42 +162,34 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-                  <SortHeader label="Pembeli" k="namaPembeli" />
+                  <SortHeader label="Pembeli" sortKey="namaPembeli" active={filters.sort === "namaPembeli"} order={filters.order} onSort={toggleSort} />
                   <th className="px-5 py-3 font-medium">Kontak</th>
-                  <th className="px-5 py-3 font-medium">Kampanye</th>
-                  <SortHeader label="Status" k="status" />
-                  <th className="px-5 py-3 font-medium">Unit</th>
-                  <SortHeader label="Tanggal" k="createdAt" />
+                  <th className="px-5 py-3 font-medium">Pesanan</th>
+                  <th className="px-5 py-3 font-medium">Total pembelian</th>
+                  <th className="px-5 py-3 font-medium">Transaksi terakhir</th>
+                  <th className="px-5 py-3 font-medium" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-sand-100">
-                {rows.map((o) => (
-                  <tr key={o.id} className="hover:bg-sand-50">
-                    <td className="px-5 py-3">
-                      <Link
-                        href={`/pesanan/${o.id}`}
-                        className="font-medium text-sand-900 hover:underline"
-                      >
-                        {o.namaPembeli}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-sand-600">{o.kontak}</td>
-                    <td className="px-5 py-3 text-sand-700">
-                      <Link
-                        href={`/kampanye/${o.campaign.id}`}
-                        className="hover:underline"
-                      >
-                        {o.campaign.namaProduk}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3">
-                      <OrderBadge status={o.status} />
-                    </td>
-                    <td className="px-5 py-3 text-sand-700">
-                      {o.items.reduce((s, it) => s + it.jumlah, 0)}
-                    </td>
+                {rows.map((buyer) => (
+                  <tr key={buyer.id} className="hover:bg-sand-50">
+                    <td className="px-5 py-3 font-medium text-sand-900">{buyer.namaPembeli}</td>
                     <td className="px-5 py-3 text-sand-600">
-                      {formatTanggal(o.createdAt)}
+                      <p>{buyer.phone ?? "—"}</p>
+                      <p className="text-xs text-sand-400">{buyer.email ?? "Tanpa email"}</p>
+                    </td>
+                    <td className="px-5 py-3 text-sand-700">{buyer.orderCount}</td>
+                    <td className="px-5 py-3 font-medium text-sand-700">{formatRupiah(buyer.totalPurchase)}</td>
+                    <td className="px-5 py-3 text-sand-600">
+                      {buyer.lastTransactionAt ? formatTanggal(buyer.lastTransactionAt) : "—"}
+                    </td>
+                    <td className="px-5 py-3">
+                      <IconButton title="Lihat riwayat pembelian" onClick={() => setHistoryId(buyer.id)}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                      </IconButton>
                     </td>
                   </tr>
                 ))}
@@ -266,6 +226,7 @@ export default function PembeliTable({ rows, meta, campaigns, filters }: Props) 
           </div>
         )}
       </Card>
+      {historyId && <PembeliHistoryModal buyerId={historyId} onClose={() => setHistoryId(null)} />}
     </div>
   );
 }

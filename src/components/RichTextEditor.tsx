@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 // react-quill-new = fork Quill 2 yang kompatibel React 19 (tanpa findDOMNode).
 // Dimuat client-only (ssr:false) karena Quill mengakses `document` saat import.
@@ -32,6 +33,7 @@ export function RichTextEditor({
   placeholder?: string;
 }) {
   const [html, setHtml] = useState(defaultValue);
+  const { prompt } = useConfirm();
 
   const modules = useMemo(
     () => ({
@@ -45,17 +47,23 @@ export function RichTextEditor({
         ],
         handlers: {
           // Sisipkan gambar via URL (bukan base64) agar HTML tersimpan ringkas.
-          image(this: { quill: import("quill").default }) {
-            const url = window.prompt("Masukkan URL gambar (https://…)");
+          async image(this: { quill: import("quill").default }) {
+            const quill = this.quill;
+            const range = quill.getSelection(true);
+            const url = await prompt({
+              title: "Sisipkan gambar",
+              label: "URL gambar",
+              placeholder: "https://…",
+              multiline: false,
+            });
             if (!url) return;
-            const range = this.quill.getSelection(true);
-            this.quill.insertEmbed(range.index, "image", url, "user");
-            this.quill.setSelection(range.index + 1, 0, "user");
+            quill.insertEmbed(range.index, "image", url, "user");
+            quill.setSelection(range.index + 1, 0, "user");
           },
         },
       },
     }),
-    [],
+    [prompt],
   );
 
   const formats = useMemo(

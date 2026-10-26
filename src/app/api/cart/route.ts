@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from "next/server";
+import { api, ApiError } from "@/lib/api";
+
+function failure(error: unknown) {
+  const status = error instanceof ApiError ? error.status : 500;
+  return NextResponse.json({ message: error instanceof Error ? error.message : "Permintaan gagal." }, { status });
+}
+
+export async function GET() {
+  try { return NextResponse.json(await api.get("/buyer/cart")); }
+  catch (error) { return failure(error); }
+}
+
+export async function POST(request: NextRequest) {
+  try { return NextResponse.json(await api.post("/buyer/cart/sync-draft", await request.json())); }
+  catch (error) { return failure(error); }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const salesEventId = request.nextUrl.searchParams.get("salesEventId");
+    return NextResponse.json(await api.del(`/buyer/cart${salesEventId ? `?salesEventId=${encodeURIComponent(salesEventId)}` : ""}`));
+  }
+  catch (error) { return failure(error); }
+}

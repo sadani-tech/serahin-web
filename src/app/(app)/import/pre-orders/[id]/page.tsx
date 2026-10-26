@@ -1,0 +1,61 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { api, ApiError } from "@/lib/api";
+import { Card, CardHeader } from "@/components/ui";
+import { ImportUploadForm } from "../../ImportUploadForm";
+
+export const dynamic = "force-dynamic";
+
+export default async function ImportToPreorderPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  let campaign: { id: string; namaProduk: string };
+  try {
+    campaign = await api.get<{ id: string; namaProduk: string }>(
+      `/pre-orders/${id}`,
+    );
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) notFound();
+    throw e;
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <Link
+          href={`/pre-orders/${id}`}
+          className="text-sm text-sand-500 hover:text-sand-700"
+        >
+          ← {campaign.namaProduk}
+        </Link>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-sand-900">
+          Impor Pesanan ke Batch PO Ini
+        </h1>
+        <p className="mt-1 text-sm text-sand-500">
+          Tambahkan pesanan & pembayaran historis ke {campaign.namaProduk}.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader title="Mode B — Pesanan" subtitle="Template 2 sheet (Pesanan + Pembayaran)." />
+        <div className="px-5 py-4">
+          <ImportUploadForm mode="PESANAN" fixedCampaignId={id} />
+        </div>
+      </Card>
+
+      <p className="text-sm text-sand-500">
+        Punya data mentah ekspor Google Form (kolom gabungan)?{" "}
+        <Link
+          href={`/import/legacy/${id}`}
+          className="font-medium text-sand-900 underline hover:text-sand-700"
+        >
+          Gunakan Import Format Lawas
+        </Link>
+        .
+      </p>
+    </div>
+  );
+}

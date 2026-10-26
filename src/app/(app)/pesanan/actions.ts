@@ -73,8 +73,8 @@ export async function createOrder(
   } catch (e) {
     return { error: e instanceof ApiError ? e.message : "Gagal membuat pesanan" };
   }
-  revalidatePath(`/kampanye/${campaignId}`);
-  redirect(`/kampanye/${campaignId}?tab=pesanan`);
+  revalidatePath(`/pre-orders/${campaignId}`);
+  redirect(`/pre-orders/${campaignId}?tab=pesanan`);
 }
 
 export async function updateOrder(
@@ -116,7 +116,7 @@ export async function bulkUpdateOrderStatus(
       ids,
       status,
     });
-    revalidatePath(`/kampanye/${campaignId}`);
+    revalidatePath(`/pre-orders/${campaignId}`);
     return { updated: res.updated };
   } catch (e) {
     return {
@@ -200,10 +200,15 @@ export async function verifyPayment(
   paymentId: string,
   keputusan: "TERVERIFIKASI" | "DITOLAK",
   jumlah?: number,
+  alasan?: string,
 ) {
   const res = await api.post<{ id?: string; campaign?: { id: string } }>(
     `/payments/${paymentId}/verify`,
-    { keputusan, ...(jumlah !== undefined && jumlah > 0 && { jumlah }) },
+    {
+      keputusan,
+      ...(jumlah !== undefined && jumlah > 0 && { jumlah }),
+      ...(alasan?.trim() && { alasan: alasan.trim() }),
+    },
   );
   if (res?.id) revalidatePath(`/pesanan/${res.id}`);
 }
@@ -211,4 +216,36 @@ export async function verifyPayment(
 export async function deletePayment(paymentId: string) {
   const res = await api.del<{ id?: string }>(`/payments/${paymentId}`);
   if (res?.id) revalidatePath(`/pesanan/${res.id}`);
+}
+
+export async function reconcileGatewayPayment(orderId: string, gatewayOrderId: string) {
+  await api.post("/admin/payments/reconcile", { gatewayOrderIds: [gatewayOrderId] });
+  revalidatePath(`/pesanan/${orderId}`);
+  revalidatePath(`/payments/${gatewayOrderId}/audit`);
+}
+
+export type ShopeeReviewState = { error?: string } | undefined;
+
+export async function reviewShopeeCheckout(
+  orderId: string,
+  creditId: string,
+  _prev: ShopeeReviewState,
+  formData: FormData,
+): Promise<ShopeeReviewState> {
+  const keputusan = String(formData.get("keputusan") ?? "");
+  const jumlahRaw = String(formData.get("jumlah") ?? "").replace(/\D/g, "");
+  const alasan = String(formData.get("alasan") ?? "").trim();
+  if (keputusan !== "VERIFIED" && keputusan !== "REJECTED") return { error: "Pilih keputusan verifikasi." };
+  if (keputusan === "REJECTED" && !alasan) return { error: "Alasan penolakan wajib diisi." };
+  try {
+    await api.post(`/pesanan/${orderId}/shopee-checkouts/${creditId}/review`, {
+      keputusan,
+      ...(jumlahRaw ? { jumlah: Number(jumlahRaw) } : {}),
+      ...(alasan ? { alasan } : {}),
+    });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal memverifikasi checkout Shopee." };
+  }
+  revalidatePath(`/pesanan/${orderId}`);
+  return undefined;
 }

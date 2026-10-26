@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "./constants";
+import type { PublicOrderState } from "./constants";
 
 // Keranjang dikirim sebagai satu field JSON ("cart") dari state klien.
 function parseCart(formData: FormData) {
@@ -15,23 +15,40 @@ function parseCart(formData: FormData) {
       parsed = [];
     }
   }
-  const items: { variantId: string; jumlah: number; warna?: string }[] = [];
+  const items: {
+    variantId: string;
+    jumlah: number;
+    expectedHarga?: number;
+    warna?: string;
+  }[] = [];
   if (Array.isArray(parsed)) {
     for (const it of parsed) {
       const vid = String((it as { variantId?: unknown })?.variantId ?? "");
       if (!vid) continue;
-      let j = Math.max(
+      const j = Math.max(
         1,
         Math.round(Number((it as { jumlah?: unknown })?.jumlah ?? 1)) || 1,
       );
-      j = Math.min(j, MAX_UNIT_PER_SUBMISSION);
       const warna =
         String((it as { warna?: unknown })?.warna ?? "").trim() || undefined;
+      const hargaRaw = (it as { expectedHarga?: unknown })?.expectedHarga;
+      const expectedHarga = Number(hargaRaw);
+      const validExpectedHarga =
+        hargaRaw !== undefined && Number.isFinite(expectedHarga) && expectedHarga >= 0
+          ? expectedHarga
+          : undefined;
       const ex = items.find(
         (x) => x.variantId === vid && (x.warna ?? "") === (warna ?? ""),
       );
-      if (ex) ex.jumlah = Math.min(MAX_UNIT_PER_SUBMISSION, ex.jumlah + j);
-      else items.push({ variantId: vid, jumlah: j, warna });
+      if (ex) ex.jumlah = ex.jumlah + j;
+      else {
+        items.push({
+          variantId: vid,
+          jumlah: j,
+          expectedHarga: validExpectedHarga,
+          warna,
+        });
+      }
     }
   }
   return items;
@@ -42,17 +59,6 @@ export async function createPublicOrder(
   _prev: PublicOrderState,
   formData: FormData,
 ): Promise<PublicOrderState> {
-  const namaPembeli = String(formData.get("namaPembeli") ?? "").trim();
-  const wa = String(formData.get("wa") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  if (!namaPembeli) return { error: "Nama wajib diisi" };
-  if (!wa) return { error: "WhatsApp wajib diisi" };
-  if (!email) return { error: "Email wajib diisi" };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { error: "Format email tidak valid" };
-  }
-  const kontak = wa + (email ? `, ${email}` : "");
-
   const items = parseCart(formData);
   if (items.length === 0) return { error: "Pilih minimal satu varian." };
 
@@ -61,29 +67,118 @@ export async function createPublicOrder(
     "",
   );
   const jumlahBayar = jumlahBayarRaw ? Number(jumlahBayarRaw) : 0;
-  if (jumlahBayar <= 0) return { error: "Jumlah bayar wajib diisi." };
-
   const confirmDuplikat = formData.get("confirmDuplikat") === "1";
   const confirmPerubahanKuota = formData.get("confirmPerubahanKuota") === "1";
+  const checkoutKey = String(formData.get("checkoutKey") ?? "").trim();
+  const checkoutSource =
+    formData.get("checkoutSource") === "HOME_CATALOG"
+      ? "HOME_CATALOG"
+      : "CAMPAIGN_LINK";
+  const acceptPolicies = formData.get("acceptPolicies") === "1";
+  const whatsappConsent = formData.get("whatsappConsent") === "1";
+  const whatsappConsentVersion = String(
+    formData.get("whatsappConsentVersion") ?? "",
+  ).trim();
+  if (!acceptPolicies) {
+    return {
+      error:
+        "Setujui Syarat & Ketentuan, Kebijakan Privasi, dan Kebijakan Refund untuk melanjutkan.",
+    };
+  }
 
-  // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran (FR-upload-bukti)
-  const fd = new FormData();
-  fd.set("namaPembeli", namaPembeli);
-  fd.set("kontak", kontak);
-  fd.set("items", JSON.stringify(items));
-  fd.set("jumlahBayar", String(jumlahBayar));
-  fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
-  fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");
+  // v2.1 — pembeli memilih "Bayar otomatis" (payment gateway).
+  const gateway = formData.get("metodeBayar") === "GATEWAY";
 
-  // Bukti pembayaran opsional — dikirim hanya jika file valid dipilih
-  const bukti = formData.get("buktiPembayaran");
-  if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
+  type OrderResult = {
+    tokenAkses?: string;
+    paymentUrl?: string;
+    needsConfirm?: boolean;
+    needsCartConfirm?: boolean;
+    warning?: string;
+  };
+  let result: OrderResult;
+  const loginCallback = `/po/${formToken}?checkout=1`;
 
-  let result: { tokenAkses?: string; needsConfirm?: boolean; needsCartConfirm?: boolean; warning?: string };
-  try {
-    result = await api.postForm(`/public/form/${formToken}/order`, fd);
-  } catch (e) {
-    return { error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan." };
+  if (gateway) {
+    // Body JSON — pembeli membayar di halaman provider, tidak ada unggahan bukti.
+    try {
+      result = await api.post<OrderResult>(
+        `/public/form/${formToken}/order/gateway`,
+        {
+          items,
+          ...(checkoutKey ? { checkoutKey } : {}),
+          ...(jumlahBayar > 0 ? { jumlahBayar } : {}),
+          confirmDuplikat,
+          confirmPerubahanKuota,
+          checkoutSource,
+          acceptPolicies,
+          whatsappConsent,
+          ...(whatsappConsentVersion ? { whatsappConsentVersion } : {}),
+        },
+      );
+    } catch (e) {
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        redirect(`/api/auth/switch?callbackUrl=${encodeURIComponent(loginCallback)}`);
+      }
+      return {
+        error: e instanceof ApiError ? e.message : "Gagal memulai pembayaran.",
+      };
+    }
+  } else {
+    if (jumlahBayar <= 0) return { error: "Jumlah bayar wajib diisi." };
+
+    // Kirim sebagai multipart/form-data agar bisa menyertakan bukti pembayaran.
+    const fd = new FormData();
+    fd.set("items", JSON.stringify(items));
+    if (checkoutKey) fd.set("checkoutKey", checkoutKey);
+    fd.set("jumlahBayar", String(jumlahBayar));
+    fd.set("confirmDuplikat", confirmDuplikat ? "1" : "0");
+    fd.set("confirmPerubahanKuota", confirmPerubahanKuota ? "1" : "0");
+    fd.set("checkoutSource", checkoutSource);
+    fd.set("acceptPolicies", "1");
+    fd.set("whatsappConsent", whatsappConsent ? "1" : "0");
+    if (whatsappConsentVersion) {
+      fd.set("whatsappConsentVersion", whatsappConsentVersion);
+    }
+
+    const bukti = formData.get("buktiPembayaran");
+    if (bukti instanceof File && bukti.size > 0) fd.set("buktiPembayaran", bukti);
+
+    const includeShopee = formData.get("includeShopee") === "1";
+    if (includeShopee) {
+      const buktiShopee = formData.get("buktiShopee");
+      if (!(buktiShopee instanceof File) || buktiShopee.size === 0) {
+        return { error: "Bukti checkout Shopee wajib diunggah." };
+      }
+      fd.set("includeShopee", "1");
+      fd.set("buktiShopee", buktiShopee);
+    }
+
+    const metodePengiriman = String(formData.get("metodePengiriman") ?? "").trim();
+    if (metodePengiriman === "SHOPEE" || metodePengiriman === "EKSPEDISI") {
+      fd.set("metodePengiriman", metodePengiriman);
+      const alamatPengiriman = String(formData.get("alamatPengiriman") ?? "").trim();
+      if (metodePengiriman === "EKSPEDISI") {
+        if (!alamatPengiriman) {
+          return { error: "Alamat pengiriman lengkap wajib diisi untuk Manual by Ekspedisi." };
+        }
+        fd.set("alamatPengiriman", alamatPengiriman);
+      }
+    }
+
+    try {
+      result = await api.postForm<OrderResult>(
+        `/public/form/${formToken}/order`,
+        fd,
+      );
+    } catch (e) {
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        redirect(`/api/auth/switch?callbackUrl=${encodeURIComponent(loginCallback)}`);
+      }
+      return {
+        error: e instanceof ApiError ? e.message : "Gagal mengirim pesanan.",
+      };
+    }
   }
 
   if (result.needsConfirm) {
@@ -92,5 +187,16 @@ export async function createPublicOrder(
   if (result.needsCartConfirm) {
     return { warning: result.warning, needsCartConfirm: true };
   }
-  redirect(`/po/sukses/${result.tokenAkses}`);
+  // Gateway dengan hosted payment page (paymentUrl): redirect langsung ke sana.
+  // Gateway tanpa paymentUrl (VA/QRIS — tidak ada halaman hosted, cuma nomor VA
+  // atau QR untuk ditampilkan): langsung ke portal, bukan halaman sukses
+  // generik, supaya buyer tidak perlu klik lagi untuk lihat cara bayarnya.
+  // Manual transfer: ke halaman sukses seperti biasa.
+  redirect(
+    gateway && result.paymentUrl
+      ? result.paymentUrl
+      : gateway && result.tokenAkses
+        ? `/portal/${result.tokenAkses}`
+        : `/po/sukses/${result.tokenAkses}?campaign=${encodeURIComponent(formToken)}`,
+  );
 }

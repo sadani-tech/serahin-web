@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardHeader, EmptyState, LinkButton, ScrollList } from "@/components/ui";
 import { CampaignBadge } from "@/components/badges";
-import { formatRupiah, formatTanggal } from "@/lib/format";
-import { persenKuotaColor, NEAR_DEADLINE_DAYS, STALE_TIMELINE_DAYS } from "@/lib/dashboard-ui";
+import { persenKuotaColor } from "@/lib/dashboard-ui";
 import type { CampaignStatus } from "@/lib/types";
 
 export function DashboardSection({
@@ -73,11 +72,11 @@ export function ActiveCampaignsCard({
     if (!showEmpty) return null;
     return (
       <Card>
-        <CardHeader title="Kampanye aktif" subtitle="Progres kuota terisi per kampanye" />
+        <CardHeader title="Batch PO aktif" subtitle="Progres kuota terisi per Batch PO" />
         <EmptyState
-          title="Belum ada kampanye aktif"
-          description="Buat kampanye baru atau ubah filter."
-          action={<LinkButton href="/kampanye/baru">+ Kampanye Baru</LinkButton>}
+          title="Belum ada Batch PO aktif"
+          description="Buat Batch PO baru atau ubah filter."
+          action={<LinkButton href="/pre-orders/baru">+ Buat Batch PO</LinkButton>}
         />
         <div className="flex justify-center pt-2">
           <button onClick={() => setShowEmpty(false)} className="text-sm text-sand-500 hover:text-sand-700">
@@ -90,10 +89,10 @@ export function ActiveCampaignsCard({
 
   return (
     <Card>
-      <CardHeader title="Kampanye aktif" subtitle="Progres kuota terisi per kampanye" />
+      <CardHeader title="Batch PO aktif" subtitle="Progres kuota terisi per Batch PO" />
       <ScrollList className="divide-y divide-sand-100">
         {items.map((c) => (
-          <Link key={c.id} href={`/kampanye/${c.id}`} className="block px-5 py-3 hover:bg-sand-50">
+          <Link key={c.id} href={`/pre-orders/${c.id}`} className="block px-5 py-3 hover:bg-sand-50">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sand-900">{c.namaProduk}</span>

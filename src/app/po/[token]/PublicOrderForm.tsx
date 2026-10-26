@@ -1,17 +1,26 @@
 "use client";
 
-import { startTransition, useActionState, useMemo, useState } from "react";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ProductImage } from "@/components/ProductImage";
 import { ImagePreviewModal } from "@/components/ImagePreviewModal";
 import { formatRupiah } from "@/lib/format";
 import { createPublicOrder } from "../actions";
-import { MAX_UNIT_PER_SUBMISSION, type PublicOrderState } from "../constants";
+import type { PublicOrderState } from "../constants";
+import { publicSite } from "@/lib/public-site";
+import { ToastFeedback } from "@/components/Toast";
+import { BuyerAccessModal } from "@/components/BuyerAccessModal";
+import { CopyButton } from "@/components/CopyButton";
+import { computeDownPaymentTarget } from "@/lib/billing";
+import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
+import type { MetodePengiriman } from "@/lib/types";
 
 export type PublicVariantOption = {
   id: string;
+  productSlug?: string | null;
   namaVarian: string;
   sisa: number;
   harga: number;
@@ -24,9 +33,20 @@ export type PublicVariantOption = {
   material?: string | null;
   sku?: string | null;
   deskripsi?: string | null;
+  // DP kustom Produk (v2.3.7 §3.18) — null berarti ikuti DP Batch PO (props
+  // dpTipe/dpPercent/dpNominal di bawah).
+  dpTipe?: "PERSEN" | "NOMINAL" | null;
+  dpPercent?: number | null;
+  dpNominal?: number | null;
+  /** Jumlah unit terjual — dasar urutan default "populer duluan" (v2.3.7 §3.20). */
+  terjual?: number;
 };
 
+type CatalogSortMode = "default" | "name" | "price_asc" | "price_desc";
+
 const CATALOG_PAGE_SIZE = 8;
+const draftExpiresAt = () => Date.now() + 24 * 60 * 60 * 1000;
+const draftIsExpired = (value?: number) => !value || value < Date.now();
 
 function getCategory(value?: string | null) {
   const category = value?.trim();
@@ -36,54 +56,265 @@ function getCategory(value?: string | null) {
 export function PublicOrderForm({
   formToken,
   variants,
+  gatewayEnabled = false,
+  manualTransferEnabled = false,
+  manualTransfer,
+  manualTransfers,
+  linkCheckoutShopee,
+  nominalCheckoutShopee,
+  paymentScheme = "DP_PELUNASAN",
+  dpTipe = "PERSEN",
+  dpPercent = 50,
+  dpNominal = null,
   orderingDisabled = false,
   unavailableMessage,
+  checkoutSource = "CAMPAIGN_LINK",
+  idPrefix = formToken,
+  buyerAuthenticated = false,
+  switchingAccount = false,
+  buyerProfile,
+  resumeCheckout = false,
 }: {
   formToken: string;
   variants: PublicVariantOption[];
+  gatewayEnabled?: boolean;
+  manualTransferEnabled?: boolean;
+  manualTransfer?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  } | null;
+  manualTransfers?: {
+    id: string;
+    accountType: "BANK" | "EWALLET";
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+    isPrimary: boolean;
+  }[];
+  linkCheckoutShopee?: string | null;
+  nominalCheckoutShopee?: number | null;
+  paymentScheme?: "DP_PELUNASAN" | "LUNAS";
+  dpTipe?: "PERSEN" | "NOMINAL";
+  dpPercent?: number | null;
+  dpNominal?: number | null;
   orderingDisabled?: boolean;
   unavailableMessage?: string;
+  checkoutSource?: "CAMPAIGN_LINK" | "HOME_CATALOG";
+  idPrefix?: string;
+  buyerAuthenticated?: boolean;
+  switchingAccount?: boolean;
+  buyerProfile?: { name: string; email: string | null; phone: string | null } | null;
+  resumeCheckout?: boolean;
 }) {
   const action = createPublicOrder.bind(null, formToken);
   const [state, formAction, pending] = useActionState<PublicOrderState, FormData>(
     action,
     undefined,
   );
-  const [namaPembeli, setNamaPembeli] = useState("");
-  const [wa, setWa] = useState("");
-  const [email, setEmail] = useState("");
-  const [jumlahBayar, setJumlahBayar] = useState("");
+  const checkoutKey = useRef("");
+  const acceptPoliciesRef = useRef<HTMLInputElement>(null);
+  // v2.1 — kanal pembayaran. Default "otomatis" bila gateway aktif.
+  const [metodeBayar, setMetodeBayar] = useState<"GATEWAY" | "MANUAL">(
+    gatewayEnabled ? "GATEWAY" : "MANUAL",
+  );
+  const gateway = gatewayEnabled && metodeBayar === "GATEWAY";
+  const paymentUnavailable = gateway ? !gatewayEnabled : !manualTransferEnabled;
+  // Pilihan pengiriman (Checkout Shopee / Manual by Ekspedisi) hanya untuk
+  // skema Lunas langsung — skema DP/Pelunasan memilih metode pengiriman
+  // belakangan di portal saat tahap pelunasan.
+  const shopeeAvailable =
+    paymentScheme === "LUNAS" && Boolean(linkCheckoutShopee && nominalCheckoutShopee);
+  const [metode, setMetode] = useState<MetodePengiriman | "">("");
+  const [alamat, setAlamat] = useState("");
+  const includeShopee = paymentScheme === "LUNAS" && metode === "SHOPEE";
+  const displayedAccounts = manualTransfers?.length
+    ? manualTransfers
+    : manualTransfer
+      ? [{
+          id: manualTransfer.accountNumber,
+          accountType: "BANK" as const,
+          bankName: manualTransfer.bankName,
+          accountNumber: manualTransfer.accountNumber,
+          accountHolderName: manualTransfer.accountHolderName,
+          isPrimary: true,
+        }]
+      : [];
   const [qty, setQty] = useState<Record<string, number>>({});
-  const [warnaSel, setWarnaSel] = useState<Record<string, string>>({});
+  // Kuantitas per varian+warna — satu varian dengan beberapa warna kini bisa
+  // punya beberapa baris sekaligus dalam satu pesanan (v2.3.7 FR-37.14/37.15),
+  // mis. Merah 2 + Kuning 1. Varian tanpa opsi warna tetap memakai `qty`.
+  const [colorQty, setColorQty] = useState<Record<string, Record<string, number>>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("Semua");
+  const [catalogSort, setCatalogSort] = useState<CatalogSortMode>("default");
   const [catalogPage, setCatalogPage] = useState(1);
   const [preview, setPreview] = useState<{
     images: string[];
     title: string;
     start: number;
   } | null>(null);
+  const [showAccessModal, setShowAccessModal] = useState(false);
+  // Produk berwarna dipilih lewat modal (bukan inline di card) supaya
+  // steppernya lega di layar mobile yang sempit — card cuma tampilkan
+  // ringkasan + tombol "Pilih warna".
+  const [colorModalFor, setColorModalFor] = useState<string | null>(null);
+  const colorModalVariant = variants.find((v) => v.id === colorModalFor) ?? null;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(`serahin:checkout:${formToken}`);
+        if (!raw) return;
+        const draft = JSON.parse(raw) as {
+          expiresAt?: number;
+          qty?: Record<string, number>;
+          colorQty?: Record<string, Record<string, number>>;
+          colors?: Record<string, string>; // draft lama (satu warna per varian)
+        };
+        if (draftIsExpired(draft.expiresAt)) {
+          localStorage.removeItem(`serahin:checkout:${formToken}`);
+          return;
+        }
+        if (draft.qty) setQty(draft.qty);
+        if (draft.colorQty) setColorQty(draft.colorQty);
+        else if (draft.colors) {
+          // Migrasi draft lama: satu warna+qty per varian → colorQty.
+          const migrated: Record<string, Record<string, number>> = {};
+          for (const [variantId, warna] of Object.entries(draft.colors)) {
+            const q = draft.qty?.[variantId];
+            if (warna && q) migrated[variantId] = { [warna]: q };
+          }
+          setColorQty(migrated);
+        }
+      } catch { localStorage.removeItem(`serahin:checkout:${formToken}`); }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [formToken]);
+
+  useEffect(() => {
+    if (!buyerAuthenticated || !resumeCheckout) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [buyerAuthenticated, idPrefix, resumeCheckout]);
+
+  useEffect(() => {
+    if (!state?.error && !state?.warning) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [idPrefix, state]);
 
   const setQ = (id: string, value: number) =>
     setQty((current) => ({ ...current, [id]: Math.max(0, value) }));
-  const selectedVariants = variants.filter((v) => (qty[v.id] ?? 0) > 0);
-  const items = selectedVariants.map((v) => ({
-    variantId: v.id,
-    jumlah: qty[v.id] ?? 0,
-    warna: warnaSel[v.id] || undefined,
+  /** Total kuantitas suatu varian, gabungan seluruh baris warna bila ada. */
+  const variantTotalQty = (v: PublicVariantOption) =>
+    v.warna?.length
+      ? Object.values(colorQty[v.id] ?? {}).reduce((sum, n) => sum + n, 0)
+      : qty[v.id] ?? 0;
+  const setColorQ = (v: PublicVariantOption, warna: string, value: number) =>
+    setColorQty((current) => {
+      const forVariant = { ...(current[v.id] ?? {}) };
+      const othersTotal = Object.entries(forVariant).reduce(
+        (sum, [c, q]) => (c === warna ? sum : sum + q),
+        0,
+      );
+      const max = Math.max(0, v.sisa - othersTotal);
+      forVariant[warna] = Math.max(0, Math.min(value, max));
+      return { ...current, [v.id]: forVariant };
+    });
+  /** Daftar stepper per warna — dipakai di dalam modal "Pilih warna". */
+  function renderColorRows(v: PublicVariantOption, disabled: boolean) {
+    if (!v.warna?.length) return null;
+    return (
+      <div className="space-y-2">
+        {v.warna.map((warna) => {
+          const warnaJumlah = colorQty[v.id]?.[warna] ?? 0;
+          const othersTotal = variantTotalQty(v) - warnaJumlah;
+          const maxForColor = Math.max(0, v.sisa - othersTotal);
+          return (
+            <div key={warna} className="flex items-center justify-between gap-3 rounded-xl border border-sand-200 px-3 py-2.5">
+              <span className="truncate text-sm font-bold text-sand-800">{warna}</span>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button type="button" onClick={() => setColorQ(v, warna, warnaJumlah - 1)} disabled={disabled || warnaJumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian} warna ${warna}`} className="flex h-10 w-10 items-center justify-center rounded-lg bg-sand-100 text-lg font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
+                <output className="flex h-10 w-10 items-center justify-center rounded-lg bg-sand-50 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian} warna ${warna}`}>{warnaJumlah}</output>
+                <button
+                  type="button"
+                  onClick={() => setColorQ(v, warna, warnaJumlah + 1)}
+                  disabled={disabled || warnaJumlah >= maxForColor}
+                  aria-label={`Tambah jumlah ${v.namaVarian} warna ${warna}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-lg font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  // Baris keranjang — satu baris per varian (tanpa warna) atau per
+  // kombinasi varian+warna (v2.3.7 FR-37.14/37.15), sumber kebenaran untuk
+  // ringkasan, payload `items`, dan total harga.
+  const rows = variants.flatMap((v) => {
+    if (v.warna?.length) {
+      return Object.entries(colorQty[v.id] ?? {})
+        .filter(([, q]) => q > 0)
+        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: warna as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }));
+    }
+    const q = qty[v.id] ?? 0;
+    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }] : [];
+  });
+  const items = rows.map((r) => ({
+    variantId: r.variantId,
+    jumlah: r.jumlah,
+    expectedHarga: r.harga,
+    warna: r.warna,
   }));
-  const total = variants.reduce((sum, v) => sum + v.harga * (qty[v.id] ?? 0), 0);
-  const jumlahItem = items.reduce((sum, item) => sum + item.jumlah, 0);
+  const total = rows.reduce((sum, r) => sum + r.harga * r.jumlah, 0);
+  const dpTarget = paymentScheme === "DP_PELUNASAN"
+    ? computeDownPaymentTarget(
+        rows.map((r) => ({ hargaSaatPesan: r.harga, jumlah: r.jumlah, dpTipe: r.dpTipe, dpPercent: r.dpPercent, dpNominal: r.dpNominal })),
+        dpTipe,
+        dpPercent,
+        dpNominal,
+      )
+    : total;
+  const jumlahItem = rows.reduce((sum, r) => sum + r.jumlah, 0);
+  const shopeeAmount =
+    includeShopee && !gateway
+      ? Math.min(dpTarget, Math.round((nominalCheckoutShopee ?? 0) * jumlahItem))
+      : 0;
+  const bankAmount = dpTarget - shopeeAmount;
+  // Nominal yang ditagih ke Buyer (transfer bank) — dikurangi porsi Shopee
+  // saat metode pengiriman Checkout Shopee dipilih. Manual by Ekspedisi tidak
+  // berubah (bankAmount === dpTarget karena shopeeAmount 0).
+  const jumlahBayar = String(bankAmount);
   const adaItem = items.length > 0;
-  const warnaBelumLengkap = variants.some(
-    (v) =>
-      (qty[v.id] ?? 0) > 0 &&
-      v.warna &&
-      v.warna.length > 0 &&
-      !warnaSel[v.id],
-  );
-  const bayarLebihDariTotal = jumlahBayar !== "" && Number(jumlahBayar) > total;
+  // DP kustom per Produk (v2.3.7 §3.18) — bila ada baris yang memakai DP
+  // sendiri (beda dari DP Batch PO), aturan singkat tidak lagi satu
+  // persen/nominal seragam untuk seluruh keranjang.
+  const adaDpKustom = rows.some((r) => r.dpTipe != null);
+  const paymentRule = paymentScheme === "LUNAS"
+    ? includeShopee && shopeeAmount > 0
+      ? `Total ${formatRupiah(dpTarget)} dikurangi ${formatRupiah(shopeeAmount)} via Shopee.`
+      : "Pembayaran lunas sesuai total pesanan."
+    : adaDpKustom
+      ? "Sebagian produk memakai DP khusus — lihat rincian per produk di atas."
+      : dpTipe === "NOMINAL"
+        ? `${formatRupiah(dpNominal ?? 0)} per unit × ${jumlahItem} unit.`
+        : `${dpPercent ?? 50}% dari harga setiap unit produk.`;
   const categoryOptions = useMemo(() => {
     const categories = new Map<string, string>();
     variants.forEach((variant) => {
@@ -114,15 +345,31 @@ export function PublicOrderForm({
       return variant.namaVarian.toLocaleLowerCase("id-ID").includes(query);
     });
   }, [catalogCategory, catalogSearch, variants]);
-  const totalCatalogPages = Math.max(1, Math.ceil(filteredVariants.length / CATALOG_PAGE_SIZE));
+  // "Default" mempertahankan urutan dari backend (populer-duluan bila tidak
+  // ada Produk berlabel di Batch PO ini, lihat FR-37.70); Nama/Harga
+  // mengurutkan ulang di klien karena seluruh data sudah dimuat penuh.
+  const sortedVariants = useMemo(() => {
+    if (catalogSort === "default") return filteredVariants;
+    const copy = [...filteredVariants];
+    if (catalogSort === "name") copy.sort((a, b) => a.namaVarian.localeCompare(b.namaVarian, "id-ID"));
+    else if (catalogSort === "price_asc") copy.sort((a, b) => a.harga - b.harga);
+    else if (catalogSort === "price_desc") copy.sort((a, b) => b.harga - a.harga);
+    return copy;
+  }, [filteredVariants, catalogSort]);
+  const totalCatalogPages = Math.max(1, Math.ceil(sortedVariants.length / CATALOG_PAGE_SIZE));
   const currentCatalogPage = Math.min(catalogPage, totalCatalogPages);
-  const visibleVariants = filteredVariants.slice(
+  const visibleVariants = sortedVariants.slice(
     (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
     currentCatalogPage * CATALOG_PAGE_SIZE,
   );
 
   function changeCatalogSearch(value: string) {
     setCatalogSearch(value);
+    setCatalogPage(1);
+  }
+
+  function changeCatalogSort(value: CatalogSortMode) {
+    setCatalogSort(value);
     setCatalogPage(1);
   }
 
@@ -144,14 +391,42 @@ export function PublicOrderForm({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (orderingDisabled) return;
+    if (!buyerAuthenticated) {
+      persistDraft();
+      setShowAccessModal(true);
+      return;
+    }
+    if (!gateway && paymentScheme === "LUNAS" && shopeeAvailable) {
+      if (!metode) return;
+      if (metode === "EKSPEDISI" && !alamat.trim()) return;
+    }
     const fd = new FormData(e.currentTarget);
     fd.set("cart", JSON.stringify(items));
     fd.set("jumlahBayar", jumlahBayar);
+    fd.set("metodeBayar", gateway ? "GATEWAY" : "MANUAL");
+    fd.set("checkoutSource", checkoutSource);
+    if (!gateway && includeShopee) fd.set("includeShopee", "1");
+    if (!gateway && metode) {
+      fd.set("metodePengiriman", metode);
+      fd.set("alamatPengiriman", metode === "EKSPEDISI" ? alamat.trim() : "");
+    }
+    if (!checkoutKey.current) checkoutKey.current = window.crypto.randomUUID();
+    fd.set("checkoutKey", checkoutKey.current);
+    persistDraft();
     startTransition(() => formAction(fd));
   }
 
+  function persistDraft() {
+    localStorage.setItem(`serahin:checkout:${formToken}`, JSON.stringify({ qty, colorQty, expiresAt: draftExpiresAt() }));
+  }
+
   function scrollToCheckout() {
-    document.getElementById("checkout")?.scrollIntoView({
+    if (!buyerAuthenticated) {
+      persistDraft();
+      setShowAccessModal(true);
+      return;
+    }
+    document.getElementById(`${idPrefix}-checkout`)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
@@ -159,16 +434,19 @@ export function PublicOrderForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <input type="hidden" name="checkoutSource" value={checkoutSource} />
+      <input type="hidden" name="policyVersion" value={publicSite.policyVersion} />
+      <input
+        type="hidden"
+        name="whatsappConsentVersion"
+        value={publicSite.whatsappConsentVersion}
+      />
       <p className="sr-only" aria-live="polite">
         Keranjang berisi {jumlahItem} item dengan total {formatRupiah(total)}.
       </p>
 
       {state?.error && <FormError message={state.error} />}
-      {(state?.needsConfirm || state?.needsCartConfirm) && state.warning && (
-        <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm font-medium text-sun-800 ring-1 ring-inset ring-sun-200">
-          {state.warning}
-        </div>
-      )}
+      <ToastFeedback warning={(state?.needsConfirm || state?.needsCartConfirm) ? state.warning : undefined} />
       {state?.needsConfirm && <input type="hidden" name="confirmDuplikat" value="1" />}
       {state?.needsCartConfirm && <input type="hidden" name="confirmPerubahanKuota" value="1" />}
       {unavailableMessage && (
@@ -181,7 +459,7 @@ export function PublicOrderForm({
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Pilih produk</p>
-            <h2 id="catalog-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">
+            <h2 id="catalog-heading" className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">
               Katalog varian
             </h2>
           </div>
@@ -189,7 +467,7 @@ export function PublicOrderForm({
         </div>
 
         <div className="mb-4 rounded-2xl border border-sand-200 bg-white p-3 shadow-sm sm:p-4">
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem]">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem_11rem]">
             <label className="block">
               <span className="mb-1.5 block text-xs font-bold text-sand-600">Cari produk</span>
               <Input
@@ -202,17 +480,31 @@ export function PublicOrderForm({
             </label>
             <label className="block">
               <span className="mb-1.5 block text-xs font-bold text-sand-600">Kategori</span>
-              <select
+              <Select
                 value={catalogCategory}
                 onChange={(event) => changeCatalogCategory(event.target.value)}
                 aria-label="Filter kategori produk"
-                className="h-11 w-full rounded-xl border border-sand-300 bg-white px-3 text-sm font-semibold text-sand-800 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                className="h-11 w-full text-sm font-semibold text-sand-800"
               >
                 <option value="Semua">Semua kategori</option>
                 {categoryOptions.map((category) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
-              </select>
+              </Select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-bold text-sand-600">Urutkan</span>
+              <Select
+                value={catalogSort}
+                onChange={(event) => changeCatalogSort(event.target.value as CatalogSortMode)}
+                aria-label="Urutkan produk"
+                className="h-11 w-full text-sm font-semibold text-sand-800"
+              >
+                <option value="default">Rekomendasi</option>
+                <option value="name">Nama (A-Z)</option>
+                <option value="price_asc">Harga: Termurah</option>
+                <option value="price_desc">Harga: Termahal</option>
+              </Select>
             </label>
           </div>
           <p className="mt-3 text-xs font-semibold text-sand-500" aria-live="polite">
@@ -242,7 +534,7 @@ export function PublicOrderForm({
             return (
               <article
                 key={v.id}
-                className={`animate-rise overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
+                className={`animate-rise flex h-full flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
                   habis ? "border-sand-200 opacity-75" : "border-sand-200"
                 }`}
                 style={{ animationDelay: `${Math.min(index * 35, 210)}ms` }}
@@ -298,7 +590,7 @@ export function PublicOrderForm({
                   )}
                 </div>
 
-                <div className="space-y-2.5 p-3 sm:space-y-3 sm:p-4">
+                <div className="flex flex-1 flex-col space-y-2.5 p-3 sm:space-y-3 sm:p-4">
                   <div>
                     <h3 className="line-clamp-2 text-sm font-extrabold leading-snug text-sand-900 sm:text-base">{v.namaVarian}</h3>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -314,6 +606,11 @@ export function PublicOrderForm({
                       )}
                     </div>
                     <p className="mt-1 text-base font-extrabold text-brand-700 sm:text-lg">{formatRupiah(v.harga)}</p>
+                    {paymentScheme === "DP_PELUNASAN" && v.dpTipe != null && (
+                      <p className="mt-0.5 text-[0.65rem] font-bold text-accent-700">
+                        DP khusus: {v.dpTipe === "NOMINAL" ? formatRupiah(v.dpNominal ?? 0) : `${v.dpPercent ?? 50}%`}
+                      </p>
+                    )}
                     <p className={`mt-1 text-xs font-bold ${habis ? "text-rose-700" : "text-sand-500"}`}>
                       {habis ? "Kuota sudah penuh" : `Sisa ${v.sisa} unit`}
                     </p>
@@ -336,45 +633,42 @@ export function PublicOrderForm({
                   )}
 
                   {v.warna?.length ? (
-                    <fieldset disabled={disabled}>
-                      <legend className="mb-1.5 text-xs font-bold text-sand-600">Pilih warna{jumlah > 0 && !warnaSel[v.id] ? " *" : ""}</legend>
-                      <div className="flex flex-wrap gap-1.5">
-                        {v.warna.map((warna) => {
-                          const selected = warnaSel[v.id] === warna;
-                          return (
-                            <button
-                              key={warna}
-                              type="button"
-                              onClick={() => setWarnaSel((current) => ({ ...current, [v.id]: warna }))}
-                              aria-pressed={selected}
-                              className={`min-h-9 rounded-lg border px-2 text-[0.7rem] font-bold transition sm:px-2.5 sm:text-xs ${
-                                selected ? "border-brand-600 bg-brand-600 text-white" : "border-sand-300 bg-white text-sand-700 hover:border-brand-400"
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              {warna}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </fieldset>
-                  ) : null}
-
-                  <div className="border-t border-sand-100 pt-2.5">
-                    <span className="mb-1.5 block text-[0.7rem] font-bold text-sand-600 sm:text-xs">Jumlah</span>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <button type="button" onClick={() => setQ(v.id, jumlah - 1)} disabled={disabled || jumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian}`} className="flex h-11 items-center justify-center rounded-xl bg-sand-100 text-xl font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
-                      <output className="flex h-11 items-center justify-center rounded-xl bg-sand-50 px-1 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian}`}>{jumlah}</output>
+                    <div className="mt-auto border-t border-sand-100 pt-2.5">
                       <button
                         type="button"
-                        onClick={() => setQ(v.id, Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION, jumlah + 1))}
-                        disabled={disabled || jumlah >= Math.min(v.sisa, MAX_UNIT_PER_SUBMISSION)}
-                        aria-label={`Tambah jumlah ${v.namaVarian}`}
-                        className="flex h-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                        onClick={() => setColorModalFor(v.id)}
+                        disabled={disabled}
+                        className="flex w-full items-center justify-between gap-2 rounded-xl border border-sand-300 bg-white px-3 py-2.5 text-left transition hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        +
+                        <span className="min-w-0">
+                          <span className="block text-[0.65rem] font-bold uppercase tracking-wide text-sand-500">Pilih warna</span>
+                          <span className="block truncate text-sm font-extrabold text-sand-900">
+                            {variantTotalQty(v) > 0 ? `${variantTotalQty(v)} dipilih` : "Belum dipilih"}
+                          </span>
+                        </span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-sand-400" aria-hidden="true">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
                       </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="mt-auto border-t border-sand-100 pt-2.5">
+                      <span className="mb-1.5 block text-[0.7rem] font-bold text-sand-600 sm:text-xs">Jumlah</span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button type="button" onClick={() => setQ(v.id, jumlah - 1)} disabled={disabled || jumlah === 0} aria-label={`Kurangi jumlah ${v.namaVarian}`} className="flex h-11 items-center justify-center rounded-xl bg-sand-100 text-xl font-bold text-sand-700 hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-40">−</button>
+                        <output className="flex h-11 items-center justify-center rounded-xl bg-sand-50 px-1 text-sm font-extrabold text-sand-900" aria-label={`Jumlah ${v.namaVarian}`}>{jumlah}</output>
+                        <button
+                          type="button"
+                          onClick={() => setQ(v.id, Math.min(v.sisa, jumlah + 1))}
+                          disabled={disabled || jumlah >= v.sisa}
+                          aria-label={`Tambah jumlah ${v.namaVarian}`}
+                          className="flex h-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-bold text-white shadow-brand hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </article>
               );
@@ -426,18 +720,18 @@ export function PublicOrderForm({
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl p-5 sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Keranjang</p>
-          <h2 id="summary-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
+          <h2 id="summary-heading" className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Ringkasan pesanan</h2>
           {adaItem ? (
             <ul className="mt-4 space-y-3 border-y border-sand-100 py-4">
-              {selectedVariants.map((v) => (
-                <li key={v.id} className="flex justify-between gap-3 text-sm">
+              {rows.map((r) => (
+                <li key={`${r.variantId}:${r.warna ?? ""}`} className="flex justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="truncate font-bold text-sand-800">{v.namaVarian}</p>
+                    <p className="truncate font-bold text-sand-800">{r.namaVarian}</p>
                     <p className="text-xs text-sand-500">
-                      {qty[v.id]} × {formatRupiah(v.harga)}{warnaSel[v.id] ? ` · ${warnaSel[v.id]}` : ""}
+                      {r.jumlah} × {formatRupiah(r.harga)}{r.warna ? ` · ${r.warna}` : ""}
                     </p>
                   </div>
-                  <span className="shrink-0 font-bold text-sand-800">{formatRupiah(v.harga * (qty[v.id] ?? 0))}</span>
+                  <span className="shrink-0 font-bold text-sand-800">{formatRupiah(r.harga * r.jumlah)}</span>
                 </li>
               ))}
             </ul>
@@ -448,52 +742,289 @@ export function PublicOrderForm({
             <span className="text-sm font-bold text-sand-600">Total</span>
             <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
           </div>
-          <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem || warnaBelumLengkap}>
-            Lanjutkan ke Tahap Akhir
+          <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem}>
+            {buyerAuthenticated ? "Konfirmasi & Bayar" : "Lanjutkan Pesanan"}
           </Button>
+          {adaItem && <button type="button" onClick={() => { setQty({}); setColorQty({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
         </div>
       </section>
 
-      <section id="checkout" className="scroll-mt-24 rounded-2xl border border-sand-200 bg-white shadow-lg" aria-labelledby="checkout-heading">
+      <section id={`${idPrefix}-checkout`} className="scroll-mt-24 rounded-2xl border border-sand-200 bg-white shadow-lg" aria-labelledby={`${idPrefix}-checkout-heading`}>
         <div className="bg-serahin-ribbon h-1.5" aria-hidden="true" />
         <div className="mx-auto max-w-2xl space-y-5 p-5 sm:p-7">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Tahap akhir</p>
-            <h2 id="checkout-heading" className="mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Lengkapi pesanan Anda</h2>
-            <p className="mt-1 text-sm text-sand-500">Data ini dipakai Admin untuk memverifikasi pesanan dan pembayaran Anda.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Checkout</p>
+            <h2 id={`${idPrefix}-checkout-heading`} className="font-head mt-1 text-2xl font-extrabold tracking-tight text-sand-900">Konfirmasi dan bayar</h2>
+            <p className="mt-1 text-sm text-sand-500">Pilihan produk di atas langsung menjadi pesananmu. Tidak perlu mengisi form produk lagi.</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nama" required>
-              <Input name="namaPembeli" required disabled={orderingDisabled} value={namaPembeli} onChange={(e) => setNamaPembeli(e.target.value)} placeholder="Nama lengkap Anda" />
+          {buyerAuthenticated && buyerProfile ? (
+            <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+              <div><p className="font-extrabold">Data Buyer otomatis digunakan</p><p className="mt-1 text-xs leading-5">{buyerProfile.name} · {buyerProfile.email ?? "Email belum tersedia"}{buyerProfile.phone ? ` · ${buyerProfile.phone}` : ""}</p></div>
+              <Link href={`/account/profile?callbackUrl=${encodeURIComponent(`/po/${formToken}?checkout=1`)}`} className="text-xs font-extrabold underline">Ubah profil</Link>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-900 ring-1 ring-inset ring-sun-200">
+              Pilihanmu disimpan selama 24 jam. Masuk hanya diperlukan saat kamu siap membuat pesanan.
+            </div>
+          )}
+          {gatewayEnabled && (
+            <Field label="Metode pembayaran" required>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["GATEWAY", "Bayar otomatis", "Verifikasi instan, tanpa perlu unggah bukti"],
+                    ["MANUAL", "Transfer manual", "Transfer bank lalu unggah bukti — diverifikasi Admin"],
+                  ] as const
+                ).map(([value, judul, sub]) => (
+                  <label
+                    key={value}
+                    onClick={(e) => {
+                      if (orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)) return;
+                      e.preventDefault();
+                      setMetodeBayar(value);
+                    }}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${
+                      metodeBayar === value
+                        ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                        : "border-sand-200 hover:border-sand-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="metodeBayarRadio"
+                      value={value}
+                      checked={metodeBayar === value}
+                      readOnly
+                      disabled={orderingDisabled || (value === "MANUAL" && !manualTransferEnabled)}
+                      className="pointer-events-none mt-0.5 h-4 w-4 accent-brand-600"
+                    />
+                    <span>
+                      <span className="block font-bold text-sand-800">{judul}</span>
+                      <span className="block text-xs text-sand-500">{sub}</span>
+                      {value === "MANUAL" && !manualTransferEnabled && <span className="mt-1 block text-xs font-bold text-rose-700">Rekening Seller belum tersedia.</span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </Field>
-            <Field label="WhatsApp" required>
-              <Input name="wa" required disabled={orderingDisabled} value={wa} onChange={(e) => setWa(e.target.value)} placeholder="081234567890" />
-            </Field>
-          </div>
-          <Field label="Email" required>
-            <Input name="email" type="email" required disabled={orderingDisabled} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
-          </Field>
-          <FileUploadField name="buktiPembayaran" label="Bukti pembayaran" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
-          <Field label="Jumlah yang dibayarkan" required hint={bayarLebihDariTotal ? undefined : jumlahBayar ? `= ${formatRupiah(Number(jumlahBayar))}` : "Nominal transfer sesuai bukti pembayaran."}>
-            <CurrencyInput name="jumlahBayar" required disabled={orderingDisabled} value={jumlahBayar} onValueChange={setJumlahBayar} placeholder="150.000" />
-            {bayarLebihDariTotal && <span className="mt-1 block text-xs font-medium text-rose-700">Jumlah yang dibayarkan tidak boleh lebih dari total harga.</span>}
-          </Field>
+          )}
+
+          {gateway ? (
+            <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+              Setelah menekan tombol di bawah, Anda akan diarahkan ke halaman
+              pembayaran. Pesanan otomatis terverifikasi begitu pembayaran
+              berhasil — tidak perlu unggah bukti.
+            </div>
+          ) : (
+            <>
+              {displayedAccounts.length > 0 ? (
+                <div className="rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-950 ring-1 ring-inset ring-sun-200">
+                  <p className="text-xs font-extrabold uppercase tracking-wider">Rekening tujuan Seller</p>
+                  <div className="mt-1.5 space-y-1">
+                    {displayedAccounts.map((account) => (
+                      <div
+                        key={account.id}
+                        className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-lg px-1.5 py-1 text-xs"
+                        title={`${account.bankName} ${account.accountNumber} a.n. ${account.accountHolderName}`}
+                      >
+                        <span className="shrink-0 rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-bold">
+                          {account.accountType === "EWALLET" ? "E-wallet" : "Bank"}
+                        </span>
+                        <span className="shrink-0 font-semibold">{account.bankName}</span>
+                        <span className="shrink-0 font-mono font-bold tracking-tight">{account.accountNumber}</span>
+                        <span className="min-w-0 flex-1 truncate text-[10px]">a.n. {account.accountHolderName}</span>
+                        {account.isPrimary && <span className="shrink-0 text-[10px] opacity-70">utama</span>}
+                        <CopyButton text={account.accountNumber} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 ring-1 ring-inset ring-rose-200">Seller belum menyediakan rekening transfer. Pilih pembayaran otomatis atau hubungi Seller.</div>
+              )}
+
+              {paymentScheme === "LUNAS" && shopeeAvailable && (
+                <Field label="Metode pengiriman" required hint="Pilih salah satu opsi pengiriman untuk pesanan ini.">
+                  <div className="space-y-2">
+                    {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[]).map((opt) => (
+                      <label
+                        key={opt}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setMetode(opt);
+                        }}
+                        className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                          metode === opt
+                            ? "border-brand-500 bg-sand-50 ring-1 ring-brand-500"
+                            : "border-sand-200 hover:border-sand-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="metodePengirimanRadio"
+                          value={opt}
+                          checked={metode === opt}
+                          readOnly
+                          className="h-4 w-4 pointer-events-none accent-brand-600"
+                        />
+                        <span className="font-medium text-sand-800">{METODE_PENGIRIMAN_LABEL[opt]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </Field>
+              )}
+
+              {metode === "EKSPEDISI" && (
+                <Field label="Alamat pengiriman lengkap" required hint="Tulis Nama, Nomor HP, dan alamat lengkap untuk pengiriman ekspedisi.">
+                  <Textarea
+                    value={alamat}
+                    onChange={(e) => setAlamat(e.target.value)}
+                    rows={4}
+                    placeholder="Nama · No HP · Alamat lengkap (jalan, kecamatan, kota, kode pos)"
+                    required
+                  />
+                </Field>
+              )}
+
+              {includeShopee && (
+                <div className="space-y-3 rounded-lg bg-orange-50 px-4 py-3 text-sm ring-1 ring-inset ring-orange-200">
+                  <div>
+                    {shopeeAmount > 0 && (
+                      <p className="font-semibold text-orange-900">{formatRupiah(shopeeAmount)} dibayar lewat Shopee.</p>
+                    )}
+                    {linkCheckoutShopee && (
+                      <a href={linkCheckoutShopee} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 font-semibold text-orange-700 underline">
+                        Checkout di Shopee →
+                      </a>
+                    )}
+                  </div>
+                  <FileUploadField
+                    name="buktiShopee"
+                    label="Bukti checkout Shopee"
+                    hint="Tidak perlu nomor transaksi — cukup screenshot/bukti checkout. JPG, PNG, WEBP, atau PDF (maks 5MB)."
+                    required
+                    disabled={orderingDisabled}
+                  />
+                </div>
+              )}
+              {bankAmount > 0 && (
+                <FileUploadField name="buktiPembayaran" label="Bukti transfer bank" hint="Unggah bukti transfer — JPG, PNG, WEBP, atau PDF (maks 5MB)." required disabled={orderingDisabled} />
+              )}
+              <Field label={paymentScheme === "DP_PELUNASAN" ? "Nominal DP" : "Nominal pembayaran"} required hint={paymentRule}>
+                <CurrencyInput name="jumlahBayar" required readOnly disabled={orderingDisabled} value={jumlahBayar} className="bg-sand-50 font-bold" />
+              </Field>
+            </>
+          )}
           <div className="rounded-xl bg-cream-soft px-4 py-3">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm font-bold text-sand-600">Total pesanan</span>
               <span className="text-xl font-extrabold text-sand-900">{formatRupiah(total)}</span>
             </div>
-            <p className="mt-1 text-xs text-sand-500">Maksimal {MAX_UNIT_PER_SUBMISSION} unit per varian.</p>
+            <div className="mt-2 flex items-center justify-between gap-4 border-t border-sand-200 pt-2">
+              <span className="text-sm font-bold text-brand-700">{paymentScheme === "DP_PELUNASAN" ? "DP yang dibayar sekarang" : "Dibayar sekarang"}</span>
+              <span className="text-lg font-extrabold text-brand-700">{formatRupiah(dpTarget)}</span>
+            </div>
+            <p className="mt-1 text-right text-xs text-sand-500">{paymentRule}</p>
           </div>
-          {warnaBelumLengkap && <p className="text-center text-sm font-bold text-rose-700">Pilih warna untuk setiap varian yang Anda pesan.</p>}
-          <Button type="submit" className="w-full" loading={pending} disabled={orderingDisabled || !adaItem || warnaBelumLengkap || bayarLebihDariTotal}>
-            {state?.needsConfirm || state?.needsCartConfirm ? "Ya, lanjutkan" : "Kirim Pesanan"}
+          <div className="space-y-3 rounded-xl border border-sand-200 bg-white p-4 text-sm text-sand-600">
+            <label
+              className="flex items-start gap-3"
+              onClick={(e) => {
+                if (orderingDisabled || (e.target as HTMLElement).closest("a")) return;
+                e.preventDefault();
+                const input = acceptPoliciesRef.current;
+                if (input) input.checked = !input.checked;
+              }}
+            >
+              <input
+                ref={acceptPoliciesRef}
+                type="checkbox"
+                name="acceptPolicies"
+                value="1"
+                required
+                disabled={orderingDisabled}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-brand-600"
+              />
+              <span>
+                Saya menyetujui{" "}
+                <Link href="/terms" target="_blank" className="font-bold text-brand-700 underline">
+                  Syarat & Ketentuan
+                </Link>
+                ,{" "}
+                <Link href="/privacy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Privasi
+                </Link>
+                , dan{" "}
+                <Link href="/refund-policy" target="_blank" className="font-bold text-brand-700 underline">
+                  Kebijakan Refund
+                </Link>
+                .
+              </span>
+            </label>
+          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            loading={pending}
+            disabled={
+              orderingDisabled ||
+              !adaItem ||
+              paymentUnavailable ||
+              (!gateway &&
+                paymentScheme === "LUNAS" &&
+                shopeeAvailable &&
+                (!metode || (metode === "EKSPEDISI" && !alamat.trim())))
+            }
+          >
+            {state?.needsConfirm || state?.needsCartConfirm
+              ? "Ya, lanjutkan"
+              : gateway
+                ? "Bayar Sekarang"
+                : "Kirim Pesanan"}
           </Button>
         </div>
       </section>
 
       {preview && <ImagePreviewModal images={preview.images} startIndex={preview.start} title={preview.title} onClose={() => setPreview(null)} />}
+      {showAccessModal && <BuyerAccessModal callbackUrl={`/po/${formToken}?checkout=1`} switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
+      {colorModalVariant && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-sand-950/50 backdrop-blur-sm sm:items-center sm:px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="color-modal-heading"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setColorModalFor(null);
+          }}
+        >
+          <div className="max-h-[85vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-lg sm:max-w-sm sm:rounded-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 id="color-modal-heading" className="truncate text-base font-extrabold text-sand-900">{colorModalVariant.namaVarian}</h2>
+                <p className="mt-0.5 text-xs font-semibold text-sand-500">
+                  {formatRupiah(colorModalVariant.harga)} · sisa {colorModalVariant.sisa} unit
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setColorModalFor(null)}
+                aria-label="Tutup"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sand-400 hover:bg-sand-100 hover:text-sand-700"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            {renderColorRows(colorModalVariant, orderingDisabled || colorModalVariant.sisa <= 0)}
+            <Button type="button" variant="accent" className="mt-5 w-full" onClick={() => setColorModalFor(null)}>
+              Selesai
+            </Button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

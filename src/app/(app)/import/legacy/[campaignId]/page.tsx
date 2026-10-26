@@ -14,7 +14,7 @@ export default async function LegacyImportPage({
   const { campaignId } = await params;
   let campaign: { id: string; namaProduk: string; variants: unknown[] };
   try {
-    campaign = await api.get(`/kampanye/${campaignId}`);
+    campaign = await api.get(`/pre-orders/${campaignId}`);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) notFound();
     throw e;
@@ -25,7 +25,7 @@ export default async function LegacyImportPage({
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <Link
-          href={`/kampanye/${campaignId}`}
+          href={`/pre-orders/${campaignId}`}
           className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← {campaign.namaProduk}
@@ -34,7 +34,7 @@ export default async function LegacyImportPage({
           Import Format Lawas
         </h1>
         <p className="mt-1 text-sm text-sand-500">
-          Untuk data mentah ekspor Google Form (kolom gabungan) ke kampanye{" "}
+          Untuk data mentah ekspor Google Form (kolom gabungan) ke Batch PO{" "}
           {campaign.namaProduk}.
         </p>
       </div>
@@ -42,7 +42,7 @@ export default async function LegacyImportPage({
       {jumlahVarian === 0 ? (
         <Card className="p-6">
           <p className="text-sm text-rose-700">
-            Kampanye ini belum punya varian. Tambahkan varian dulu agar hasil
+            Batch PO ini belum punya varian. Tambahkan varian dulu agar hasil
             parsing bisa dicocokkan.
           </p>
         </Card>

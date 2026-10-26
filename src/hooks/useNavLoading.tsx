@@ -106,8 +106,11 @@ export function NavLoadingProvider({ children }: { children: ReactNode }) {
 
   // Route baru sudah commit → hentikan loading navigasi.
   useEffect(() => {
-    setNavPending(false);
-    clearNavTimer();
+    const timer = window.setTimeout(() => {
+      setNavPending(false);
+      clearNavTimer();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [pathname, searchParams]);
 
   useEffect(() => () => clearNavTimer(), []);

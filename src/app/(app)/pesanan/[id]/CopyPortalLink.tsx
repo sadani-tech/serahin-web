@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui";
 
 export function CopyPortalLink({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
-  const [url, setUrl] = useState("");
-
-  useEffect(() => {
-    setUrl(`${window.location.origin}/portal/${token}`);
-  }, [token]);
+  const [url] = useState(() => typeof window === "undefined" ? "" : `${window.location.origin}/portal/${token}`);
 
   async function copy() {
     if (!url) return;

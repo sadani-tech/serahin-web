@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Select } from "@/components/ui";
+import { Button, DeleteIconButton, Select } from "@/components/ui";
 import { OrderBadge } from "@/components/badges";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatTanggal } from "@/lib/format";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
+import { useSort } from "@/hooks/useSort";
+import { SortableTh } from "@/components/SortableTh";
 import { bulkUpdateOrderStatus } from "@/app/(app)/pesanan/actions";
 import type { OrderStatus } from "@/lib/types";
 
@@ -21,22 +24,58 @@ export type OrderRow = {
   status: OrderStatus;
   sisa: number;
   aktif: boolean;
+  paymentStatus: string;
+  createdAt: string;
+  shipment: { method: "SHOPEE" | "COURIER"; label: string; courier: string | null; trackingNumber: string | null } | null;
+};
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  MENUNGGU_VERIFIKASI: "Menunggu Verifikasi",
+  LUNAS: "Lunas",
+  DP_DITERIMA: "DP Diterima",
+  DITOLAK: "Ditolak",
+  BELUM_BAYAR: "Belum Bayar",
 };
 
 export function OrderBulkTable({
   campaignId,
   rows,
+  onDelete,
 }: {
   campaignId: string;
   rows: OrderRow[];
+  /** Admin saja — diisi bila boleh hapus pesanan (v2.3.9 FR-42.7). */
+  onDelete?: (orderId: string) => Promise<{ error?: string }>;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
-  const { confirm, alert } = useConfirm();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { confirm } = useConfirm();
+  const toast = useToast();
   const { startLoading, stopLoading } = useNavLoading();
   const router = useRouter();
   const headRef = useRef<HTMLInputElement>(null);
+
+  async function handleDelete(order: OrderRow) {
+    if (!onDelete) return;
+    const ok = await confirm({
+      title: "Hapus pesanan ini?",
+      description: `Pesanan ${order.namaPembeli} akan dihapus. Pesanan tanpa histori pembayaran dihapus permanen; pesanan yang sudah ada pembayaran/pengiriman akan dibatalkan dan diarsipkan (bukan dihapus total).`,
+      confirmLabel: "Ya, hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
+    setDeletingId(order.id);
+    const result = await onDelete(order.id);
+    setDeletingId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Pesanan dihapus.");
+    router.refresh();
+  }
 
   // Simpan & pulihkan posisi scroll daftar agar saat kembali dari detail
   // pesanan (browser back atau tautan "←") tetap di baris yang dipilih —
@@ -54,9 +93,23 @@ export function OrderBulkTable({
     return () => el.removeEventListener("scroll", onScroll);
   }, [storageKey]);
 
+  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(rows, (row, key) => {
+    switch (key) {
+      case "pembeli": return row.namaPembeli;
+      case "varian": return row.varianLabel;
+      case "qty": return row.totalQty;
+      case "status": return row.status;
+      case "pembayaran": return row.paymentStatus;
+      case "sisa": return row.sisa;
+      default: return null;
+    }
+  });
+
   const allChecked = rows.length > 0 && selected.size === rows.length;
   const someChecked = selected.size > 0 && !allChecked;
-  if (headRef.current) headRef.current.indeterminate = someChecked;
+  useEffect(() => {
+    if (headRef.current) headRef.current.indeterminate = someChecked;
+  }, [someChecked]);
 
   const toggle = (id: string) =>
     setSelected((s) => {
@@ -93,15 +146,14 @@ export function OrderBulkTable({
     }
 
     if (res.error) {
-      await alert({ title: "Gagal", description: res.error });
+      toast.error(res.error);
       return;
     }
     setSelected(new Set());
     setTarget("");
     router.refresh();
-    await alert({
+    toast.success(`${res.updated ?? 0} pesanan diubah menjadi "${label}".`, {
       title: "Status diperbarui",
-      description: `${res.updated ?? 0} pesanan diubah menjadi "${label}".`,
     });
   }
 
@@ -161,15 +213,18 @@ export function OrderBulkTable({
                   aria-label="Pilih semua"
                 />
               </th>
-              <th className="px-5 py-3 font-medium">Pembeli</th>
-              <th className="px-5 py-3 font-medium">Varian</th>
-              <th className="px-5 py-3 font-medium">Qty</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Sisa tagihan</th>
+              <SortableTh label="Pembeli" sortKey="pembeli" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Varian" sortKey="varian" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Qty" sortKey="qty" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Pembayaran" sortKey="pembayaran" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <th className="px-5 py-3 font-medium">Jenis Pengiriman</th>
+              <SortableTh label="Sisa tagihan" sortKey="sisa" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              {onDelete && <th className="px-5 py-3" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-sand-100">
-            {rows.map((o) => {
+            {sorted.map((o) => {
               const checked = selected.has(o.id);
               return (
                 <tr
@@ -193,11 +248,18 @@ export function OrderBulkTable({
                       {o.namaPembeli}
                     </Link>
                     <div className="text-xs text-sand-500">{o.kontak}</div>
+                    <div className="mt-1 text-[11px] text-sand-400">{o.id.slice(0, 8).toUpperCase()} · {formatTanggal(o.createdAt)}</div>
                   </td>
                   <td className="px-5 py-3 text-sand-700">{o.varianLabel}</td>
                   <td className="px-5 py-3 text-sand-700">{o.totalQty}</td>
                   <td className="px-5 py-3">
                     <OrderBadge status={o.status} />
+                  </td>
+                  <td className="px-5 py-3 text-xs font-semibold text-sand-700">
+                    {PAYMENT_STATUS_LABEL[o.paymentStatus] ?? o.paymentStatus}
+                  </td>
+                  <td className="px-5 py-3">
+                    {o.shipment ? <div><p className="font-semibold text-sand-800">{o.shipment.label}</p>{(o.shipment.courier || o.shipment.trackingNumber) && <p className="text-xs text-sand-500">{[o.shipment.courier, o.shipment.trackingNumber].filter(Boolean).join(" · ")}</p>}</div> : <span className="text-sand-400">Belum dipilih</span>}
                   </td>
                   <td className="px-5 py-3">
                     {!o.aktif ? (
@@ -210,6 +272,16 @@ export function OrderBulkTable({
                       <span className="text-emerald-600">Lunas</span>
                     )}
                   </td>
+                  {onDelete && (
+                    <td className="px-5 py-3">
+                      <DeleteIconButton
+                        title="Hapus pesanan"
+                        loading={deletingId === o.id}
+                        disabled={deletingId !== null && deletingId !== o.id}
+                        onClick={() => handleDelete(o)}
+                      />
+                    </td>
+                  )}
                 </tr>
               );
             })}

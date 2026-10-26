@@ -19,11 +19,15 @@ import type {
   MetodePengiriman,
 } from "@/lib/types";
 import { Collapsible } from "@/components/Collapsible";
+import { ProofViewerButton } from "@/components/ProofViewerButton";
 import { OrderStatusControl } from "./OrderStatusControl";
 import { CancelOrderForm } from "./CancelOrderForm";
 import { PaymentForm } from "./PaymentForm";
 import { PaymentActions } from "./PaymentActions";
 import { CopyPortalLink } from "./CopyPortalLink";
+import { getSession } from "@/lib/session";
+import { reconcileGatewayPayment } from "../actions";
+import { ShopeeCheckoutActions } from "./ShopeeCheckoutActions";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +47,11 @@ type OrderDetail = {
     jumlah: number;
     hargaSaatPesan: string;
     warna: string | null;
+    // DP kustom Produk (v2.3.7 §3.18) — snapshot DP efektif saat pesanan
+    // dibuat; null berarti mengikuti DP Batch PO (order.campaign.dp...).
+    dpTipe: DpTipe | null;
+    dpPercent: number | null;
+    dpNominal: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
   payments: {
@@ -52,8 +61,24 @@ type OrderDetail = {
     tanggal: string;
     buktiFile: string | null;
     statusVerifikasi: PaymentVerification;
+    channel?: "MANUAL_TRANSFER" | "GATEWAY";
+    gatewayOrderId?: string | null;
+    gatewayProvider?: string | null;
+    gatewayReference?: string | null;
+    gatewayStatus?: string | null;
+    attemptNumber?: number;
   }[];
-  statusLogs: {
+  shopeeCheckouts: {
+    id: string;
+    submittedAmount: string;
+    verifiedAmount: string | null;
+    externalReference: string;
+    proofFile: string | null;
+    status: "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED";
+    rejectionReason: string | null;
+    submittedAt: string;
+  }[];
+  statusLogs?: {
     id: string;
     statusLama: OrderStatus | null;
     statusBaru: OrderStatus;
@@ -78,6 +103,7 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await getSession();
 
   let order: OrderDetail;
   try {
@@ -93,9 +119,13 @@ export default async function OrderDetailPage({
     dpTipe: order.campaign.dpTipe,
     dpPercent: order.campaign.dpPercent,
     dpNominal: order.campaign.dpNominal,
-    payments: order.payments,
+    payments: [...order.payments, ...order.shopeeCheckouts.map((credit) => ({
+      jumlah: credit.status === "VERIFIED" ? credit.verifiedAmount ?? credit.submittedAmount : credit.submittedAmount,
+      statusVerifikasi: (credit.status === "VERIFIED" ? "TERVERIFIKASI" : credit.status === "REJECTED" ? "DITOLAK" : "MENUNGGU_VERIFIKASI") as PaymentVerification,
+    }))],
   });
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
+  const adaPembayaranTerverifikasi = order.payments.some((p) => p.statusVerifikasi === "TERVERIFIKASI");
 
   const dibatalkan = order.status === "DIBATALKAN";
   const deadline = order.campaign.deadlinePelunasan
@@ -105,8 +135,10 @@ export default async function OrderDetailPage({
     deadline &&
     !billing.lunas &&
     !dibatalkan &&
+    // eslint-disable-next-line react-hooks/purity -- server render needs a request-time deadline comparison
     deadline.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
   const deadlineLewat =
+    // eslint-disable-next-line react-hooks/purity -- server render needs a request-time deadline comparison
     deadline && !billing.lunas && !dibatalkan && deadline.getTime() < Date.now();
 
   return (
@@ -114,7 +146,7 @@ export default async function OrderDetailPage({
       {/* Header */}
       <div>
         <Link
-          href={`/kampanye/${order.campaignId}?tab=pesanan`}
+          href={`/pre-orders/${order.campaignId}?tab=pesanan`}
           className="text-sm text-sand-500 hover:text-sand-700"
         >
           ← {order.campaign.namaProduk}
@@ -137,11 +169,18 @@ export default async function OrderDetailPage({
               {totalQty} unit
             </p>
           </div>
-          {!dibatalkan && (
-            <LinkButton href={`/pesanan/${id}/edit`} variant="secondary">
-              Edit pesanan
-            </LinkButton>
-          )}
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {adaPembayaranTerverifikasi && (
+              <LinkButton href={`/api/pesanan/${id}/invoice`} variant="secondary" target="_blank">
+                Unduh Invoice
+              </LinkButton>
+            )}
+            {!dibatalkan && (
+              <LinkButton href={`/pesanan/${id}/edit`} variant="secondary">
+                Edit pesanan
+              </LinkButton>
+            )}
+          </div>
         </div>
       </div>
 
@@ -201,9 +240,14 @@ export default async function OrderDetailPage({
               <div className="px-5 py-4">
                 <p className="text-xs uppercase tracking-wide text-sand-500">
                   {order.campaign.paymentScheme === "DP_PELUNASAN"
-                    ? order.campaign.dpTipe === "NOMINAL"
-                      ? "Target DP (nominal)"
-                      : `Target DP (${order.campaign.dpPercent ?? 50}%)`
+                    ? // DP kustom per Produk (v2.3.7 §3.18) — bila ada item yang
+                      // memakai DP sendiri, target DP tidak lagi satu persen/
+                      // nominal seragam untuk seluruh pesanan.
+                      order.items.some((item) => item.dpTipe !== null)
+                      ? "Target DP (kustom per Produk)"
+                      : order.campaign.dpTipe === "NOMINAL"
+                        ? "Target DP (nominal)"
+                        : `Target DP (${order.campaign.dpPercent ?? 50}%)`
                     : "Menunggu verifikasi"}
                 </p>
                 <p className="mt-1 text-lg font-semibold text-sand-700">
@@ -265,7 +309,7 @@ export default async function OrderDetailPage({
               title="Pembayaran"
               subtitle="Hanya pembayaran terverifikasi yang mengurangi sisa tagihan."
             />
-            {order.payments.length === 0 ? (
+            {order.payments.length === 0 && order.shopeeCheckouts.length === 0 ? (
               <EmptyState title="Belum ada pembayaran tercatat" />
             ) : (
               <div className="divide-y divide-sand-100">
@@ -289,26 +333,18 @@ export default async function OrderDetailPage({
                         {p.buktiFile && (
                           <>
                             {" · "}
-                            <a
-                              href={p.buktiFile}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-sand-700 underline"
-                            >
-                              Lihat bukti
-                            </a>
+                            <ProofViewerButton url={p.buktiFile} className="text-sand-700 underline" />
                           </>
                         )}
                       </p>
+                      {p.channel === "GATEWAY" && <div className="mt-2 space-y-0.5 text-xs text-sand-500"><p>Gateway: <strong>{p.gatewayProvider?.toUpperCase() ?? "—"}</strong> · status <strong>{p.gatewayStatus ?? "PENDING"}</strong> · attempt #{p.attemptNumber ?? 1}</p><p className="font-mono">{p.gatewayOrderId}{p.gatewayReference ? ` · ref ${p.gatewayReference}` : ""}</p></div>}
                     </div>
-                    <PaymentActions
-                      paymentId={p.id}
-                      status={p.statusVerifikasi}
-                    />
+                    <div className="flex flex-wrap items-center gap-2"><PaymentActions paymentId={p.id} status={p.statusVerifikasi} />{session?.role === "ADMIN" && p.gatewayOrderId && <><form action={reconcileGatewayPayment.bind(null,id,p.gatewayOrderId)}><button className="min-h-9 rounded-lg border border-brand-300 px-3 text-xs font-bold text-brand-700">Sinkronkan ulang</button></form><Link href={`/payments/${p.id}/audit`} className="min-h-9 rounded-lg border border-sand-300 px-3 py-2 text-xs font-bold text-sand-700">Log gateway</Link></>}</div>
                   </div>
                 ))}
               </div>
             )}
+            {order.shopeeCheckouts.length > 0 && <div className="border-t border-sand-100 px-5 py-4"><p className="text-sm font-extrabold text-sand-900">Checkout Shopee</p><div className="mt-2 space-y-2">{order.shopeeCheckouts.map((credit) => <div key={credit.id} className="rounded-xl bg-orange-50 p-3 text-sm text-orange-950"><div className="flex flex-wrap items-center justify-between gap-2"><p><strong>{formatRupiah(credit.verifiedAmount ?? credit.submittedAmount)}</strong> · transaksi <span className="font-mono">{credit.externalReference}</span></p><span className="rounded bg-white px-2 py-1 text-xs font-bold">{credit.status === "VERIFIED" ? "Terverifikasi" : credit.status === "REJECTED" ? "Ditolak" : "Menunggu verifikasi"}</span></div>{credit.proofFile && <ProofViewerButton url={credit.proofFile} className="mt-1 inline-block text-xs font-semibold underline" />}{credit.rejectionReason && <p className="mt-1 text-xs font-semibold text-rose-700">Alasan: {credit.rejectionReason}</p>}{credit.status === "PENDING_VERIFICATION" && <ShopeeCheckoutActions orderId={id} creditId={credit.id} submittedAmount={credit.submittedAmount} />}</div>)}</div></div>}
 
             {!dibatalkan && (
               <div className="border-t border-sand-100 bg-sand-50/50 px-5 py-4">
@@ -327,11 +363,11 @@ export default async function OrderDetailPage({
           {/* Riwayat status pesanan (FR-4.5) */}
           <Card>
             <CardHeader title="Riwayat status pesanan" />
-            {order.statusLogs.length === 0 ? (
+            {(order.statusLogs ?? []).length === 0 ? (
               <EmptyState title="Belum ada riwayat" />
             ) : (
               <ol className="space-y-4 px-6 py-5">
-                {order.statusLogs.map((log) => (
+                {(order.statusLogs ?? []).map((log) => (
                   <li key={log.id} className="relative pl-6">
                     <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-4 ring-white" />
                     <p className="text-sm text-sand-800">

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Field, Input } from "@/components/ui";
-import { useConfirm } from "@/components/ConfirmDialog";
+import { useToast } from "@/components/Toast";
 
 // Field upload berkas dengan pratinjau gambar / label PDF + validasi ukuran.
 // Dipakai untuk unggah bukti pembayaran di formulir pemesanan.
@@ -29,7 +29,7 @@ export function FileUploadField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
-  const { alert } = useConfirm();
+  const toast = useToast();
 
   const reset = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -45,9 +45,8 @@ export function FileUploadField({
       return;
     }
     if (file.size > maxSizeMB * 1024 * 1024) {
-      void alert({
+      toast.warning(`Ukuran file melebihi batas maksimal ${maxSizeMB}MB.`, {
         title: "File terlalu besar",
-        description: `Ukuran file melebihi batas maksimal ${maxSizeMB}MB.`,
       });
       reset();
       return;

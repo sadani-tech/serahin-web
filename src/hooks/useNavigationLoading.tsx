@@ -9,9 +9,9 @@ export function useNavigationLoading() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    setIsLoading(true);
+    const start = setTimeout(() => setIsLoading(true), 0);
     const timeout = setTimeout(() => setIsLoading(false), 200);
-    return () => clearTimeout(timeout);
+    return () => { clearTimeout(start); clearTimeout(timeout); };
   }, [pathname, searchParams]);
 
   return isLoading;

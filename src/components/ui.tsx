@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { ComponentProps, ReactNode } from "react";
+import { ToastFeedback } from "@/components/Toast";
+import { Dropdown } from "@/components/Dropdown";
+import { DatePicker } from "@/components/DatePicker";
 
 // Kumpulan primitif UI ringan berbasis Tailwind — konsisten lintas modul.
 // Palet & geometri mengikuti design system Serahin v1.9 (lihat globals.css).
@@ -99,7 +102,7 @@ const buttonStyles: Record<ButtonVariant, string> = {
 };
 
 const buttonBase =
-  "inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-y-0";
+  "inline-flex min-h-[2.25rem] items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-150 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:translate-y-0";
 
 function Spinner() {
   return (
@@ -186,7 +189,7 @@ export function DeleteIconButton({
       disabled={disabled || loading}
       title={title}
       aria-label={title}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sand-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sand-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {loading ? (
         <Spinner />
@@ -206,6 +209,56 @@ export function DeleteIconButton({
           <line x1="14" y1="11" x2="14" y2="17" />
         </svg>
       )}
+    </button>
+  );
+}
+
+const iconButtonVariants = {
+  neutral: "text-sand-500 hover:bg-sand-100 hover:text-sand-900",
+  danger: "text-sand-400 hover:bg-rose-50 hover:text-rose-600",
+} as const;
+
+/**
+ * Tombol ikon 32×32 generik (mis. Edit/Nonaktifkan pada tabel Produk).
+ * Sengaja TIDAK dibangun dari `Button` — `buttonBase` (dipakai `Button`)
+ * berisi utility `px-4 py-2` yang secara urutan CSS Tailwind menang atas
+ * `className="h-8 w-8 p-0"` yang coba menimpanya (longhand `px-*`/`py-*`
+ * selalu diurutkan setelah shorthand `p-0` di stylesheet Tailwind, terlepas
+ * dari urutan string di JSX). Akibatnya kotak 32px kehabisan ruang untuk
+ * ikon 16px di dalamnya — inilah sebab bug "icon tidak muncul" pada
+ * `ProductModal`/`ProductDeleteButton` (v2.3.7 FR-37.31/37.32). Komponen ini
+ * memakai elemen `<button>` mentah seperti `DeleteIconButton` agar tidak
+ * mewarisi masalah yang sama.
+ */
+export function IconButton({
+  onClick,
+  type = "button",
+  loading = false,
+  disabled = false,
+  title,
+  variant = "neutral",
+  className = "",
+  children,
+}: {
+  onClick?: () => void;
+  type?: "button" | "submit";
+  loading?: boolean;
+  disabled?: boolean;
+  title: string;
+  variant?: keyof typeof iconButtonVariants;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled || loading}
+      title={title}
+      aria-label={title}
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${iconButtonVariants[variant]} ${className}`}
+    >
+      {loading ? <Spinner /> : children}
     </button>
   );
 }
@@ -248,9 +301,30 @@ export function Field({
 const inputBase =
   "block w-full rounded-xl border border-sand-300 bg-white px-3.5 py-2.5 text-sm text-sand-900 transition placeholder:text-sand-400 hover:border-sand-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25";
 
+/**
+ * `type="date"`/`type="datetime-local"` didelegasikan ke `DatePicker`
+ * (kalender bertema Serahin, v2.3.7) — popup native tidak bisa diberi warna
+ * brand lewat CSS apa pun. `name`/`defaultValue`/`className`/`disabled`/
+ * `required` diteruskan apa adanya sehingga pemanggil `Input` yang sudah
+ * ada tidak perlu berubah.
+ */
 export function Input(props: ComponentProps<"input">) {
-  const { className = "", ...rest } = props;
-  return <input className={`${inputBase} ${className}`} {...rest} />;
+  const { className = "", type, ...rest } = props;
+  if (type === "date" || type === "datetime-local") {
+    return (
+      <DatePicker
+        name={rest.name}
+        defaultValue={typeof rest.defaultValue === "string" ? rest.defaultValue : undefined}
+        disabled={rest.disabled}
+        required={rest.required}
+        id={rest.id}
+        aria-label={rest["aria-label"]}
+        mode={type === "datetime-local" ? "datetime" : "date"}
+        className={className}
+      />
+    );
+  }
+  return <input type={type} className={`${inputBase} ${className}`} {...rest} />;
 }
 
 export function Textarea(props: ComponentProps<"textarea">) {
@@ -258,9 +332,15 @@ export function Textarea(props: ComponentProps<"textarea">) {
   return <textarea className={`${inputBase} ${className}`} {...rest} />;
 }
 
+/**
+ * Dropdown bertema Serahin (v2.3.7) — sebelumnya `<select>` native yang
+ * popup daftarnya dirender OS/browser dan tidak bisa diberi warna brand.
+ * API identik dengan `<select>` native (`name`/`defaultValue`/`value`/
+ * `onChange`/`children` berupa `<option>`), jadi seluruh pemanggil `Select`
+ * yang sudah ada tidak perlu berubah.
+ */
 export function Select(props: ComponentProps<"select">) {
-  const { className = "", ...rest } = props;
-  return <select className={`${inputBase} ${className}`} {...rest} />;
+  return <Dropdown {...props} />;
 }
 
 // Membungkus list panjang agar hanya menampilkan ~10 baris lalu bisa di-scroll.
@@ -327,26 +407,7 @@ export function EmptyState({
 }
 
 export function FormError({ message }: { message?: string }) {
-  if (!message) return null;
-  return (
-    <div className="flex items-start gap-2 rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm font-medium text-rose-700 ring-1 ring-inset ring-rose-200">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="mt-0.5 h-4 w-4 shrink-0"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      <span className="min-w-0">{message}</span>
-    </div>
-  );
+  return <ToastFeedback error={message} />;
 }
 
 export function StatItem({
