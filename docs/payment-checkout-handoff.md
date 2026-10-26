@@ -18,6 +18,12 @@ Browser → halaman return/status → Serahin API melakukan rekonsiliasi
 
 ## UI checkout
 
+Serahin menampilkan QRIS serta bank VA yang diizinkan oleh payment-service
+untuk consumer `serahin`. Saat ini GDC mengonfirmasi Permata (`VA_013`),
+BRI (`VA_002`), dan CIMB Niaga (`VA_022`). Pilihan dari cart, form PO, dan
+portal pembayaran diteruskan sebagai `paymentMethodCode`; kode bank tidak
+ditentukan langsung oleh browser pada request GDC.
+
 UI harus menangani kondisi berikut secara eksplisit:
 
 - loading saat checkout dibuat dan saat status payment direfresh;

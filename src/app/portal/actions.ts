@@ -163,6 +163,7 @@ export async function startPortalGatewayPayment(
     jumlahBayar?: number;
     itemIds?: string[];
     idempotencyKey: string;
+    paymentMethodCode?: string;
     metodePengiriman?: string;
     alamatPengiriman?: string;
   } = {
@@ -170,6 +171,8 @@ export async function startPortalGatewayPayment(
     ...(itemIds.length > 0 ? { itemIds } : {}),
     idempotencyKey: String(formData.get("idempotencyKey") ?? ""),
   };
+  const paymentMethodCode = String(formData.get("paymentMethodCode") ?? "").trim();
+  if (paymentMethodCode) body.paymentMethodCode = paymentMethodCode;
 
   if (!body.idempotencyKey) {
     return { error: "Kunci pembayaran tidak tersedia. Muat ulang halaman." };
