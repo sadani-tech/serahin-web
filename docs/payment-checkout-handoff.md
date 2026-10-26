@@ -25,6 +25,10 @@ dapat memilih QRIS/VA untuk pelunasan berikutnya. Jika QRIS/VA masih aktif,
 portal menampilkan instruksinya lebih dulu dan transfer manual baru dapat
 dipakai setelah tagihan gagal atau kedaluwarsa. Bukti transfer manual tetap
 menunggu verifikasi Admin.
+Untuk pembayaran awal yang dipilih sebagai transfer manual di cart, portal
+mengikuti pilihan tersebut dan tidak meminta Buyer memilih kanal sekali lagi.
+Daftar metode gateway di portal publik melewati endpoint khusus yang hanya
+mengembalikan nama metode/biaya; endpoint ini tidak membuka data pesanan.
 Jika order berhasil dibuat tetapi charge gateway gagal, checkout menuju portal
 dengan pesan fallback sehingga Buyer tidak mengulang pembuatan order.
 

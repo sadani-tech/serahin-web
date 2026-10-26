@@ -669,6 +669,8 @@ export default async function PortalPage({
                 token={token}
                 amountDue={paymentDue}
                 isPelunasan={false}
+                initialPaymentChannel={order.paymentChannel}
+                lockInitialChannel={order.paymentChannel === "MANUAL_TRANSFER" && order.payments.length === 0}
                 gatewayAvailable={Boolean(order.gatewayEnabled)}
                 manualTransfer={order.manualTransfer}
                 manualTransfers={order.manualTransfers}
