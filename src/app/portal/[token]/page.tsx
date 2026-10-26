@@ -258,6 +258,11 @@ export default async function PortalPage({
       </div>
 
       <main className="relative mx-auto min-w-0 max-w-2xl space-y-6 px-4 pb-10 pt-7 sm:px-6">
+        {payment === "fallback" && (
+          <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Pesanan berhasil dibuat, tetapi tagihan otomatis belum siap. Perbarui status terlebih dahulu. Jika tagihan gateway dipastikan gagal atau kedaluwarsa, Anda dapat memilih transfer manual di bawah.
+          </div>
+        )}
         {/* Status */}
         <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white text-center shadow-lg">
           <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
@@ -604,6 +609,11 @@ export default async function PortalPage({
               <p className="text-center text-xs text-sand-500">
                 Halaman ini memeriksa status otomatis. Kamu juga bisa menekan tombol “Perbarui status” di ringkasan pembayaran.
               </p>
+              {order.manualTransfer && (
+                <p className="text-center text-xs text-amber-800">
+                  Transfer manual dapat dipilih setelah tagihan QRIS/VA ini kedaluwarsa atau gagal, agar pembayaran tidak tercatat dua kali.
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -633,7 +643,6 @@ export default async function PortalPage({
                 items={order.items}
                 unsettledItemIds={order.settlement.unsettledItemIds}
                 pendingItemIds={order.settlement.pendingItemIds}
-                paymentChannel={order.paymentChannel}
                 gatewayAvailable={Boolean(order.gatewayEnabled)}
                 manualTransfer={order.manualTransfer}
                 manualTransfers={order.manualTransfers}
@@ -660,7 +669,6 @@ export default async function PortalPage({
                 token={token}
                 amountDue={paymentDue}
                 isPelunasan={false}
-                paymentChannel={order.paymentChannel}
                 gatewayAvailable={Boolean(order.gatewayEnabled)}
                 manualTransfer={order.manualTransfer}
                 manualTransfers={order.manualTransfers}
