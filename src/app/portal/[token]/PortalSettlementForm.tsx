@@ -157,7 +157,7 @@ export function PortalSettlementForm({
     }
     setLocalError(undefined);
     const fd = new FormData(e.currentTarget);
-    if (metode === "SHOPEE") {
+    if (metode === "SHOPEE" && !gateway) {
       const buktiShopee = fd.get("buktiShopee");
       if (!(buktiShopee instanceof File) || buktiShopee.size === 0) {
         setLocalError("Bukti checkout Shopee wajib diunggah.");
@@ -167,7 +167,7 @@ export function PortalSettlementForm({
     for (const id of selected) fd.append("itemIds", id);
     fd.set("metodePengiriman", metode);
     fd.set("alamatPengiriman", metode === "EKSPEDISI" ? alamat.trim() : "");
-    if (metode === "SHOPEE") fd.set("includeShopee", "1");
+    if (metode === "SHOPEE" && !gateway) fd.set("includeShopee", "1");
     if (gateway) {
       paymentAttemptKey.current ??= crypto.randomUUID();
       fd.set("idempotencyKey", paymentAttemptKey.current);
@@ -311,7 +311,7 @@ export function PortalSettlementForm({
         <Field label="Metode pengiriman" required hint="Pilih salah satu opsi pengiriman untuk produk yang dilunasi.">
           <div className="space-y-2">
             {(Object.keys(METODE_PENGIRIMAN_LABEL) as MetodePengiriman[])
-              .filter((opt) => opt !== "SHOPEE" || (!gateway && shopeeEnabled))
+              .filter((opt) => opt !== "SHOPEE" || shopeeEnabled)
               .map((opt) => (
                 <label
                   key={opt}
@@ -363,12 +363,14 @@ export function PortalSettlementForm({
               </a>
             )}
           </div>
-          <FileUploadField
-            name="buktiShopee"
-            label="Bukti checkout Shopee"
-            hint="Tidak perlu nomor transaksi — cukup screenshot/bukti checkout. JPG, PNG, WEBP, atau PDF (maks 5MB)."
-            required
-          />
+          {!gateway && (
+            <FileUploadField
+              name="buktiShopee"
+              label="Bukti checkout Shopee"
+              hint="Tidak perlu nomor transaksi — cukup screenshot/bukti checkout. JPG, PNG, WEBP, atau PDF (maks 5MB)."
+              required
+            />
+          )}
         </div>
       )}
 
