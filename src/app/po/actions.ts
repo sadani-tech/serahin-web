@@ -88,10 +88,12 @@ export async function createPublicOrder(
 
   // v2.1 — pembeli memilih "Bayar otomatis" (payment gateway).
   const gateway = formData.get("metodeBayar") === "GATEWAY";
+  const paymentMethodCode = String(formData.get("paymentMethodCode") ?? "").trim();
 
   type OrderResult = {
     tokenAkses?: string;
     paymentUrl?: string;
+    paymentFallback?: boolean;
     needsConfirm?: boolean;
     needsCartConfirm?: boolean;
     warning?: string;
@@ -112,6 +114,7 @@ export async function createPublicOrder(
           confirmPerubahanKuota,
           checkoutSource,
           acceptPolicies,
+          ...(paymentMethodCode ? { paymentMethodCode } : {}),
           whatsappConsent,
           ...(whatsappConsentVersion ? { whatsappConsentVersion } : {}),
         },
@@ -196,7 +199,7 @@ export async function createPublicOrder(
     gateway && result.paymentUrl
       ? result.paymentUrl
       : gateway && result.tokenAkses
-        ? `/portal/${result.tokenAkses}`
+        ? `/portal/${result.tokenAkses}${result.paymentFallback ? "?payment=fallback" : ""}`
         : `/po/sukses/${result.tokenAkses}?campaign=${encodeURIComponent(formToken)}`,
   );
 }

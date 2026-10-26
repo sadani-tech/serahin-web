@@ -18,6 +18,23 @@ Browser → halaman return/status → Serahin API melakukan rekonsiliasi
 
 ## UI checkout
 
+Di portal pesanan, Buyer memilih kanal untuk setiap pembayaran, bukan seluruh
+pesanan. Gateway menjadi pilihan awal saat aktif; transfer manual tersedia jika
+Seller mempunyai rekening aktif. DP manual tidak mengunci pelunasan: Buyer
+dapat memilih QRIS/VA untuk pelunasan berikutnya. Jika QRIS/VA masih aktif,
+portal menampilkan instruksinya lebih dulu dan transfer manual baru dapat
+dipakai setelah tagihan gagal atau kedaluwarsa. Bukti transfer manual tetap
+menunggu verifikasi Admin.
+Jika order berhasil dibuat tetapi charge gateway gagal, checkout menuju portal
+dengan pesan fallback sehingga Buyer tidak mengulang pembuatan order.
+
+
+Serahin menampilkan QRIS serta bank VA yang diizinkan oleh payment-service
+untuk consumer `serahin`. Saat ini GDC mengonfirmasi Permata (`VA_013`),
+BRI (`VA_002`), dan CIMB Niaga (`VA_022`). Pilihan dari cart, form PO, dan
+portal pembayaran diteruskan sebagai `paymentMethodCode`; kode bank tidak
+ditentukan langsung oleh browser pada request GDC.
+
 UI harus menangani kondisi berikut secara eksplisit:
 
 - loading saat checkout dibuat dan saat status payment direfresh;

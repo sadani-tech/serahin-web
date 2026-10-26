@@ -14,6 +14,7 @@ import { publicSite } from "@/lib/public-site";
 import { ToastFeedback } from "@/components/Toast";
 import { BuyerAccessModal } from "@/components/BuyerAccessModal";
 import { CopyButton } from "@/components/CopyButton";
+import { GatewayMethodSelect } from "@/components/GatewayMethodSelect";
 import { computeDownPaymentTarget } from "@/lib/billing";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -811,10 +812,12 @@ export function PublicOrderForm({
           )}
 
           {gateway ? (
-            <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
-              Setelah menekan tombol di bawah, Anda akan diarahkan ke halaman
-              pembayaran. Pesanan otomatis terverifikasi begitu pembayaran
-              berhasil — tidak perlu unggah bukti.
+            <div className="space-y-3">
+              <GatewayMethodSelect amount={bankAmount} enabled={buyerAuthenticated} />
+              <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 ring-1 ring-inset ring-brand-200">
+                Setelah checkout, instruksi pembayaran akan tampil di portal pesanan.
+                Pembayaran terverifikasi otomatis setelah berhasil.
+              </div>
             </div>
           ) : (
             <>

@@ -6,6 +6,7 @@ import { CurrencyInput } from "@/components/CurrencyInput";
 import { FileUploadField } from "@/components/FileUploadField";
 import { ToastFeedback } from "@/components/Toast";
 import { CopyButton } from "@/components/CopyButton";
+import { GatewayMethodSelect } from "@/components/GatewayMethodSelect";
 import { formatRupiah } from "@/lib/format";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
@@ -20,13 +21,11 @@ import {
 // Pada tahap pelunasan (isPelunasan), pembeli wajib memilih metode pengiriman;
 // opsi Ekspedisi mewajibkan alamat lengkap, Shopee tidak butuh alamat (v1.8).
 //
-// Kanal pembayaran dikunci mengikuti pilihan saat checkout. Portal tidak
-// menawarkan perpindahan dari transfer manual ke gateway atau sebaliknya.
+// Kanal dipilih per pembayaran; pilihan checkout tidak mengunci pembayaran berikutnya.
 export function PortalPaymentForm({
   token,
   amountDue,
   isPelunasan,
-  paymentChannel,
   gatewayAvailable = false,
   manualTransfer,
   manualTransfers,
@@ -38,7 +37,6 @@ export function PortalPaymentForm({
   token: string;
   amountDue: number;
   isPelunasan: boolean;
-  paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
   gatewayAvailable?: boolean;
   manualTransfer?: {
     bankName: string | null;
@@ -69,7 +67,10 @@ export function PortalPaymentForm({
     FormData
   >(gatewayAction, undefined);
   const pending = manualPending || gwPending;
-  const gateway = paymentChannel === "GATEWAY";
+  const [channel, setChannel] = useState<"GATEWAY" | "MANUAL_TRANSFER">(
+    gatewayAvailable ? "GATEWAY" : "MANUAL_TRANSFER",
+  );
+  const gateway = channel === "GATEWAY";
   const manualAccountReady = Boolean(
     manualTransfer?.bankName &&
       manualTransfer.accountNumber &&
@@ -150,6 +151,23 @@ export function PortalPaymentForm({
     <form id="portal-payment-form" onSubmit={handleSubmit} className="scroll-mt-24 space-y-3">
       {errorMessage && <FormError message={errorMessage} />}
 
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-bold text-sand-900">Cara pembayaran</legend>
+        {gatewayAvailable && (
+          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
+            <input type="radio" name="paymentChannel" value="GATEWAY" checked={gateway} onChange={() => setChannel("GATEWAY")} className="mt-0.5 accent-brand-600" />
+            <span><strong className="block">Bayar otomatis</strong><span className="text-xs text-sand-600">QRIS atau Virtual Account. Terverifikasi otomatis.</span></span>
+          </label>
+        )}
+        {manualAccountReady && (
+          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${!gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
+            <input type="radio" name="paymentChannel" value="MANUAL_TRANSFER" checked={!gateway} onChange={() => setChannel("MANUAL_TRANSFER")} className="mt-0.5 accent-brand-600" />
+            <span><strong className="block">Transfer manual</strong><span className="text-xs text-sand-600">Alternatif bila gateway bermasalah; bukti diverifikasi Admin.</span></span>
+          </label>
+        )}
+      </fieldset>
+      {gwState?.error && manualAccountReady && <p className="text-xs text-amber-800">Gateway gagal? Perbarui status terlebih dahulu. Transfer manual dapat dipakai setelah tagihan gateway dipastikan gagal atau kedaluwarsa.</p>}
+
       <div className={`rounded-xl px-3 py-2.5 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>
         <p className="text-[11px] font-extrabold uppercase tracking-wider">
           {gateway ? "Pembayaran otomatis" : "Rekening tujuan Seller"}
@@ -183,6 +201,8 @@ export function PortalPaymentForm({
           <p className="mt-1 text-sm font-bold text-rose-700">Rekening Seller belum tersedia. Hubungi Seller sebelum melakukan transfer.</p>
         )}
       </div>
+
+      <GatewayMethodSelect amount={Number(jumlah)} enabled={gateway && gatewayAvailable} />
 
       {isPelunasan && (
         <Field
