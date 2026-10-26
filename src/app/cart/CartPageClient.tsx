@@ -16,7 +16,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   buyerProfile?: { name: string; email: string | null; phone: string | null } | null;
 }) {
   const router = useRouter();
-  const { carts, activeEventId, setActiveEvent, ready, authenticated, setQuantity, setColor, removeItem, clearOne } = useCart();
+  const { carts, activeEventId, setActiveEvent, ready, authenticated, setQuantity, setColor, removeItem, clearOne, syncCart } = useCart();
   const cart = carts.find((c) => c.salesEventId === activeEventId) ?? null;
   const siblingsSameSeller = cart ? carts.filter((c) => c.sellerId && c.sellerId === cart.sellerId) : [];
   const [paymentMethod, setPaymentMethod] = useState<"GATEWAY" | "MANUAL">("GATEWAY");
@@ -44,13 +44,22 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   const checkoutCartId = useRef<string>("");
   const total = cart?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
   const selectedGatewayMethod = gatewayMethods.find((method) => method.code === gatewayMethod);
+  const cartRevision = cart?.items.map((item) => `${item.variantId}:${item.selectedColor ?? ""}:${item.quantity}`).join("|") ?? "";
 
   useEffect(() => {
     if (!authenticated || !cart) return;
+    let cancelled = false;
     const timer = window.setTimeout(async () => {
-      const response = await fetch(`/api/cart/payment-methods?salesEventId=${encodeURIComponent(cart.salesEventId)}`).catch(() => null);
-      if (!response?.ok) return;
+      setPaymentAmount(null);
+      setGatewayAvailable(false);
+      setGatewayMethods([]);
       try {
+        // Ensure the latest local quantity/color write reaches the API before
+        // asking it to calculate the payable amount and available methods.
+        await syncCart(cart.salesEventId);
+        if (cancelled) return;
+        const response = await fetch(`/api/cart/payment-methods?salesEventId=${encodeURIComponent(cart.salesEventId)}`);
+        if (!response.ok) throw new Error("Metode pembayaran belum dapat dimuat. Silakan coba lagi.");
         const data = await response.json() as {
           amount: number;
           gatewayEnabled: boolean;
@@ -62,6 +71,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
           downPaymentAmount: number | null;
           totalQuantity: number;
         };
+        if (cancelled) return;
         setPaymentAmount(data.amount);
         setPaymentBilling(data);
         const gatewayUsable = data.gatewayEnabled && data.methods.length > 0;
@@ -78,12 +88,16 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
           if (current === "GATEWAY" && !gatewayUsable && data.manualTransferEnabled) return "MANUAL";
           return current;
         });
-      } catch {
-        setError("Metode pembayaran belum dapat dimuat. Silakan coba lagi.");
+      } catch (reason) {
+        if (cancelled) return;
+        setError(reason instanceof Error ? reason.message : "Metode pembayaran belum dapat dimuat. Silakan coba lagi.");
       }
     }, 250);
-    return () => window.clearTimeout(timer);
-  }, [authenticated, cart?.salesEventId]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [authenticated, cart, cartRevision, syncCart]);
 
   useEffect(() => {
     if (!authenticated || !resumeCheckout || !cart) return;
@@ -103,6 +117,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
     }
     setPending(true); setError("");
     try {
+      await syncCart(cart.salesEventId);
       const keyStorage = `serahin:cart:checkout-key:${cart.salesEventId}`;
       if (checkoutCartId.current !== cart.salesEventId) {
         checkoutCartId.current = cart.salesEventId;
@@ -260,7 +275,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
             {authenticated && !gatewayAvailable && <span className="cart-page__option-warn">Pembayaran online belum tersedia untuk nominal tagihan ini. Pilih transfer manual.</span>}
             {paymentMethod === "GATEWAY" && gatewayMethods.length > 0 && (
               <Select value={gatewayMethod} onClick={(e) => e.stopPropagation()} onChange={(event) => setGatewayMethod(event.target.value)} className="mt-2 min-h-10 w-full text-sm">
-                {gatewayMethods.map((method) => <option key={method.code} value={method.code}>{method.name}{method.fee ? ` (+${formatRupiah(method.fee)})` : ""}</option>)}
+                {gatewayMethods.map((method) => <option key={method.code} value={method.code}>{displayGatewayMethod(method.name)}{method.fee ? ` (+${formatRupiah(method.fee)})` : ""}</option>)}
               </Select>
             )}
           </span>
@@ -281,10 +296,11 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       {paymentAmount !== null && (
         <div className="cart-page__billing">
           <div className="cart-page__billing-row"><span>{paymentBilling?.billingType === "DOWN_PAYMENT" ? "DP yang dibayar sekarang" : "Tagihan tahap ini"}</span><strong>{formatRupiah(paymentAmount)}</strong></div>
-          {paymentBilling?.billingType === "DOWN_PAYMENT" && <p className="cart-page__billing-note">{paymentBilling.downPaymentType === "FIXED_AMOUNT" ? `${formatRupiah(paymentBilling.downPaymentAmount ?? 0)} per unit × ${paymentBilling.totalQuantity} unit` : `${paymentBilling.downPaymentPercentage ?? 50}% dari harga setiap unit produk`}</p>}
+          {paymentBilling?.billingType === "DOWN_PAYMENT" && <p className="cart-page__billing-note">{paymentBilling.downPaymentType === "FIXED_AMOUNT" ? `DP dihitung otomatis berdasarkan harga produk dan jumlah ${paymentBilling.totalQuantity} unit.` : `${paymentBilling.downPaymentPercentage ?? 50}% dari harga setiap unit produk · ${paymentBilling.totalQuantity} unit.`}</p>}
           {paymentMethod === "GATEWAY" && selectedGatewayMethod?.fee ? <div className="cart-page__billing-row"><span>Estimasi fee {selectedGatewayMethod.name}</span><strong>{formatRupiah(selectedGatewayMethod.fee)}</strong></div> : null}
         </div>
       )}
+      {authenticated && paymentAmount === null && <p className="cart-page__billing-note" role="status">Menyinkronkan keranjang dan memperbarui nominal pembayaran…</p>}
 
       {/* v2.4.1: tidak lagi menawarkan pilihan rekening tujuan di sini —
           backend otomatis memakai rekening utama Seller (atau rekening
@@ -301,7 +317,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
 
       <button
         type="button"
-        disabled={pending || cart.items.some((item) => item.eligible === false) || (authenticated && paymentMethod === "GATEWAY" && !gatewayAvailable) || (authenticated && paymentMethod === "MANUAL" && !manualTransferEnabled)}
+        disabled={pending || (authenticated && paymentAmount === null) || cart.items.some((item) => item.eligible === false) || (authenticated && paymentMethod === "GATEWAY" && !gatewayAvailable) || (authenticated && paymentMethod === "MANUAL" && !manualTransferEnabled)}
         onClick={checkout}
         className="cart-page__submit"
       >
@@ -311,6 +327,10 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       {showAccessModal && <BuyerAccessModal callbackUrl="/cart?checkout=1" switchingAccount={switchingAccount} onClose={() => setShowAccessModal(false)} />}
     </aside>
   </div></div>;
+}
+
+function displayGatewayMethod(name: string) {
+  return /^virtual account\s+\d{3}$/i.test(name) ? "Virtual Account" : name;
 }
 
 /** v2.4.1 FR-39.5: checkout gabungan lintas Batch PO (manual transfer, satu
