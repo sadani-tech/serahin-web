@@ -30,7 +30,14 @@ export function GatewayMethodSelect({
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Pilihan pembayaran belum dapat dimuat.");
-        return response.json() as Promise<GatewayMethod[]>;
+        if (!response.headers.get("content-type")?.includes("application/json")) {
+          throw new Error("Respons pilihan pembayaran tidak valid. Silakan muat ulang halaman.");
+        }
+        const available: unknown = await response.json();
+        if (!Array.isArray(available)) {
+          throw new Error("Daftar metode pembayaran tidak valid. Silakan muat ulang halaman.");
+        }
+        return available as GatewayMethod[];
       })
       .then((available) => {
         setResult({ amount, methods: available, error: "" });

@@ -13,8 +13,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(methods, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const status = error instanceof ApiError ? error.status : 500;
+    const message = error instanceof SyntaxError
+      ? "Respons pilihan pembayaran tidak valid. Silakan coba lagi."
+      : error instanceof Error
+        ? error.message
+        : "Metode pembayaran gagal dimuat.";
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Metode pembayaran gagal dimuat." },
+      { message },
       { status },
     );
   }

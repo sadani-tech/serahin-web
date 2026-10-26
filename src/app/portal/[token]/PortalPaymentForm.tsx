@@ -26,6 +26,8 @@ export function PortalPaymentForm({
   token,
   amountDue,
   isPelunasan,
+  initialPaymentChannel,
+  lockInitialChannel = false,
   gatewayAvailable = false,
   manualTransfer,
   manualTransfers,
@@ -37,6 +39,8 @@ export function PortalPaymentForm({
   token: string;
   amountDue: number;
   isPelunasan: boolean;
+  initialPaymentChannel?: "MANUAL_TRANSFER" | "GATEWAY";
+  lockInitialChannel?: boolean;
   gatewayAvailable?: boolean;
   manualTransfer?: {
     bankName: string | null;
@@ -67,9 +71,11 @@ export function PortalPaymentForm({
     FormData
   >(gatewayAction, undefined);
   const pending = manualPending || gwPending;
-  const [channel, setChannel] = useState<"GATEWAY" | "MANUAL_TRANSFER">(
-    gatewayAvailable ? "GATEWAY" : "MANUAL_TRANSFER",
-  );
+  const [channel, setChannel] = useState<"GATEWAY" | "MANUAL_TRANSFER">(() => {
+    if (initialPaymentChannel === "MANUAL_TRANSFER") return "MANUAL_TRANSFER";
+    if (initialPaymentChannel === "GATEWAY" && gatewayAvailable) return "GATEWAY";
+    return gatewayAvailable ? "GATEWAY" : "MANUAL_TRANSFER";
+  });
   const gateway = channel === "GATEWAY";
   const manualAccountReady = Boolean(
     manualTransfer?.bankName &&
@@ -151,21 +157,27 @@ export function PortalPaymentForm({
     <form id="portal-payment-form" onSubmit={handleSubmit} className="scroll-mt-24 space-y-3">
       {errorMessage && <FormError message={errorMessage} />}
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-bold text-sand-900">Cara pembayaran</legend>
-        {gatewayAvailable && (
-          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
-            <input type="radio" name="paymentChannel" value="GATEWAY" checked={gateway} onChange={() => setChannel("GATEWAY")} className="mt-0.5 accent-brand-600" />
-            <span><strong className="block">Bayar otomatis</strong><span className="text-xs text-sand-600">QRIS atau Virtual Account. Terverifikasi otomatis.</span></span>
-          </label>
-        )}
-        {manualAccountReady && (
-          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${!gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
-            <input type="radio" name="paymentChannel" value="MANUAL_TRANSFER" checked={!gateway} onChange={() => setChannel("MANUAL_TRANSFER")} className="mt-0.5 accent-brand-600" />
-            <span><strong className="block">Transfer manual</strong><span className="text-xs text-sand-600">Alternatif bila gateway bermasalah; bukti diverifikasi Admin.</span></span>
-          </label>
-        )}
-      </fieldset>
+      {lockInitialChannel ? (
+        <p className="rounded-lg bg-sand-50 px-3 py-2 text-sm text-sand-700">
+          Metode pembayaran mengikuti pilihan saat checkout: transfer manual.
+        </p>
+      ) : (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-bold text-sand-900">Cara pembayaran</legend>
+          {gatewayAvailable && (
+            <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
+              <input type="radio" name="paymentChannel" value="GATEWAY" checked={gateway} onChange={() => setChannel("GATEWAY")} className="mt-0.5 accent-brand-600" />
+              <span><strong className="block">Bayar otomatis</strong><span className="text-xs text-sand-600">QRIS atau Virtual Account. Terverifikasi otomatis.</span></span>
+            </label>
+          )}
+          {manualAccountReady && (
+            <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${!gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
+              <input type="radio" name="paymentChannel" value="MANUAL_TRANSFER" checked={!gateway} onChange={() => setChannel("MANUAL_TRANSFER")} className="mt-0.5 accent-brand-600" />
+              <span><strong className="block">Transfer manual</strong><span className="text-xs text-sand-600">Alternatif bila gateway bermasalah; bukti diverifikasi Admin.</span></span>
+            </label>
+          )}
+        </fieldset>
+      )}
       {gwState?.error && manualAccountReady && <p className="text-xs text-amber-800">Gateway gagal? Perbarui status terlebih dahulu. Transfer manual dapat dipakai setelah tagihan gateway dipastikan gagal atau kedaluwarsa.</p>}
 
       <div className={`rounded-xl px-3 py-2.5 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>
