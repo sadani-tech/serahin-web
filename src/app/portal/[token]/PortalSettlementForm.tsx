@@ -33,7 +33,6 @@ export function PortalSettlementForm({
   items,
   unsettledItemIds,
   pendingItemIds,
-  paymentChannel,
   gatewayAvailable = false,
   manualTransfer,
   manualTransfers,
@@ -48,7 +47,6 @@ export function PortalSettlementForm({
    * lagi), BEDA dari item lain yang belum pernah diajukan sama sekali
    * (tetap bisa dicentang langsung). */
   pendingItemIds: string[];
-  paymentChannel: "MANUAL_TRANSFER" | "GATEWAY";
   gatewayAvailable?: boolean;
   manualTransfer?: {
     bankName: string | null;
@@ -77,7 +75,10 @@ export function PortalSettlementForm({
     undefined,
   );
   const pending = manualPending || gwPending;
-  const gateway = paymentChannel === "GATEWAY";
+  const [channel, setChannel] = useState<"GATEWAY" | "MANUAL_TRANSFER">(
+    gatewayAvailable ? "GATEWAY" : "MANUAL_TRANSFER",
+  );
+  const gateway = channel === "GATEWAY";
 
   const manualAccountReady = Boolean(
     manualTransfer?.bankName && manualTransfer.accountNumber && manualTransfer.accountHolderName,
@@ -188,6 +189,23 @@ export function PortalSettlementForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {errorMessage && <FormError message={errorMessage} />}
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-bold text-sand-900">Cara pelunasan</legend>
+        {gatewayAvailable && (
+          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
+            <input type="radio" name="paymentChannel" value="GATEWAY" checked={gateway} onChange={() => setChannel("GATEWAY")} className="mt-0.5 accent-brand-600" />
+            <span><strong className="block">Bayar otomatis</strong><span className="text-xs text-sand-600">QRIS atau Virtual Account. Terverifikasi otomatis.</span></span>
+          </label>
+        )}
+        {manualAccountReady && (
+          <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm ${!gateway ? "border-brand-500 bg-brand-50" : "border-sand-200"}`}>
+            <input type="radio" name="paymentChannel" value="MANUAL_TRANSFER" checked={!gateway} onChange={() => setChannel("MANUAL_TRANSFER")} className="mt-0.5 accent-brand-600" />
+            <span><strong className="block">Transfer manual</strong><span className="text-xs text-sand-600">Alternatif bila gateway bermasalah; bukti diverifikasi Admin.</span></span>
+          </label>
+        )}
+      </fieldset>
+      {gwState?.error && manualAccountReady && <p className="text-xs text-amber-800">Perbarui status dahulu. Transfer manual tersedia setelah tagihan gateway dipastikan gagal atau kedaluwarsa.</p>}
 
       <div>
         <p className="mb-2 text-xs font-bold uppercase tracking-wide text-sand-500">

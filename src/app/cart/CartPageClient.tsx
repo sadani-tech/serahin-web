@@ -131,7 +131,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ checkoutKey: checkoutKey.current, salesEventId: cart.salesEventId, paymentMethod, paymentMethodCode: paymentMethod === "GATEWAY" ? gatewayMethod || undefined : undefined, acceptPolicies: accepted, whatsappConsent: whatsapp }),
       });
-      const data = await response.json().catch(() => ({ message: "Respons server tidak valid. Silakan coba lagi." })) as { message?: string; paymentUrl?: string | null; tokenAkses?: string; needsConfirm?: boolean; warning?: string };
+      const data = await response.json().catch(() => ({ message: "Respons server tidak valid. Silakan coba lagi." })) as { message?: string; paymentUrl?: string | null; tokenAkses?: string; needsConfirm?: boolean; warning?: string; paymentFallback?: boolean };
       if (response.status === 401 || response.status === 403) {
         setPending(false);
         setShowAccessModal(true);
@@ -141,7 +141,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       if (data.needsConfirm) throw new Error(data.warning ?? "Pesanan serupa baru saja dibuat.");
       sessionStorage.removeItem(keyStorage);
       if (data.paymentUrl) window.location.href = data.paymentUrl;
-      else if (data.tokenAkses) router.push(`/portal/${data.tokenAkses}`);
+      else if (data.tokenAkses) router.push(`/portal/${data.tokenAkses}${data.paymentFallback ? "?payment=fallback" : ""}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Checkout belum berhasil.");
       setPending(false);
