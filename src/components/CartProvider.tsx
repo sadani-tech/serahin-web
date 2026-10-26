@@ -37,6 +37,7 @@ type CartContextValue = {
   authenticated: boolean;
   addItem: (event: Omit<CartDraft, "items">, item: CartItem) => Promise<boolean>;
   setQuantity: (salesEventId: string, variantId: string, selectedColor: string | undefined, quantity: number) => void;
+  syncCart: (salesEventId: string) => Promise<void>;
   setColor: (salesEventId: string, variantId: string, selectedColor: string | undefined, nextColor: string) => void;
   removeItem: (salesEventId: string, variantId: string, selectedColor?: string) => void;
   clearOne: (salesEventId: string) => void;
@@ -92,6 +93,7 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const toast = useToast();
+  const syncQueue = useRef(new Map<string, Promise<void>>());
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -119,21 +121,37 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
 
   const push = useCallback(async (draft: CartDraft) => {
     if (!authenticated) return;
-    const response = await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        salesEventId: draft.salesEventId,
-        items: draft.items.map((item) => ({
-          variantId: item.variantId,
-          quantity: item.quantity,
-          selectedColor: item.selectedColor,
-        })),
-      }),
+    const previous = syncQueue.current.get(draft.salesEventId);
+    const current = (previous ?? Promise.resolve()).catch(() => undefined).then(async () => {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          salesEventId: draft.salesEventId,
+          items: draft.items.map((item) => ({
+            variantId: item.variantId,
+            quantity: item.quantity,
+            selectedColor: item.selectedColor,
+          })),
+        }),
+      });
+      const data = await response.json().catch(() => ({})) as RemoteCart & { message?: string };
+      if (!response.ok) throw new Error(data.message ?? "Keranjang belum dapat disinkronkan.");
     });
-    const data = await response.json().catch(() => ({})) as RemoteCart & { message?: string };
-    if (!response.ok) throw new Error(data.message ?? "Keranjang belum dapat disinkronkan.");
+    syncQueue.current.set(draft.salesEventId, current);
+    try {
+      await current;
+    } finally {
+      if (syncQueue.current.get(draft.salesEventId) === current) {
+        syncQueue.current.delete(draft.salesEventId);
+      }
+    }
   }, [authenticated]);
+
+  const syncCart = useCallback(async (salesEventId: string) => {
+    const draft = carts.find((cart) => cart.salesEventId === salesEventId);
+    if (draft) await push(draft);
+  }, [carts, push]);
 
   const synced = useRef(false);
   useEffect(() => {
@@ -249,11 +267,12 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     authenticated,
     addItem,
     setQuantity,
+    syncCart,
     setColor,
     removeItem,
     clearOne,
     clearAll,
-  }), [activeEventId, addItem, authenticated, carts, clearAll, clearOne, ready, removeItem, setActiveEvent, setColor, setQuantity]);
+  }), [activeEventId, addItem, authenticated, carts, clearAll, clearOne, ready, removeItem, setActiveEvent, setColor, setQuantity, syncCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

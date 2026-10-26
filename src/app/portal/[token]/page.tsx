@@ -102,7 +102,8 @@ function formatTanggal(value: string): string {
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(date);
+    timeZone: "Asia/Jakarta",
+  }).format(date) + " WIB";
 }
 
 export const metadata: Metadata = {
