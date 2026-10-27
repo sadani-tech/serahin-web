@@ -10,6 +10,8 @@ const NOT_CANCELLABLE_STATUS = ["CANCELLED", "REJECTED", "COMPLETED", "SHIPPED"]
 
 type BuyerOrder = {
   id: string; status: string; publicToken: string; createdAt: string;
+  paymentStatus: "UNPAID" | "DOWN_PAYMENT" | "PAID";
+  orderProgressStatus: string;
   cancellationRequestStatus: "REQUESTED" | "APPROVED" | "REJECTED" | null;
   cancellationRequestedAt: string | null;
   cancellationReason: string | null;
@@ -44,17 +46,15 @@ const MILESTONE_LABEL: Record<string, string> = {
   PACKING: "Siap Kirim", DELIVERED: "Deliver", COMPLETED: "Selesai",
 };
 
-const ORDER_STATUS_LABEL: Record<string, string> = {
-  SUBMITTED: "Menunggu konfirmasi",
-  AWAITING_DOWN_PAYMENT: "Belum bayar",
-  DOWN_PAYMENT_RECEIVED: "DP diterima",
-  PAID: "Lunas",
-  IN_PRODUCTION: "Diproses",
-  READY_TO_SHIP: "Siap dikirim",
-  SHIPPED: "Dikirim",
-  COMPLETED: "Selesai",
-  CANCELLED: "Dibatalkan",
-  REJECTED: "Ditolak",
+const ORDER_PROGRESS_LABEL: Record<string, string> = {
+  OPEN: "Open", CLOSED: "Closed", PRODUCTION: "Produksi", SHIPMENT: "Shipment",
+  PACKING: "Siap Kirim", DELIVERED: "Terkirim", COMPLETED: "Selesai",
+  SUPPLIER_PROCESSING: "Diproses Supplier", INTERNATIONAL_TRANSIT: "Transit Internasional",
+  ARRIVED_INDONESIA: "Tiba di Indonesia", QUALITY_CHECK: "Pemeriksaan Kualitas",
+  READY_TO_SHIP: "Siap Dikirim", SHIPPED: "Dikirim", CANCELLED: "Dibatalkan", REJECTED: "Ditolak",
+};
+const PAYMENT_PROGRESS_LABEL: Record<string, string> = {
+  UNPAID: "Belum Bayar", DOWN_PAYMENT: "DP Diterima", PAID: "Lunas",
 };
 
 const PAYMENT_TYPE_LABEL: Record<string, string> = { DOWN_PAYMENT: "DP", SETTLEMENT: "Pelunasan", FULL_PAYMENT: "Pembayaran lunas" };
@@ -89,7 +89,10 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
               Unduh Invoice
             </a>
           )}
-          <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-800">{ORDER_STATUS_LABEL[order.status] ?? order.status}</span>
+          <div className="flex flex-wrap justify-end gap-2">
+            <span className="rounded-full bg-sun-100 px-3 py-1 text-xs font-bold text-sun-900">Pembayaran: {PAYMENT_PROGRESS_LABEL[order.paymentStatus] ?? "Belum Bayar"}</span>
+            <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-800">Pesanan: {ORDER_PROGRESS_LABEL[order.orderProgressStatus] ?? order.orderProgressStatus}</span>
+          </div>
         </div>
       </div>
       {order.checkoutGroupOrder && (

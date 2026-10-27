@@ -125,10 +125,34 @@ export async function bulkUpdateOrderStatus(
   }
 }
 
+export async function bulkUpdateOrderProgress(
+  campaignId: string,
+  ids: string[],
+  status: string | null,
+): Promise<{ updated?: number; error?: string }> {
+  if (ids.length === 0) return { updated: 0 };
+  try {
+    const res = await api.patch<{ updated: number }>("/pesanan/bulk-progress-status", { ids, status });
+    revalidatePath(`/pre-orders/${campaignId}`);
+    return { updated: res.updated };
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal memperbarui progres pesanan" };
+  }
+}
+
 export async function changeOrderStatus(orderId: string, formData: FormData) {
   await api.post(`/pesanan/${orderId}/status`, {
     status: String(formData.get("status") ?? ""),
     catatan: String(formData.get("catatan") ?? ""),
+  });
+  revalidatePath(`/pesanan/${orderId}`);
+}
+
+export async function changeOrderProgress(orderId: string, formData: FormData) {
+  await api.patch(`/pesanan/${orderId}/progress-status`, {
+    status: String(formData.get("progressStatus") ?? "") === "INHERIT"
+      ? null
+      : String(formData.get("progressStatus") ?? ""),
   });
   revalidatePath(`/pesanan/${orderId}`);
 }

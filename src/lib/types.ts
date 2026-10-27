@@ -26,6 +26,14 @@ export type OrderStatus =
   | "DIBATALKAN"
   | "DITOLAK";
 
+export type OrderProgressStatus =
+  | "OPEN" | "CLOSED" | "PRODUCTION" | "SHIPMENT" | "PACKING"
+  | "DELIVERED" | "COMPLETED" | "SUPPLIER_PROCESSING"
+  | "INTERNATIONAL_TRANSIT" | "ARRIVED_INDONESIA" | "QUALITY_CHECK"
+  | "READY_TO_SHIP" | "SHIPPED" | "CANCELLED" | "REJECTED";
+
+export type OrderPaymentStatus = "UNPAID" | "DOWN_PAYMENT" | "PAID";
+
 export type PaymentType = "DP" | "PELUNASAN" | "LUNAS";
 
 export type MetodePengiriman = "SHOPEE" | "EKSPEDISI";

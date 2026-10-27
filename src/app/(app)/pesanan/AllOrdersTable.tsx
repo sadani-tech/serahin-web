@@ -1,30 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { OrderBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { useSort } from "@/hooks/useSort";
 import { SortableTh } from "@/components/SortableTh";
-import type { OrderStatus } from "@/lib/types";
+import type { OrderProgressStatus } from "@/lib/types";
 
 export type AllOrdersRow = {
   id: string;
   namaPembeli: string;
   kontak: string;
-  status: OrderStatus;
+  status: string;
+  orderProgressStatus: OrderProgressStatus | "CANCELLED" | "REJECTED";
   createdAt: string;
   campaign: { id: string; namaProduk: string };
   items: { namaVarian: string; jumlah: number }[];
   billing: { total: number; dibayar: number; sisa: number };
-  paymentStatus: string;
+  paymentProgressStatus: string;
 };
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
-  MENUNGGU_VERIFIKASI: "Menunggu verifikasi",
-  LUNAS: "Lunas",
-  DP_DITERIMA: "DP diterima",
-  DITOLAK: "Ditolak",
-  BELUM_BAYAR: "Belum bayar",
+  UNPAID: "Belum bayar",
+  DOWN_PAYMENT: "DP diterima",
+  PAID: "Lunas",
+};
+const ORDER_PROGRESS_LABEL: Record<string, string> = {
+  OPEN: "Open", CLOSED: "Closed", PRODUCTION: "Produksi", SHIPMENT: "Shipment", PACKING: "Siap Kirim",
+  DELIVERED: "Terkirim", COMPLETED: "Selesai", SUPPLIER_PROCESSING: "Diproses Supplier",
+  INTERNATIONAL_TRANSIT: "Transit Internasional", ARRIVED_INDONESIA: "Tiba di Indonesia",
+  QUALITY_CHECK: "Pemeriksaan Kualitas", READY_TO_SHIP: "Siap Dikirim", SHIPPED: "Dikirim",
+  CANCELLED: "Dibatalkan", REJECTED: "Ditolak",
 };
 
 export function AllOrdersTable({ rows }: { rows: AllOrdersRow[] }) {
@@ -32,7 +37,7 @@ export function AllOrdersTable({ rows }: { rows: AllOrdersRow[] }) {
     switch (key) {
       case "pembeli": return row.namaPembeli;
       case "batchPo": return row.campaign.namaProduk;
-      case "status": return row.status;
+      case "status": return row.orderProgressStatus;
       case "tanggal": return row.createdAt;
       default: return null;
     }
@@ -45,7 +50,7 @@ export function AllOrdersTable({ rows }: { rows: AllOrdersRow[] }) {
           <SortableTh label="Pembeli" sortKey="pembeli" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
           <SortableTh label="Batch PO" sortKey="batchPo" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
           <th className="px-4 py-3 font-medium">Item</th>
-          <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
+          <SortableTh label="Status Pesanan" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
           <th className="px-4 py-3 font-medium">Tagihan</th>
           <th className="px-4 py-3 font-medium">Pembayaran</th>
           <SortableTh label="Tanggal" sortKey="tanggal" activeKey={sortKey} direction={direction} onSort={toggleSort} className="px-4 py-3 font-medium" />
@@ -56,12 +61,12 @@ export function AllOrdersTable({ rows }: { rows: AllOrdersRow[] }) {
               <td className="px-4 py-3"><Link href={`/pesanan/${row.id}`} className="font-bold text-sand-900 hover:underline">{row.namaPembeli}</Link><div className="text-xs text-sand-500">{row.kontak}</div></td>
               <td className="px-4 py-3"><Link href={`/pre-orders/${row.campaign.id}`} className="hover:underline">{row.campaign.namaProduk}</Link></td>
               <td className="px-4 py-3 text-sand-700">{row.items.map((item) => `${item.namaVarian} × ${item.jumlah}`).join(", ")}</td>
-              <td className="px-4 py-3"><OrderBadge status={row.status} /></td>
+              <td className="px-4 py-3">{ORDER_PROGRESS_LABEL[row.orderProgressStatus] ?? row.orderProgressStatus}</td>
               <td className="px-4 py-3">
                 <div className="font-bold text-sand-900">{formatRupiah(row.billing.total)}</div>
                 {row.billing.sisa > 0 && <div className="text-xs text-rose-600">Sisa {formatRupiah(row.billing.sisa)}</div>}
               </td>
-              <td className="px-4 py-3 text-xs text-sand-600">{PAYMENT_STATUS_LABEL[row.paymentStatus] ?? row.paymentStatus}</td>
+              <td className="px-4 py-3 text-xs text-sand-600">{PAYMENT_STATUS_LABEL[row.paymentProgressStatus] ?? row.paymentProgressStatus}</td>
               <td className="px-4 py-3 text-xs text-sand-600">{formatTanggal(row.createdAt)}</td>
             </tr>
           ))}

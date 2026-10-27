@@ -4,16 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, DeleteIconButton, Select } from "@/components/ui";
-import { OrderBadge } from "@/components/badges";
 import { formatRupiah, formatTanggal } from "@/lib/format";
-import { ORDER_STATUS_LABEL, ORDER_STATUS_ORDER } from "@/lib/domain";
+import { ORDER_PROGRESS_LABEL, ORDER_PROGRESS_OPTIONS } from "@/lib/domain";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 import { useNavLoading } from "@/hooks/useNavLoading";
 import { useSort } from "@/hooks/useSort";
 import { SortableTh } from "@/components/SortableTh";
-import { bulkUpdateOrderStatus } from "@/app/(app)/pesanan/actions";
-import type { OrderStatus } from "@/lib/types";
+import { bulkUpdateOrderProgress } from "@/app/(app)/pesanan/actions";
+import type { OrderProgressStatus } from "@/lib/types";
 
 export type OrderRow = {
   id: string;
@@ -21,20 +20,19 @@ export type OrderRow = {
   kontak: string;
   varianLabel: string;
   totalQty: number;
-  status: OrderStatus;
+  status: string;
+  orderProgressStatus: OrderProgressStatus | "CANCELLED" | "REJECTED";
+  paymentProgressStatus: "UNPAID" | "DOWN_PAYMENT" | "PAID";
   sisa: number;
   aktif: boolean;
-  paymentStatus: string;
   createdAt: string;
   shipment: { method: "SHOPEE" | "COURIER"; label: string; courier: string | null; trackingNumber: string | null } | null;
 };
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
-  MENUNGGU_VERIFIKASI: "Menunggu Verifikasi",
-  LUNAS: "Lunas",
-  DP_DITERIMA: "DP Diterima",
-  DITOLAK: "Ditolak",
-  BELUM_BAYAR: "Belum Bayar",
+  UNPAID: "Belum Bayar",
+  DOWN_PAYMENT: "DP Diterima",
+  PAID: "Lunas",
 };
 
 export function OrderBulkTable({
@@ -48,7 +46,7 @@ export function OrderBulkTable({
   onDelete?: (orderId: string) => Promise<{ error?: string }>;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [target, setTarget] = useState("");
+  const [target, setTarget] = useState<OrderProgressStatus | "INHERIT" | "">("");
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { confirm } = useConfirm();
@@ -98,8 +96,8 @@ export function OrderBulkTable({
       case "pembeli": return row.namaPembeli;
       case "varian": return row.varianLabel;
       case "qty": return row.totalQty;
-      case "status": return row.status;
-      case "pembayaran": return row.paymentStatus;
+      case "status": return row.orderProgressStatus;
+      case "pembayaran": return row.paymentProgressStatus;
       case "sisa": return row.sisa;
       default: return null;
     }
@@ -126,7 +124,7 @@ export function OrderBulkTable({
 
   async function apply() {
     if (!target || selected.size === 0) return;
-    const label = ORDER_STATUS_LABEL[target as OrderStatus];
+    const label = target === "INHERIT" ? "milestone Batch PO" : ORDER_PROGRESS_LABEL[target];
     const ok = await confirm({
       title: `Ubah status ${selected.size} pesanan?`,
       description: `Status akan diubah menjadi "${label}". Pesanan yang dibatalkan/ditolak akan dilewati.`,
@@ -139,7 +137,7 @@ export function OrderBulkTable({
     startLoading();
     let res: { updated?: number; error?: string };
     try {
-      res = await bulkUpdateOrderStatus(campaignId, Array.from(selected), target);
+      res = await bulkUpdateOrderProgress(campaignId, Array.from(selected), target === "INHERIT" ? null : target);
     } finally {
       stopLoading();
       setBusy(false);
@@ -167,13 +165,14 @@ export function OrderBulkTable({
           </span>
           <Select
             value={target}
-            onChange={(e) => setTarget(e.target.value)}
+            onChange={(e) => setTarget(e.target.value as OrderProgressStatus | "INHERIT" | "")}
             className="h-9 w-auto"
           >
             <option value="">Pilih status baru…</option>
-            {ORDER_STATUS_ORDER.map((s) => (
+            <option value="INHERIT">Ikuti milestone Batch PO</option>
+            {ORDER_PROGRESS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {ORDER_STATUS_LABEL[s]}
+                {ORDER_PROGRESS_LABEL[s]}
               </option>
             ))}
           </Select>
@@ -216,8 +215,8 @@ export function OrderBulkTable({
               <SortableTh label="Pembeli" sortKey="pembeli" activeKey={sortKey} direction={direction} onSort={toggleSort} />
               <SortableTh label="Varian" sortKey="varian" activeKey={sortKey} direction={direction} onSort={toggleSort} />
               <SortableTh label="Qty" sortKey="qty" activeKey={sortKey} direction={direction} onSort={toggleSort} />
-              <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} />
-              <SortableTh label="Pembayaran" sortKey="pembayaran" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Status Pesanan" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} />
+              <SortableTh label="Status Pembayaran" sortKey="pembayaran" activeKey={sortKey} direction={direction} onSort={toggleSort} />
               <th className="px-5 py-3 font-medium">Jenis Pengiriman</th>
               <SortableTh label="Sisa tagihan" sortKey="sisa" activeKey={sortKey} direction={direction} onSort={toggleSort} />
               {onDelete && <th className="px-5 py-3" />}
@@ -253,10 +252,10 @@ export function OrderBulkTable({
                   <td className="px-5 py-3 text-sand-700">{o.varianLabel}</td>
                   <td className="px-5 py-3 text-sand-700">{o.totalQty}</td>
                   <td className="px-5 py-3">
-                    <OrderBadge status={o.status} />
+                    {ORDER_PROGRESS_LABEL[o.orderProgressStatus] ?? o.orderProgressStatus}
                   </td>
                   <td className="px-5 py-3 text-xs font-semibold text-sand-700">
-                    {PAYMENT_STATUS_LABEL[o.paymentStatus] ?? o.paymentStatus}
+                    {PAYMENT_STATUS_LABEL[o.paymentProgressStatus] ?? o.paymentProgressStatus}
                   </td>
                   <td className="px-5 py-3">
                     {o.shipment ? <div><p className="font-semibold text-sand-800">{o.shipment.label}</p>{(o.shipment.courier || o.shipment.trackingNumber) && <p className="text-xs text-sand-500">{[o.shipment.courier, o.shipment.trackingNumber].filter(Boolean).join(" · ")}</p>}</div> : <span className="text-sand-400">Belum dipilih</span>}
