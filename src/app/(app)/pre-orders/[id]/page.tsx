@@ -127,6 +127,8 @@ type CampaignOrderEnvelope = {
     namaPembeli: string;
     kontak: string;
     status: OrderStatus;
+    orderProgressStatus: OrderRow["orderProgressStatus"];
+    paymentProgressStatus: OrderRow["paymentProgressStatus"];
     createdAt: string;
     items: Array<{ variantId: string; namaVarian: string; jumlah: number }>;
     billing: { total: number; dibayar: number; menunggu: number; sisa: number };
@@ -309,9 +311,10 @@ export default async function CampaignDetailPage({
       o.items.length === 1 ? o.items[0].namaVarian : `${o.items.length} varian`,
     totalQty: o.items.reduce((s, it) => s + it.jumlah, 0),
     status: o.status,
+    orderProgressStatus: o.orderProgressStatus,
+    paymentProgressStatus: o.paymentProgressStatus,
     sisa: o.billing.sisa,
     aktif: !["DIBATALKAN", "DITOLAK"].includes(o.status),
-    paymentStatus: o.paymentStatus,
     shipment: o.shipment,
     createdAt: o.createdAt,
   }));

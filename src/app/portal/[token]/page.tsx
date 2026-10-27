@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import QRCode from "qrcode";
 import { api, ApiError } from "@/lib/api";
-import { OrderBadge } from "@/components/badges";
 import type { Billing } from "@/lib/billing";
 import { formatRupiah } from "@/lib/format";
 import {
@@ -13,7 +12,7 @@ import {
   PAYMENT_SCHEME_LABEL,
   METODE_PENGIRIMAN_LABEL,
 } from "@/lib/domain";
-import type { CampaignStatus, OrderStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
+import type { CampaignStatus, OrderStatus, OrderPaymentStatus, OrderProgressStatus, PaymentScheme, MetodePengiriman } from "@/lib/types";
 import { PublicFooter } from "@/components/PublicFooter";
 import { RichText } from "@/components/RichText";
 import { IconSprite } from "@/components/revamp/IconSprite";
@@ -25,6 +24,8 @@ import { getSession } from "@/lib/session";
 
 type PortalOrder = {
   status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  orderProgressStatus: OrderProgressStatus | "CANCELLED" | "REJECTED";
   alasanBatal: string | null;
   metodePengiriman: MetodePengiriman | null;
   alamatPengiriman: string | null;
@@ -126,6 +127,17 @@ const PRODUCTION_STATUS_LABEL: Record<NonNullable<PortalOrder["campaign"]["produ
   IN_PRODUCTION: "Sedang dikerjakan",
   READY_TO_SHIP: "Siap dikirim",
   COMPLETED: "Produksi selesai",
+};
+
+const ORDER_PROGRESS_LABEL: Record<PortalOrder["orderProgressStatus"], string> = {
+  OPEN: "Open", CLOSED: "Closed", PRODUCTION: "Produksi", SHIPMENT: "Shipment",
+  PACKING: "Siap Kirim", DELIVERED: "Terkirim", COMPLETED: "Selesai",
+  SUPPLIER_PROCESSING: "Diproses Supplier", INTERNATIONAL_TRANSIT: "Transit Internasional",
+  ARRIVED_INDONESIA: "Tiba di Indonesia", QUALITY_CHECK: "Pemeriksaan Kualitas",
+  READY_TO_SHIP: "Siap Dikirim", SHIPPED: "Dikirim", CANCELLED: "Dibatalkan", REJECTED: "Ditolak",
+};
+const PAYMENT_PROGRESS_LABEL: Record<OrderPaymentStatus, string> = {
+  UNPAID: "Belum Bayar", DOWN_PAYMENT: "DP Diterima", PAID: "Lunas",
 };
 
 const CAMPAIGN_STATUS_DESCRIPTION: Record<CampaignStatus, string> = {
@@ -268,10 +280,15 @@ export default async function PortalPage({
           <div aria-hidden="true" className="bg-serahin-ribbon h-1.5 w-full" />
           <div className="p-6">
           <p className="text-xs font-bold uppercase tracking-wider text-sand-500">
-            Status pesanan Anda
+            Status pembayaran dan pesanan
           </p>
-          <div className="mt-2 flex justify-center">
-            <OrderBadge status={order.status} />
+          <div className="mt-2 flex flex-wrap justify-center gap-2">
+            <span className="rounded-full bg-sun-100 px-3 py-1 text-xs font-bold text-sun-900 ring-1 ring-inset ring-sun-500/25">
+              Pembayaran: {PAYMENT_PROGRESS_LABEL[order.paymentStatus]}
+            </span>
+            <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-900 ring-1 ring-inset ring-brand-600/25">
+              Pesanan: {ORDER_PROGRESS_LABEL[order.orderProgressStatus]}
+            </span>
           </div>
           {(dibatalkan || ditolak) && order.alasanBatal && (
             <p className="mt-3 rounded-lg bg-sand-100 px-4 py-2 text-sm text-sand-600">

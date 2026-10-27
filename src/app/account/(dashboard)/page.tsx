@@ -11,7 +11,7 @@ type Dashboard = {
   };
   activeStatusGroup: StatusGroup;
   orders: Array<{
-    id: string; status: string; createdAt: string;
+    id: string; status: string; paymentStatus: "UNPAID" | "DOWN_PAYMENT" | "PAID"; orderProgressStatus: string; createdAt: string;
     nextAction: string;
     rejectionReason: string | null;
     salesEvent: { title: string };
@@ -34,17 +34,13 @@ const NEXT_ACTION: Record<string, string> = {
   NONE: "Lihat detail",
 };
 
-const STATUS: Record<string, { label: string; className: string }> = {
-  SUBMITTED: { label: "Menunggu konfirmasi", className: "bg-sand-100 text-sand-700" },
-  AWAITING_DOWN_PAYMENT: { label: "Belum bayar", className: "bg-sun-100 text-sun-800" },
-  DOWN_PAYMENT_RECEIVED: { label: "DP diterima", className: "bg-brand-100 text-brand-800" },
-  PAID: { label: "Lunas", className: "bg-brand-100 text-brand-800" },
-  IN_PRODUCTION: { label: "Sedang diproses", className: "bg-accent-100 text-accent-700" },
-  READY_TO_SHIP: { label: "Siap dikirim", className: "bg-accent-100 text-accent-700" },
-  SHIPPED: { label: "Dalam pengiriman", className: "bg-sky-100 text-sky-700" },
-  COMPLETED: { label: "Selesai", className: "bg-brand-50 text-brand-700" },
-  CANCELLED: { label: "Dibatalkan", className: "bg-rose-100 text-rose-700" },
-  REJECTED: { label: "Ditolak", className: "bg-rose-100 text-rose-700" },
+const PAYMENT_STATUS_LABEL: Record<string, string> = { UNPAID: "Belum Bayar", DOWN_PAYMENT: "DP Diterima", PAID: "Lunas" };
+const ORDER_PROGRESS_LABEL: Record<string, string> = {
+  OPEN: "Open", CLOSED: "Closed", PRODUCTION: "Produksi", SHIPMENT: "Shipment", PACKING: "Siap Kirim",
+  DELIVERED: "Terkirim", COMPLETED: "Selesai", SUPPLIER_PROCESSING: "Diproses Supplier",
+  INTERNATIONAL_TRANSIT: "Transit Internasional", ARRIVED_INDONESIA: "Tiba di Indonesia",
+  QUALITY_CHECK: "Pemeriksaan Kualitas", READY_TO_SHIP: "Siap Dikirim", SHIPPED: "Dikirim",
+  CANCELLED: "Dibatalkan", REJECTED: "Ditolak",
 };
 
 const FILTERS = [
@@ -121,14 +117,16 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </div>
 
         {data.orders.length ? <div className="space-y-3">{data.orders.map((order) => {
-          const status = STATUS[order.status] ?? { label: order.status, className: "bg-sand-100 text-sand-700" };
           const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
           const action = NEXT_ACTION[order.nextAction] ?? "Lihat detail";
           const thumb = order.items[0]?.salesEventItem?.displayImages[0] ?? order.items[0]?.salesEventItem?.productVariant.images[0] ?? null;
           return <article key={order.id} className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-md">
             <div className="flex items-center justify-between gap-3 border-b border-sand-100 bg-sand-50/70 px-4 py-3 sm:px-5">
               <p className="text-xs font-bold text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p>
-              <span className={`rounded-full px-2.5 py-1 text-[0.68rem] font-extrabold ${status.className}`}>{status.label}</span>
+              <div className="flex flex-wrap justify-end gap-1.5">
+                <span className="rounded-full bg-sun-100 px-2.5 py-1 text-[0.68rem] font-extrabold text-sun-900">Pembayaran: {PAYMENT_STATUS_LABEL[order.paymentStatus] ?? "Belum Bayar"}</span>
+                <span className="rounded-full bg-brand-100 px-2.5 py-1 text-[0.68rem] font-extrabold text-brand-800">Pesanan: {ORDER_PROGRESS_LABEL[order.orderProgressStatus] ?? order.orderProgressStatus}</span>
+              </div>
             </div>
             <div className="flex gap-3 p-4 sm:p-5">
               {thumb ? (

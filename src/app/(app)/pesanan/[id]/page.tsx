@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { OrderBadge, PaymentBadge } from "@/components/badges";
+import { PaymentBadge } from "@/components/badges";
 import { Card, CardHeader, EmptyState, LinkButton } from "@/components/ui";
 import { formatRupiah, formatTanggal, formatWaktu } from "@/lib/format";
 import {
   ORDER_STATUS_LABEL,
   PAYMENT_TYPE_LABEL,
   METODE_PENGIRIMAN_LABEL,
+  ORDER_PAYMENT_LABEL,
+  ORDER_PROGRESS_LABEL,
 } from "@/lib/domain";
 import { computeBilling } from "@/lib/billing";
 import type {
   OrderStatus,
+  OrderPaymentStatus,
+  OrderProgressStatus,
   PaymentScheme,
   DpTipe,
   PaymentType,
@@ -37,6 +41,9 @@ type OrderDetail = {
   namaPembeli: string;
   kontak: string;
   status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  orderProgressStatus: OrderProgressStatus | "CANCELLED" | "REJECTED";
+  orderProgressIsCustom: boolean;
   catatan: string | null;
   alasanBatal: string | null;
   tokenAkses: string;
@@ -157,7 +164,12 @@ export default async function OrderDetailPage({
               <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
                 {order.namaPembeli || "(Nama belum diisi)"}
               </h1>
-              <OrderBadge status={order.status} />
+              <span className="rounded-full bg-sun-100 px-3 py-1 text-xs font-bold text-sun-900 ring-1 ring-inset ring-sun-500/25">
+                Pembayaran: {ORDER_PAYMENT_LABEL[order.paymentStatus]}
+              </span>
+              <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-900 ring-1 ring-inset ring-brand-600/25">
+                Pesanan: {ORDER_PROGRESS_LABEL[order.orderProgressStatus]}
+              </span>
               {(!order.namaPembeli || !order.kontak) && (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                   Data belum lengkap
@@ -419,10 +431,14 @@ export default async function OrderDetailPage({
               )}
             </Card>
           )}
-          {!dibatalkan && (
+          {!['DIBATALKAN', 'DITOLAK'].includes(order.status) && (
             <>
               <Card className="p-5">
-                <OrderStatusControl orderId={id} current={order.status} />
+                <OrderStatusControl
+                  orderId={id}
+                  current={order.orderProgressStatus as OrderProgressStatus}
+                  isCustom={order.orderProgressIsCustom}
+                />
               </Card>
               <Card className="p-5">
                 <CancelOrderForm orderId={id} />

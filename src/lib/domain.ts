@@ -5,6 +5,8 @@ import {
   PaymentChannel,
   PaymentType,
   PaymentVerification,
+  OrderProgressStatus,
+  OrderPaymentStatus,
   PaymentScheme,
 } from "@/lib/types";
 
@@ -94,6 +96,36 @@ export const ORDER_STATUS_BADGE: Record<OrderStatus, string> = {
  * BARU_MASUK tetap menempati kuota (reservasi, v1.2 FR-1.4).
  */
 export const ORDER_STATUS_NONAKTIF: OrderStatus[] = ["DIBATALKAN", "DITOLAK"];
+
+export const ORDER_PROGRESS_LABEL: Record<OrderProgressStatus, string> = {
+  OPEN: "Open",
+  CLOSED: "Closed",
+  PRODUCTION: "Produksi",
+  SHIPMENT: "Shipment",
+  PACKING: "Siap Kirim",
+  DELIVERED: "Terkirim",
+  COMPLETED: "Selesai",
+  SUPPLIER_PROCESSING: "Diproses Supplier",
+  INTERNATIONAL_TRANSIT: "Transit Internasional",
+  ARRIVED_INDONESIA: "Tiba di Indonesia",
+  QUALITY_CHECK: "Pemeriksaan Kualitas",
+  READY_TO_SHIP: "Siap Dikirim",
+  SHIPPED: "Dikirim",
+  CANCELLED: "Dibatalkan",
+  REJECTED: "Ditolak",
+};
+
+export const ORDER_PROGRESS_OPTIONS: OrderProgressStatus[] = [
+  "OPEN", "CLOSED", "PRODUCTION", "SUPPLIER_PROCESSING",
+  "INTERNATIONAL_TRANSIT", "ARRIVED_INDONESIA", "QUALITY_CHECK",
+  "PACKING", "READY_TO_SHIP", "SHIPMENT", "SHIPPED", "DELIVERED", "COMPLETED",
+];
+
+export const ORDER_PAYMENT_LABEL: Record<OrderPaymentStatus, string> = {
+  UNPAID: "Belum Bayar",
+  DOWN_PAYMENT: "DP Diterima",
+  PAID: "Lunas",
+};
 
 /** Pesanan dianggap aktif (menempati kuota) selama bukan dibatalkan/ditolak. */
 export function orderAktif(status: OrderStatus): boolean {
