@@ -242,6 +242,12 @@ export async function deletePayment(paymentId: string) {
   if (res?.id) revalidatePath(`/pesanan/${res.id}`);
 }
 
+/** Seller: tarik status terbaru pembayaran gateway dari payment-service. */
+export async function syncGatewayPaymentAsSeller(orderId: string, paymentId: string) {
+  await api.post(`/seller/orders/${orderId}/payment-attempts/${paymentId}/sync`);
+  revalidatePath(`/pesanan/${orderId}`);
+}
+
 export async function reconcileGatewayPayment(orderId: string, gatewayOrderId: string) {
   await api.post("/admin/payments/reconcile", { gatewayOrderIds: [gatewayOrderId] });
   revalidatePath(`/pesanan/${orderId}`);
