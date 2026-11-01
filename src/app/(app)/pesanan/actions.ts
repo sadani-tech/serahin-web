@@ -243,9 +243,33 @@ export async function deletePayment(paymentId: string) {
 }
 
 /** Seller: tarik status terbaru pembayaran gateway dari payment-service. */
-export async function syncGatewayPaymentAsSeller(orderId: string, paymentId: string) {
-  await api.post(`/seller/orders/${orderId}/payment-attempts/${paymentId}/sync`);
+export async function syncGatewayPaymentAsSeller(
+  orderId: string,
+  paymentId: string,
+): Promise<{ error?: string; gatewayStatus?: string }> {
+  try {
+    const res = await api.post<{ gatewayStatus?: string }>(
+      `/seller/orders/${orderId}/payment-attempts/${paymentId}/sync`,
+    );
+    revalidatePath(`/pesanan/${orderId}`);
+    return { gatewayStatus: res?.gatewayStatus };
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal mengecek status gateway." };
+  }
+}
+
+/** Seller: tandai pembayaran gateway PENDING sebagai terverifikasi (dana sudah dicek di dashboard GDC). */
+export async function verifyGatewayPaymentManually(
+  orderId: string,
+  paymentId: string,
+): Promise<{ error?: string }> {
+  try {
+    await api.post(`/payments/${paymentId}/verify`, { keputusan: "TERVERIFIKASI" });
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal memverifikasi pembayaran." };
+  }
   revalidatePath(`/pesanan/${orderId}`);
+  return {};
 }
 
 export async function reconcileGatewayPayment(orderId: string, gatewayOrderId: string) {
