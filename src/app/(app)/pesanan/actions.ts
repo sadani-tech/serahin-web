@@ -258,6 +258,20 @@ export async function syncGatewayPaymentAsSeller(
   }
 }
 
+/** Seller: tutup tagihan gateway PENDING yang sudah Expired di dashboard provider (membuka transfer manual). */
+export async function expireGatewayPaymentAsSeller(
+  orderId: string,
+  paymentId: string,
+): Promise<{ error?: string }> {
+  try {
+    await api.post(`/seller/orders/${orderId}/payment-attempts/${paymentId}/expire`);
+  } catch (e) {
+    return { error: e instanceof ApiError ? e.message : "Gagal menandai tagihan kedaluwarsa." };
+  }
+  revalidatePath(`/pesanan/${orderId}`);
+  return {};
+}
+
 /** Seller: tandai pembayaran gateway PENDING sebagai terverifikasi (dana sudah dicek di dashboard GDC). */
 export async function verifyGatewayPaymentManually(
   orderId: string,
