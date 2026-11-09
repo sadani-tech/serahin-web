@@ -50,7 +50,7 @@ export function RevampFooter() {
         <div><h2 className="footer__h">Kontak</h2>
           <address><ul>
             <li><a href="tel:+6285111510038" className="footer__contact"><Icon name="phone" />(+62) 851 1151 0038</a></li>
-            <li><a href="mailto:suryadanikmah@gmail.com" className="footer__contact"><Icon name="mail" />suryadanikmah@gmail.com</a></li>
+            <li><a href="mailto:sadanitech@gmail.com" className="footer__contact"><Icon name="mail" />sadanitech@gmail.com</a></li>
           </ul></address>
         </div>
       </div>

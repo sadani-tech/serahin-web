@@ -4,7 +4,7 @@ export const publicSite = {
     process.env.NEXT_PUBLIC_LEGAL_NAME || "PT Sadani Teknologi Indonesia",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://serahin.suraise.com",
   email:
-    process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "suryadanikmah@gmail.com",
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "sadanitech@gmail.com",
   phoneDisplay:
     process.env.NEXT_PUBLIC_SUPPORT_PHONE_DISPLAY || "0851 1151 0038",
   phoneHref:
