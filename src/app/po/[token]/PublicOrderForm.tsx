@@ -16,6 +16,7 @@ import { BuyerAccessModal } from "@/components/BuyerAccessModal";
 import { CopyButton } from "@/components/CopyButton";
 import { GatewayMethodSelect } from "@/components/GatewayMethodSelect";
 import { computeDownPaymentTarget } from "@/lib/billing";
+import { effectiveUnitPrice } from "@/lib/quantity-promo";
 import { METODE_PENGIRIMAN_LABEL } from "@/lib/domain";
 import type { MetodePengiriman } from "@/lib/types";
 
@@ -25,6 +26,8 @@ export type PublicVariantOption = {
   namaVarian: string;
   sisa: number;
   harga: number;
+  promoMinQuantity?: number | null;
+  promoDiscountPerUnit?: number | null;
   gambarUrl?: string | null;
   images?: string[];
   warna?: string[];
@@ -272,10 +275,10 @@ export function PublicOrderForm({
     if (v.warna?.length) {
       return Object.entries(colorQty[v.id] ?? {})
         .filter(([, q]) => q > 0)
-        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: warna as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }));
+        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: warna as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }));
     }
     const q = qty[v.id] ?? 0;
-    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, jumlah: q, warna: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }] : [];
+    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }] : [];
   });
   const items = rows.map((r) => ({
     variantId: r.variantId,
@@ -283,10 +286,13 @@ export function PublicOrderForm({
     expectedHarga: r.harga,
     warna: r.warna,
   }));
-  const total = rows.reduce((sum, r) => sum + r.harga * r.jumlah, 0);
+  const totalQuantity = rows.reduce((sum, row) => sum + row.jumlah, 0);
+  const discountedPrice = (row: typeof rows[number]) => effectiveUnitPrice({ price: row.harga, promoMinQuantity: row.promoMinQuantity, promoDiscountPerUnit: row.promoDiscountPerUnit }, totalQuantity);
+  const total = rows.reduce((sum, r) => sum + discountedPrice(r) * r.jumlah, 0);
+  const originalTotal = rows.reduce((sum, r) => sum + r.harga * r.jumlah, 0);
   const dpTarget = paymentScheme === "DP_PELUNASAN"
     ? computeDownPaymentTarget(
-        rows.map((r) => ({ hargaSaatPesan: r.harga, jumlah: r.jumlah, dpTipe: r.dpTipe, dpPercent: r.dpPercent, dpNominal: r.dpNominal })),
+        rows.map((r) => ({ hargaSaatPesan: discountedPrice(r), jumlah: r.jumlah, dpTipe: r.dpTipe, dpPercent: r.dpPercent, dpNominal: r.dpNominal })),
         dpTipe,
         dpPercent,
         dpNominal,
@@ -607,6 +613,7 @@ export function PublicOrderForm({
                       )}
                     </div>
                     <p className="mt-1 text-base font-extrabold text-brand-700 sm:text-lg">{formatRupiah(v.harga)}</p>
+                    {v.promoMinQuantity && v.promoDiscountPerUnit ? <p className="mt-0.5 text-xs font-semibold text-emerald-700">Promo toko: beli {v.promoMinQuantity}+ unit dari produk apa pun, hemat {formatRupiah(v.promoDiscountPerUnit)} per unit</p> : null}
                     {paymentScheme === "DP_PELUNASAN" && v.dpTipe != null && (
                       <p className="mt-0.5 text-[0.65rem] font-bold text-accent-700">
                         DP khusus: {v.dpTipe === "NOMINAL" ? formatRupiah(v.dpNominal ?? 0) : `${v.dpPercent ?? 50}%`}
@@ -729,15 +736,21 @@ export function PublicOrderForm({
                   <div className="min-w-0">
                     <p className="truncate font-bold text-sand-800">{r.namaVarian}</p>
                     <p className="text-xs text-sand-500">
-                      {r.jumlah} × {formatRupiah(r.harga)}{r.warna ? ` · ${r.warna}` : ""}
+                      {r.jumlah} × {formatRupiah(discountedPrice(r))}{r.warna ? ` · ${r.warna}` : ""}
                     </p>
                   </div>
-                  <span className="shrink-0 font-bold text-sand-800">{formatRupiah(r.harga * r.jumlah)}</span>
+                  <span className="shrink-0 font-bold text-sand-800">{formatRupiah(discountedPrice(r) * r.jumlah)}</span>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="mt-4 rounded-xl bg-sand-50 px-3 py-4 text-center text-sm text-sand-500">Pilih varian dari katalog untuk memulai pesanan.</p>
+          )}
+          {originalTotal > total && (
+            <div className="mt-4 flex items-center justify-between text-sm text-sand-500"><span>Harga awal</span><span className="line-through">{formatRupiah(originalTotal)}</span></div>
+          )}
+          {originalTotal > total && (
+            <div className="mt-1 flex items-center justify-between text-sm font-semibold text-emerald-700"><span>Potongan promo</span><span>−{formatRupiah(originalTotal - total)}</span></div>
           )}
           <div className="mt-4 flex items-baseline justify-between gap-3">
             <span className="text-sm font-bold text-sand-600">Total</span>

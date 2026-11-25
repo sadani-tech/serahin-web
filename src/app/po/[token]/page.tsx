@@ -61,6 +61,8 @@ type FormInfo = {
     namaVarian: string;
     sisa: number;
     harga: number;
+    promoMinQuantity?: number | null;
+    promoDiscountPerUnit?: number | null;
     gambarUrl: string | null;
     images: string[];
     warna: string[];

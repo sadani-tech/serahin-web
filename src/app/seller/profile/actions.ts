@@ -8,6 +8,24 @@ export async function updateSellerProfile(formData: FormData) {
   revalidatePath("/seller/profile"); revalidatePath("/seller/dashboard");
 }
 
+export type PromotionState = { error?: string; success?: string } | undefined;
+
+export async function updateSellerPromotion(_prev: PromotionState, formData: FormData): Promise<PromotionState> {
+  const minimum = String(formData.get("promoMinQuantity") ?? "").trim();
+  const discount = String(formData.get("promoDiscountPerUnit") ?? "").trim();
+  try {
+    await api.patch("/seller/promotion", {
+      promoMinQuantity: minimum ? Number(minimum) : null,
+      promoDiscountPerUnit: discount ? Number(discount) : null,
+    });
+    revalidatePath("/seller/profile");
+    revalidatePath("/catalog");
+    return { success: "Promo toko berhasil disimpan." };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Promo toko gagal disimpan." };
+  }
+}
+
 export type UploadSellerLogoState = { error?: string; success?: string } | undefined;
 
 export async function uploadSellerLogoAction(_prev: UploadSellerLogoState, form: FormData): Promise<UploadSellerLogoState> {

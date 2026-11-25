@@ -7,6 +7,8 @@ export type CartItem = {
   variantId: string;
   name: string;
   price: number;
+  promoMinQuantity?: number | null;
+  promoDiscountPerUnit?: number | null;
   quantity: number;
   selectedColor?: string;
   image?: string | null;
@@ -56,6 +58,8 @@ type RemoteCart = {
     variantId: string;
     name: string;
     price: number | null;
+    promoMinQuantity?: number | null;
+    promoDiscountPerUnit?: number | null;
     quantity: number;
     selectedColor: string | null;
     image: string | null;
@@ -82,6 +86,7 @@ function remoteToDraft(remote: RemoteCart): CartDraft {
     endsAt: remote.salesEvent.endsAt,
     items: remote.items.filter((item) => item.price !== null).map((item) => ({
       variantId: item.variantId, name: item.name, price: item.price!, quantity: item.quantity,
+      promoMinQuantity: item.promoMinQuantity, promoDiscountPerUnit: item.promoDiscountPerUnit,
       selectedColor: item.selectedColor ?? undefined, image: item.image, colors: item.colors,
       eligible: item.eligible, invalidReason: item.invalidReason,
     })),
@@ -137,6 +142,22 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
       });
       const data = await response.json().catch(() => ({})) as RemoteCart & { message?: string };
       if (!response.ok) throw new Error(data.message ?? "Keranjang belum dapat disinkronkan.");
+      if (Array.isArray(data.items)) {
+        setCarts((current) => current.map((cart) => {
+          if (cart.salesEventId !== draft.salesEventId) return cart;
+          let changed = false;
+          const items = cart.items.map((item) => {
+            const remote = data.items.find((candidate) => candidate.variantId === item.variantId && (candidate.selectedColor ?? "") === (item.selectedColor ?? ""));
+            if (!remote || remote.price == null) return item;
+            const promoMinQuantity = remote.promoMinQuantity ?? null;
+            const promoDiscountPerUnit = remote.promoDiscountPerUnit ?? null;
+            if (item.price === remote.price && (item.promoMinQuantity ?? null) === promoMinQuantity && (item.promoDiscountPerUnit ?? null) === promoDiscountPerUnit) return item;
+            changed = true;
+            return { ...item, price: remote.price, promoMinQuantity, promoDiscountPerUnit };
+          });
+          return changed ? { ...cart, items } : cart;
+        }));
+      }
     });
     syncQueue.current.set(draft.salesEventId, current);
     try {
@@ -182,7 +203,7 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
       const existingItem = existingCart?.items.find((candidate) => sameItem(candidate, item));
       const items = existingItem
         ? existingCart!.items.map((candidate) => sameItem(candidate, item)
-          ? { ...candidate, quantity: candidate.quantity + item.quantity }
+          ? { ...candidate, price: item.price, promoMinQuantity: item.promoMinQuantity, promoDiscountPerUnit: item.promoDiscountPerUnit, quantity: candidate.quantity + item.quantity }
           : candidate)
         : [...(existingCart?.items ?? []), item];
       draftForEvent = { ...event, items };

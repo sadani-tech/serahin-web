@@ -8,6 +8,8 @@ export type PublicOffering = {
   status: string;
   endsAt: string;
   price: number;
+  promoMinQuantity?: number | null;
+  promoDiscountPerUnit?: number | null;
   quotaRemaining: number;
   label: string | null;
   orderable: boolean;

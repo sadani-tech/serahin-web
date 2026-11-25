@@ -9,6 +9,7 @@ import { ToastFeedback } from "@/components/Toast";
 import { BuyerAccessModal } from "@/components/BuyerAccessModal";
 import { Select } from "@/components/ui";
 import { formatRupiah, formatTanggal } from "@/lib/format";
+import { cartTotal, effectiveUnitPrice } from "@/lib/quantity-promo";
 
 export function CartPageClient({ resumeCheckout = false, switchingAccount = false, buyerProfile }: {
   resumeCheckout?: boolean;
@@ -42,7 +43,8 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   const checkoutPanel = useRef<HTMLElement>(null);
   const checkoutKey = useRef<string>("");
   const checkoutCartId = useRef<string>("");
-  const total = cart?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
+  const total = cart ? cartTotal(cart.items) : 0;
+  const originalTotal = cart?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
   const selectedGatewayMethod = gatewayMethods.find((method) => method.code === gatewayMethod);
   const cartRevision = cart?.items.map((item) => `${item.variantId}:${item.selectedColor ?? ""}:${item.quantity}`).join("|") ?? "";
 
@@ -225,7 +227,8 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
             ) : item.selectedColor ? (
               <p className="cart-page__item-color-text">Warna: {item.selectedColor}</p>
             ) : null}
-            <p className="cart-page__item-price">{formatRupiah(item.price)}</p>
+            <p className="cart-page__item-price">{formatRupiah(effectiveUnitPrice(item, cart.items.reduce((sum, row) => sum + row.quantity, 0)))} / unit</p>
+            {item.promoMinQuantity && item.promoDiscountPerUnit ? <p className="text-xs text-emerald-700">Promo toko: potongan {formatRupiah(item.promoDiscountPerUnit)} per unit mulai {item.promoMinQuantity} unit dalam keranjang</p> : null}
             {item.invalidReason && <p className="cart-page__item-warn">{item.invalidReason}</p>}
             <div className="cart-page__item-row">
               <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.quantity - 1)} className="cart-page__qty-btn" aria-label="Kurangi jumlah">−</button>
@@ -242,6 +245,8 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       <p className="cart-page__eyebrow">Checkout</p>
       <h2 className="cart-page__title" style={{ fontSize: "1.3rem" }}>Konfirmasi dan bayar</h2>
       <p className="cart-page__meta" style={{ fontWeight: 500 }}>Keranjang ini langsung menjadi pesanan. Tidak ada form produk tambahan setelah halaman ini.</p>
+      {originalTotal > total && <div className="cart-page__billing-row"><span>Harga awal</span><span className="line-through">{formatRupiah(originalTotal)}</span></div>}
+      {originalTotal > total && <div className="cart-page__billing-row text-emerald-700"><span>Potongan promo</span><strong>−{formatRupiah(originalTotal - total)}</strong></div>}
       <div className="cart-page__summary-total"><span>Total produk</span><strong>{formatRupiah(total)}</strong></div>
 
       {authenticated && buyerProfile ? (
@@ -337,7 +342,7 @@ function displayGatewayMethod(name: string) {
  * bukti) untuk Batch PO yang berasal dari Seller yang sama dengan cart aktif. */
 function CheckoutGabunganPanel({ carts, pending, onSubmit }: { carts: CartDraft[]; pending: boolean; onSubmit: (salesEventIds: string[]) => void }) {
   const [selected, setSelected] = useState<Set<string>>(new Set(carts.map((c) => c.salesEventId)));
-  const total = carts.filter((c) => selected.has(c.salesEventId)).reduce((sum, c) => sum + c.items.reduce((s, i) => s + i.price * i.quantity, 0), 0);
+  const total = carts.filter((c) => selected.has(c.salesEventId)).reduce((sum, c) => sum + cartTotal(c.items), 0);
   return (
     <div className="cart-page__conflict" style={{ marginBottom: "1rem" }}>
       <strong>Checkout gabungan tersedia — {carts[0]?.sellerName}</strong>
