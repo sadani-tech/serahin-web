@@ -53,6 +53,8 @@ export function ProductDetailClient({
       variantId: variant.id,
       name: `${product.name} — ${variant.name}`,
       price: offering.price,
+      promoMinQuantity: offering.promoMinQuantity,
+      promoDiscountPerUnit: offering.promoDiscountPerUnit,
       quantity,
       selectedColor: color || undefined,
       image,
@@ -100,6 +102,7 @@ export function ProductDetailClient({
           <p className="pd-seller">{product.seller.businessName}</p>
           <h1 className="pd-name" id="pd-name">{product.name}</h1>
           <p className="pd-price">{offering ? formatRupiah(offering.price) : "—"}</p>
+          {offering?.promoMinQuantity && offering.promoDiscountPerUnit ? <p className="text-sm font-semibold text-emerald-700">Promo toko: beli minimal {offering.promoMinQuantity} unit dari produk apa pun dalam satu keranjang, hemat {formatRupiah(offering.promoDiscountPerUnit)} per unit.</p> : null}
 
           {offering && (
             <div className="pd-meta">

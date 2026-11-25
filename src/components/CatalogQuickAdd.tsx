@@ -9,7 +9,7 @@ import { useCart } from "@/components/CartProvider";
 export function CatalogQuickAdd({ detailHref, event, item, role }: {
   detailHref: string;
   event: { salesEventId: string; eventTitle: string; formToken: string; sellerId?: string | null; sellerName: string; endsAt: string };
-  item: { variantId: string; name: string; price: number; image?: string | null; colors?: string[]; quotaRemaining: number };
+  item: { variantId: string; name: string; price: number; promoMinQuantity?: number | null; promoDiscountPerUnit?: number | null; image?: string | null; colors?: string[]; quotaRemaining: number };
   role?: string;
 }) {
   const { addItem } = useCart();
@@ -24,7 +24,7 @@ export function CatalogQuickAdd({ detailHref, event, item, role }: {
   return (
     <button
       type="button"
-      onClick={async () => { await addItem(event, { variantId: item.variantId, name: item.name, price: item.price, quantity: 1, image: item.image, colors: item.colors }); }}
+      onClick={async () => { await addItem(event, { variantId: item.variantId, name: item.name, price: item.price, promoMinQuantity: item.promoMinQuantity, promoDiscountPerUnit: item.promoDiscountPerUnit, quantity: 1, image: item.image, colors: item.colors }); }}
       disabled={item.quotaRemaining <= 0}
       className="pcard__cart"
       aria-label={item.quotaRemaining > 0 ? `Tambah ${item.name} ke keranjang` : `${item.name} — kuota habis`}
