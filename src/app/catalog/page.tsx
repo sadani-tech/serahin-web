@@ -260,7 +260,7 @@ export default async function CatalogPage({
                                 {variant.sisa > 0 ? `Sisa ${variant.sisa} pcs` : "Kuota habis"}
                               </span>
                             </div>
-                            {variant.promoMinQuantity && variant.promoDiscountPerUnit ? <p className="text-xs font-semibold text-emerald-700">Promo toko: beli {variant.promoMinQuantity}+ unit, hemat {formatRupiah(variant.promoDiscountPerUnit)} / unit</p> : null}
+                            {variant.promoMinQuantity && variant.promoDiscountPerUnit ? <p className="text-xs font-semibold text-emerald-700">Promo Batch PO: beli {variant.promoMinQuantity}+ unit, hemat {formatRupiah(variant.promoDiscountPerUnit)} / unit</p> : null}
                             <div className="pcard__actions">
                               {showClosed ? (
                                 <Link href={detailHref} className="pcard__buy">Detail Produk</Link>

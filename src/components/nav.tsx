@@ -124,6 +124,17 @@ const links: NavLink[] = [
     ),
   },
   {
+    href: "/seller/promotions",
+    label: "Promo",
+    roles: ["SELLER"],
+    group: "Promosi & Konten",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M3 7V4h7l11 11-7 7L3 11V7Z" /><circle cx="7.5" cy="7.5" r="1" />
+      </svg>
+    ),
+  },
+  {
     href: "/broadcast",
     label: "Broadcast",
     roles: ["ADMIN", "SELLER"],
