@@ -26,6 +26,7 @@ const roleLinks: Record<UserRole, Array<{ href: string; label: string }>> = {
   ],
   SELLER: [
     { href: "/seller/dashboard", label: "Dashboard" },
+    { href: "/seller/promotions", label: "Promo" },
     { href: "/seller/profile", label: "Pengaturan" },
   ],
   BUYER: [

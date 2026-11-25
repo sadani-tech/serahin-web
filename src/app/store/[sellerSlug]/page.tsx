@@ -123,13 +123,14 @@ export default async function StorePage({ params }: { params: Params }) {
                             {variant.sisa > 0 ? `Sisa ${variant.sisa} pcs` : "Kuota habis"}
                           </span>
                         </div>
+                        {variant.promoMinQuantity && variant.promoDiscountPerUnit ? <p className="text-xs font-semibold text-emerald-700">Promo Batch PO: beli {variant.promoMinQuantity}+ unit, hemat {formatRupiah(variant.promoDiscountPerUnit)} / unit</p> : null}
                         <div className="pcard__actions">
                           <Link href={detailHref} className="pcard__buy">Beli Produk</Link>
                           <CatalogQuickAdd
                             role={session?.role}
                             detailHref={detailHref}
                             event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerId: profile.id, sellerName: profile.businessName, endsAt: campaign.tanggalTutup }}
-                            item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
+                            item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, promoMinQuantity: variant.promoMinQuantity, promoDiscountPerUnit: variant.promoDiscountPerUnit, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
                           />
                         </div>
                       </div>
