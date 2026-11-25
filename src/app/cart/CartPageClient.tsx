@@ -228,7 +228,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
               <p className="cart-page__item-color-text">Warna: {item.selectedColor}</p>
             ) : null}
             <p className="cart-page__item-price">{formatRupiah(effectiveUnitPrice(item, cart.items.reduce((sum, row) => sum + row.quantity, 0)))} / unit</p>
-            {item.promoMinQuantity && item.promoDiscountPerUnit ? <p className="text-xs text-emerald-700">Promo toko: potongan {formatRupiah(item.promoDiscountPerUnit)} per unit mulai {item.promoMinQuantity} unit dalam keranjang</p> : null}
+            {item.promoMinQuantity && item.promoDiscountPerUnit ? <p className="text-xs text-emerald-700">Promo Batch PO: potongan {formatRupiah(item.promoDiscountPerUnit)} per unit mulai {item.promoMinQuantity} unit dalam keranjang</p> : null}
             {item.invalidReason && <p className="cart-page__item-warn">{item.invalidReason}</p>}
             <div className="cart-page__item-row">
               <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.quantity - 1)} className="cart-page__qty-btn" aria-label="Kurangi jumlah">−</button>

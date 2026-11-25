@@ -613,7 +613,7 @@ export function PublicOrderForm({
                       )}
                     </div>
                     <p className="mt-1 text-base font-extrabold text-brand-700 sm:text-lg">{formatRupiah(v.harga)}</p>
-                    {v.promoMinQuantity && v.promoDiscountPerUnit ? <p className="mt-0.5 text-xs font-semibold text-emerald-700">Promo toko: beli {v.promoMinQuantity}+ unit dari produk apa pun, hemat {formatRupiah(v.promoDiscountPerUnit)} per unit</p> : null}
+                    {v.promoMinQuantity && v.promoDiscountPerUnit ? <p className="mt-0.5 text-xs font-semibold text-emerald-700">Promo Batch PO: beli {v.promoMinQuantity}+ unit dari produk apa pun, hemat {formatRupiah(v.promoDiscountPerUnit)} per unit</p> : null}
                     {paymentScheme === "DP_PELUNASAN" && v.dpTipe != null && (
                       <p className="mt-0.5 text-[0.65rem] font-bold text-accent-700">
                         DP khusus: {v.dpTipe === "NOMINAL" ? formatRupiah(v.dpNominal ?? 0) : `${v.dpPercent ?? 50}%`}
