@@ -70,15 +70,21 @@ export default async function KeuanganPage({
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-sand-900">
+    <div className="space-y-6 pb-8">
+      <header className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-900 p-6 text-white sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-[.18em] text-brand-100">Kinerja toko</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">
           Keuangan
         </h1>
-        <p className="mt-1 text-sm text-sand-500">
-          Laba bersih riil per Batch PO (HPP snapshot) dan piutang buyer yang
-          belum lunas. Utang &amp; rekap Vendor ada di halaman detail Vendor.
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-50">
+          Pantau nilai pesanan, perkiraan laba setelah HPP, dan tagihan Buyer yang belum lunas dalam satu tempat.
         </p>
+      </header>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <FinanceMetric label="Nilai pesanan" value={formatRupiah(summary.totalNilaiPesanan)} note="Total pesanan pada filter terpilih" />
+        <FinanceMetric label="Laba setelah HPP" value={formatRupiah(summary.labaSetelahHpp)} note="Belum termasuk biaya operasional" tone="green" />
+        <FinanceMetric label="Belum dilunasi Buyer" value={formatRupiah(totalPiutang)} note={`${piutang.length} pesanan memiliki sisa tagihan`} tone="amber" />
       </div>
 
       {/* Filter (PRD v2.3.8 §3.4 — rentang tanggal custom), berlaku untuk semua sub-tab */}
@@ -109,12 +115,12 @@ export default async function KeuanganPage({
       </Card>
 
       {/* Sub-tab, supaya cashflow/ringkasan/piutang tidak tampil sekaligus */}
-      <div className="flex gap-1 border-b border-sand-200">
+      <nav aria-label="Bagian keuangan" className="flex gap-1 overflow-x-auto border-b border-sand-200">
         {TABS.map(([t, label]) => (
           <Link
             key={t}
             href={tabHref(t)}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition ${
+            className={`-mb-px min-h-11 shrink-0 border-b-2 px-4 py-2 text-sm font-bold transition ${
               tab === t
                 ? "border-brand-500 text-sand-900"
                 : "border-transparent text-sand-500 hover:text-sand-700"
@@ -123,7 +129,7 @@ export default async function KeuanganPage({
             {label}
           </Link>
         ))}
-      </div>
+      </nav>
 
       {tab === "cashflow" && (
         <div className="space-y-6">
@@ -242,4 +248,8 @@ export default async function KeuanganPage({
       )}
     </div>
   );
+}
+
+function FinanceMetric({ label, value, note, tone }: { label: string; value: string; note: string; tone?: "green" | "amber" }) {
+  return <div className="min-w-0 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm"><p className="text-xs font-bold uppercase tracking-wide text-sand-500">{label}</p><p className={`mt-2 break-all text-2xl font-extrabold sm:text-3xl ${tone === "green" ? "text-emerald-700" : tone === "amber" ? "text-amber-700" : "text-sand-900"}`}>{value}</p><p className="mt-2 text-xs leading-5 text-sand-500">{note}</p></div>;
 }

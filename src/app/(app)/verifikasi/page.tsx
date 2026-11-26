@@ -34,13 +34,13 @@ export default async function VerificationPage({ searchParams }: { searchParams:
   const tabQuery = (next: string) => ({ tab: next, ...(sp.campaignId ? { campaignId: sp.campaignId } : {}) });
 
   return <div className="space-y-6">
-    <div><h1 className="text-2xl font-bold text-sand-900">Verifikasi</h1><p className="mt-1 text-sm text-sand-500">Tinjau pesanan baru, pembayaran manual, checkout gabungan, dan pengajuan pembatalan yang membutuhkan keputusan.</p></div>
-    <div className="flex flex-wrap gap-2 border-b border-sand-200">
-      <Link href={{ pathname: "/verifikasi", query: tabQuery("orders") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "orders" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pesanan baru</Link>
-      <Link href={{ pathname: "/verifikasi", query: tabQuery("payments") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "payments" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pembayaran</Link>
-      <Link href={{ pathname: "/verifikasi", query: tabQuery("checkout-gabungan") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "checkout-gabungan" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Checkout Gabungan</Link>
-      <Link href={{ pathname: "/verifikasi", query: tabQuery("pembatalan") }} className={`-mb-px border-b-2 px-4 py-3 text-sm font-bold ${tab === "pembatalan" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pembatalan</Link>
-    </div>
+    <header className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-900 p-6 text-white sm:p-8"><p className="text-xs font-bold uppercase tracking-[.18em] text-brand-100">Antrean tindakan</p><h1 className="mt-2 text-3xl font-extrabold">Verifikasi</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-brand-50">Tinjau detail dan bukti sebelum memutuskan pesanan, pembayaran, checkout gabungan, atau pembatalan.</p><p className="mt-4 text-sm font-bold">{tab === "checkout-gabungan" ? checkoutGroups.length : queue.meta.total} item pada tab ini</p></header>
+    <nav aria-label="Jenis verifikasi" className="flex gap-2 overflow-x-auto border-b border-sand-200">
+      <Link href={{ pathname: "/verifikasi", query: tabQuery("orders") }} className={`-mb-px shrink-0 border-b-2 px-4 py-3 text-sm font-bold ${tab === "orders" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pesanan baru</Link>
+      <Link href={{ pathname: "/verifikasi", query: tabQuery("payments") }} className={`-mb-px shrink-0 border-b-2 px-4 py-3 text-sm font-bold ${tab === "payments" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pembayaran</Link>
+      <Link href={{ pathname: "/verifikasi", query: tabQuery("checkout-gabungan") }} className={`-mb-px shrink-0 border-b-2 px-4 py-3 text-sm font-bold ${tab === "checkout-gabungan" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Checkout Gabungan</Link>
+      <Link href={{ pathname: "/verifikasi", query: tabQuery("pembatalan") }} className={`-mb-px shrink-0 border-b-2 px-4 py-3 text-sm font-bold ${tab === "pembatalan" ? "border-brand-600 text-brand-700" : "border-transparent text-sand-500"}`}>Pembatalan</Link>
+    </nav>
 
     {tab !== "checkout-gabungan" && <Card className="p-4"><form className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="tab" value={tab} />

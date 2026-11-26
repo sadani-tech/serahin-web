@@ -31,13 +31,12 @@ export type PaymentVerificationRow = {
 
 export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRow[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const headRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const router = useRouter();
-  const { confirm } = useConfirm();
+  const { confirm, prompt } = useConfirm();
   const { sorted, sortKey, direction, toggle: toggleSort } = useSort(rows, (row, key) => {
     switch (key) {
       case "buyer": return row.order.namaPembeli;
@@ -57,18 +56,18 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
   async function submit(decision: "TERVERIFIKASI" | "DITOLAK", ids = [...selected]) {
     setError("");
     if (!ids.length) return;
-    if (decision === "DITOLAK" && !reason.trim()) return setError("Alasan penolakan wajib diisi.");
+    const reason = decision === "DITOLAK" ? await prompt({ title: `Tolak ${ids.length} pembayaran?`, description: "Alasan penolakan akan terlihat oleh Buyer.", label: "Alasan penolakan", confirmLabel: "Tolak", variant: "danger" }) : undefined;
+    if (decision === "DITOLAK" && !reason) return;
     const total = rows.filter((row) => ids.includes(row.id)).reduce((sum, row) => sum + Number(row.jumlah), 0);
     const ok = decision === "TERVERIFIKASI"
       ? await confirm({ title: `Verifikasi ${ids.length} pembayaran dengan total ${rupiah(total)}?`, confirmLabel: "Verifikasi", variant: "primary" })
-      : await confirm({ title: `Tolak ${ids.length} pembayaran?`, description: "Alasan akan terlihat oleh Buyer.", confirmLabel: "Tolak" });
+      : true;
     if (!ok) return;
     setBusy(true);
-    const result = await reviewPayments(ids, decision, reason);
+    const result = await reviewPayments(ids, decision, reason ?? "");
     setBusy(false);
     if (result.error) return setError(result.error);
     setSelected(new Set());
-    setReason("");
     toast.success(`${result.updated ?? ids.length} pembayaran berhasil ${decision === "TERVERIFIKASI" ? "diverifikasi" : "ditolak"}.`);
     router.refresh();
   }
@@ -80,10 +79,10 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
         <Button type="button" disabled={busy} onClick={() => submit("TERVERIFIKASI")}>Verifikasi</Button>
         <Button type="button" variant="danger" disabled={busy} onClick={() => submit("DITOLAK")}>Tolak</Button>
       </div>
-      <textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Alasan penolakan (wajib untuk Tolak)" className="min-h-20 w-full rounded-xl border border-sand-300 px-3 py-2 text-sm" />
       <ToastFeedback error={error} />
     </div>}
-    <div className="overflow-x-auto">
+    <div className="divide-y divide-sand-100 md:hidden">{rows.map((row) => <article key={row.id} className="space-y-3 p-4"><div className="flex items-start gap-3"><input type="checkbox" aria-label={`Pilih pembayaran ${row.order.namaPembeli}`} checked={selected.has(row.id)} onChange={() => setSelected((current) => { const next = new Set(current); if (next.has(row.id)) next.delete(row.id); else next.add(row.id); return next; })} className="mt-1 h-5 w-5"/><div className="min-w-0 flex-1"><Link href={`/pesanan/${row.order.id}`} className="font-extrabold text-sand-900">{row.order.namaPembeli}</Link><p className="text-xs text-sand-500">{row.order.campaign.namaProduk} · {row.jenis}</p></div><b className="text-sm text-brand-700">{rupiah(Number(row.jumlah))}</b></div><div className="flex items-center justify-between rounded-xl bg-sand-50 p-3 text-sm"><span>{waitingSince(row.createdAt)}</span>{row.buktiFile ? <ProofViewerButton url={row.buktiFile} className="font-bold text-brand-700"/> : <span className="text-rose-700">Tanpa bukti</span>}</div><div className="grid grid-cols-2 gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="min-h-11 rounded-xl bg-brand-600 text-sm font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => submit("DITOLAK", [row.id])} className="min-h-11 rounded-xl border border-rose-300 text-sm font-bold text-rose-700">Tolak</button></div></article>)}</div>
+    <div className="hidden overflow-x-auto md:block">
       <table className="w-full min-w-[1050px] text-sm">
         <thead><tr className="border-b text-left text-xs uppercase text-sand-500">
           <th className="px-4 py-3"><input ref={headRef} type="checkbox" checked={allChecked} onChange={() => setSelected(allChecked ? new Set() : new Set(rows.map((row) => row.id)))} /></th>
@@ -103,7 +102,7 @@ export function PaymentVerificationTable({ rows }: { rows: PaymentVerificationRo
           <td className="px-4 py-3 font-extrabold text-sand-900">{rupiah(Number(row.jumlah))}</td>
           <td className="px-4 py-3">{row.buktiFile ? <ProofViewerButton url={row.buktiFile} className="font-bold text-brand-700 hover:underline" /> : <span className="text-rose-600">Tidak ada</span>}</td>
           <td className="px-4 py-3 text-xs text-sand-600">{waitingSince(row.createdAt)}</td>
-          <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => { setSelected(new Set([row.id])); setError("Isi alasan, lalu pilih Tolak."); }} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
+          <td className="px-4 py-3"><div className="flex gap-2"><button disabled={busy} onClick={() => submit("TERVERIFIKASI", [row.id])} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-bold text-white">Verifikasi</button><button disabled={busy} onClick={() => submit("DITOLAK", [row.id])} className="rounded-lg border border-rose-300 px-3 py-2 text-xs font-bold text-rose-700">Tolak</button></div></td>
         </tr>)}</tbody>
       </table>
     </div>

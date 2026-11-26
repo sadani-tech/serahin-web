@@ -8,6 +8,7 @@ import { reviewOrders } from "./actions";
 import { ToastFeedback, useToast } from "@/components/Toast";
 import { useSort } from "@/hooks/useSort";
 import { SortableTh } from "@/components/SortableTh";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export type VerificationRow = {
   id: string;
@@ -23,7 +24,7 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [alasan, setAlasan] = useState("");
+  const { confirm, prompt } = useConfirm();
   const headRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const toast = useToast();
@@ -46,19 +47,18 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
     return next;
   });
 
-  async function submit(keputusan: "APPROVE" | "REJECT") {
+  async function submit(keputusan: "APPROVE" | "REJECT", ids = Array.from(selected)) {
     setError("");
-    if (keputusan === "REJECT" && !alasan.trim()) {
-      setError("Alasan penolakan wajib diisi.");
-      return;
-    }
+    if (!ids.length) return;
+    const reason = keputusan === "REJECT" ? await prompt({ title: `Tolak ${ids.length} pesanan?`, description: "Alasan akan terlihat oleh Buyer.", label: "Alasan penolakan", confirmLabel: "Tolak", variant: "danger" }) : undefined;
+    if (keputusan === "REJECT" && !reason) return;
+    if (keputusan === "APPROVE" && !await confirm({ title: `Setujui ${ids.length} pesanan?`, description: "Pesanan akan masuk ke tahap pembayaran atau pemrosesan.", confirmLabel: "Setujui", variant: "primary" })) return;
     setBusy(true);
-    const result = await reviewOrders(Array.from(selected), keputusan, alasan);
+    const result = await reviewOrders(ids, keputusan, reason ?? "");
     setBusy(false);
     if (result.error) return setError(result.error);
     setSelected(new Set());
-    setAlasan("");
-    toast.success(`${selected.size} pesanan berhasil ${keputusan === "APPROVE" ? "disetujui" : "ditolak"}.`);
+    toast.success(`${ids.length} pesanan berhasil ${keputusan === "APPROVE" ? "disetujui" : "ditolak"}.`);
     router.refresh();
   }
 
@@ -71,16 +71,11 @@ export function VerificationTable({ rows }: { rows: VerificationRow[] }) {
             <Button type="button" disabled={busy} onClick={() => submit("APPROVE")}>Setujui</Button>
             <Button type="button" variant="danger" disabled={busy} onClick={() => submit("REJECT")}>Tolak</Button>
           </div>
-          <textarea
-            value={alasan}
-            onChange={(event) => setAlasan(event.target.value)}
-            placeholder="Alasan penolakan (wajib untuk aksi Tolak)"
-            className="min-h-20 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm"
-          />
           <ToastFeedback error={error} />
         </div>
       )}
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-sand-100 md:hidden">{rows.map((row) => <article key={row.id} className="space-y-3 p-4"><div className="flex items-start gap-3"><input type="checkbox" aria-label={`Pilih pesanan ${row.namaPembeli}`} checked={selected.has(row.id)} onChange={() => toggle(row.id)} className="mt-1 h-5 w-5"/><div className="min-w-0"><Link href={`/pesanan/${row.id}`} className="font-extrabold text-sand-900">{row.namaPembeli}</Link><p className="text-xs text-sand-500">{row.kontak}</p></div></div><div className="rounded-xl bg-sand-50 p-3 text-sm"><b>{row.campaign.namaProduk}</b><p className="mt-1 text-sand-600">{row.items.map((item) => `${item.variant.namaVarian} × ${item.jumlah}`).join(", ")}</p>{row.flagDuplikat && <p className="mt-2 font-bold text-amber-800">Periksa kemungkinan duplikat</p>}</div><div className="grid grid-cols-2 gap-2"><button disabled={busy} onClick={() => submit("APPROVE", [row.id])} className="min-h-11 rounded-xl bg-brand-600 text-sm font-bold text-white">Setujui</button><button disabled={busy} onClick={() => submit("REJECT", [row.id])} className="min-h-11 rounded-xl border border-rose-300 text-sm font-bold text-rose-700">Tolak</button></div></article>)}</div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead><tr className="border-b text-left text-xs uppercase text-sand-500">
             <th className="px-4 py-3"><input ref={headRef} type="checkbox" checked={allChecked} onChange={() => setSelected(allChecked ? new Set() : new Set(rows.map((r) => r.id)))} /></th>

@@ -4,8 +4,18 @@ import { revalidatePath } from "next/cache";
 import { api, ApiError, TOKEN_COOKIE } from "@/lib/api";
 
 export async function updateSellerProfile(formData: FormData) {
-  await api.patch("/seller/profile", { businessName: String(formData.get("businessName") ?? ""), description: String(formData.get("description") ?? ""), contactEmail: String(formData.get("contactEmail") ?? ""), contactPhone: String(formData.get("contactPhone") ?? ""), logoUrl: String(formData.get("logoUrl") ?? "") || undefined });
+  await api.patch("/seller/profile", { businessName: String(formData.get("businessName") ?? ""), description: String(formData.get("description") ?? ""), contactEmail: String(formData.get("contactEmail") ?? ""), logoUrl: String(formData.get("logoUrl") ?? "") || undefined });
   revalidatePath("/seller/profile"); revalidatePath("/seller/dashboard");
+}
+
+export async function requestPhoneChange(_previous: { error?: string; success?: string } | undefined, formData: FormData) {
+  try {
+    await api.post("/seller/profile/phone-change-requests", { newPhone: String(formData.get("newPhone") ?? ""), reason: String(formData.get("reason") ?? "") });
+    revalidatePath("/seller/profile");
+    return { success: "Permintaan terkirim. Owner akan meninjau nomor baru Anda." };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Permintaan gagal dikirim." };
+  }
 }
 
 export type UploadSellerLogoState = { error?: string; success?: string } | undefined;
