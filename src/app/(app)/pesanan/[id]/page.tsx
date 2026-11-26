@@ -53,6 +53,7 @@ type OrderDetail = {
     id: string;
     jumlah: number;
     hargaSaatPesan: string;
+    hargaKatalog: string;
     warna: string | null;
     // DP kustom Produk (v2.3.7 §3.18) — snapshot DP efektif saat pesanan
     // dibuat; null berarti mengikuti DP Batch PO (order.campaign.dp...).
@@ -101,6 +102,7 @@ type OrderDetail = {
     dpPercent: number | null;
     dpNominal: string | null;
     deadlinePelunasan: string | null;
+    promotion: { name: string; promoMinQuantity: number; promoDiscountPerUnit: string; isActive: boolean } | null;
   };
 };
 
@@ -132,6 +134,12 @@ export default async function OrderDetailPage({
     }))],
   });
   const totalQty = order.items.reduce((s, it) => s + it.jumlah, 0);
+  const promotion = order.campaign.promotion;
+  const promoApplied = Boolean(promotion && totalQty >= promotion.promoMinQuantity && order.items.every((item) =>
+    Number(item.hargaSaatPesan) === Math.max(0, Number(item.hargaKatalog) - Number(promotion!.promoDiscountPerUnit))));
+  const promoSavings = promoApplied
+    ? order.items.reduce((sum, item) => sum + (Number(item.hargaKatalog) - Number(item.hargaSaatPesan)) * item.jumlah, 0)
+    : 0;
   const adaPembayaranTerverifikasi = order.payments.some((p) => p.statusVerifikasi === "TERVERIFIKASI");
 
   const dibatalkan = order.status === "DIBATALKAN";
@@ -222,6 +230,19 @@ export default async function OrderDetailPage({
           {/* Billing */}
           <Card>
             <CardHeader title="Ringkasan tagihan" />
+            {promotion && (
+              <div className="border-b border-sand-100 px-5 py-3 text-sm">
+                {promoApplied ? (
+                  <p className="font-semibold text-emerald-700">Promo {promotion.name} diterapkan: hemat {formatRupiah(promoSavings)}. Total dan sisa tagihan di bawah sudah termasuk potongan.</p>
+                ) : !promotion.isActive ? (
+                  <p className="text-sand-600">Promo {promotion.name} saat ini nonaktif. Total dan sisa tagihan tetap mengikuti harga yang tersimpan pada pesanan.</p>
+                ) : totalQty < promotion.promoMinQuantity ? (
+                  <p className="text-sand-600">Promo {promotion.name} berlaku mulai {promotion.promoMinQuantity} unit dalam satu pesanan. Pesanan ini berisi {totalQty} unit.</p>
+                ) : (
+                  <p className="font-semibold text-amber-700">Harga tersimpan pada pesanan ini belum mencerminkan promo {promotion.name}. Periksa sebelum membuat tagihan pelunasan.</p>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
               <div className="px-5 py-4">
                 <p className="text-xs uppercase tracking-wide text-sand-500">
