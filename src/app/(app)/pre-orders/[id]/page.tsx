@@ -70,6 +70,7 @@ type CampaignDetail = {
   namaProduk: string;
   status: CampaignStatus;
   harga: string;
+  promotion: { id: string; name: string; promoMinQuantity: number; promoDiscountPerUnit: string; isActive: boolean } | null;
   hpp: string | null;
   paymentScheme: PaymentScheme;
   dpTipe: DpTipe | null;
@@ -398,6 +399,14 @@ export default async function CampaignDetailPage({
           </div>
         </div>
       </div>
+
+      {campaign.promotion && (
+        <div className={`rounded-xl border p-4 text-sm ${campaign.promotion.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-sand-200 bg-sand-50 text-sand-600"}`}>
+          <p className="font-bold">Promo {campaign.promotion.isActive ? "aktif" : "nonaktif"}: {campaign.promotion.name}</p>
+          <p className="mt-1">Beli minimal {campaign.promotion.promoMinQuantity} unit dari produk apa pun dalam satu pesanan, potongan {formatRupiah(campaign.promotion.promoDiscountPerUnit)} per unit. Harga produk di bawah adalah harga katalog sebelum promo.</p>
+          <Link href="/seller/promotions" className="mt-2 inline-block font-bold underline">Kelola promo</Link>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-sand-200">
