@@ -20,6 +20,7 @@ type SettlementItem = {
   id: string;
   jumlah: number;
   hargaSaatPesan: string;
+  hargaSebelumPromo: number | null;
   warna: string | null;
   variant: { namaVarian: string; gambarUrl: string | null };
 };
@@ -99,38 +100,52 @@ export function PortalSettlementForm({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [metode, setMetode] = useState<MetodePengiriman | "">("");
   const [alamat, setAlamat] = useState("");
-  const [preview, setPreview] = useState<{ dueTotal: number; shopeeMaxAmount: number; bankAmountIfShopee: number }>({
+  const [preview, setPreview] = useState<{ key: string; dueTotal: number; shopeeMaxAmount: number; bankAmountIfShopee: number; error?: string }>({
+    key: "",
     dueTotal: 0,
     shopeeMaxAmount: 0,
     bankAmountIfShopee: 0,
   });
-  const [previewError, setPreviewError] = useState<string | undefined>();
   const [localError, setLocalError] = useState<string | undefined>();
   const paymentAttemptKey = useRef<string | null>(null);
 
-  const activePreview = selected.size === 0 ? { dueTotal: 0, shopeeMaxAmount: 0, bankAmountIfShopee: 0 } : preview;
+  const selectionKey = [...selected].sort().join(",");
+  const previewReady = selectionKey.length > 0 && preview.key === selectionKey && !preview.error;
+  const activePreview = previewReady ? preview : { dueTotal: 0, shopeeMaxAmount: 0, bankAmountIfShopee: 0 };
   const includeShopee = metode === "SHOPEE";
   const shopeeAmount = includeShopee ? activePreview.shopeeMaxAmount : 0;
   const bankAmount = includeShopee ? activePreview.bankAmountIfShopee : activePreview.dueTotal;
+  const selectedItems = items.filter((item) => selected.has(item.id));
+  const priceBeforePromo = selectedItems.reduce(
+    (sum, item) => sum + (item.hargaSebelumPromo ?? Number(item.hargaSaatPesan)) * item.jumlah,
+    0,
+  );
+  const priceAfterPromo = selectedItems.reduce(
+    (sum, item) => sum + Number(item.hargaSaatPesan) * item.jumlah,
+    0,
+  );
+  const promoDiscount = priceBeforePromo - priceAfterPromo;
+  const dpCovered = Math.max(0, priceAfterPromo - activePreview.dueTotal);
 
   useEffect(() => {
-    if (selected.size === 0) return;
+    if (!selectionKey) return;
     let cancelled = false;
     const timer = window.setTimeout(async () => {
-      const result = await getSettlementPreview(token, [...selected]);
+      const result = await getSettlementPreview(token, selectionKey.split(","));
       if (cancelled) return;
-      setPreviewError(result.error);
       setPreview({
+        key: selectionKey,
         dueTotal: result.dueTotal,
         shopeeMaxAmount: result.shopeeMaxAmount,
         bankAmountIfShopee: result.bankAmountIfShopee,
+        error: result.error,
       });
     }, 300);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [selected, token]);
+  }, [selectionKey, token]);
 
   function toggleItem(id: string) {
     setSelected((prev) => {
@@ -145,6 +160,10 @@ export function PortalSettlementForm({
     e.preventDefault();
     if (selected.size === 0) {
       setLocalError("Pilih minimal satu produk untuk dilunasi.");
+      return;
+    }
+    if (!previewReady) {
+      setLocalError("Nominal pelunasan belum siap. Tunggu pratinjau tagihan diperbarui.");
       return;
     }
     if (!metode) {
@@ -175,7 +194,7 @@ export function PortalSettlementForm({
     startTransition(() => (gateway ? gwFormAction(fd) : formAction(fd)));
   }
 
-  const errorMessage = localError ?? previewError ?? state?.error ?? gwState?.error;
+  const errorMessage = localError ?? (preview.key === selectionKey ? preview.error : undefined) ?? state?.error ?? gwState?.error;
 
   if (state?.ok) {
     return (
@@ -269,7 +288,7 @@ export function PortalSettlementForm({
         </div>
       </div>
 
-      <GatewayMethodSelect amount={bankAmount} enabled={gateway && gatewayAvailable && selected.size > 0} />
+      <GatewayMethodSelect amount={bankAmount} enabled={gateway && gatewayAvailable && previewReady} />
 
       {selected.size > 0 && (
         <div className={`rounded-xl px-3 py-2.5 ring-1 ring-inset ${gateway ? "bg-brand-50 text-brand-900 ring-brand-200" : "bg-sun-50 text-sun-950 ring-sun-200"}`}>
@@ -372,18 +391,36 @@ export function PortalSettlementForm({
         </div>
       )}
 
-      {selected.size > 0 && (
-        <div className="rounded-xl bg-cream-soft px-4 py-3 text-sm">
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-bold text-sand-600">Sisa pelunasan produk dipilih</span>
-            <span className="text-lg font-extrabold text-sand-900">{formatRupiah(activePreview.dueTotal)}</span>
+      {selected.size > 0 && !previewReady && (preview.key !== selectionKey || !preview.error) && (
+        <p className="rounded-xl bg-cream-soft px-4 py-3 text-sm text-sand-600">Menghitung tagihan produk dipilih...</p>
+      )}
+      {previewReady && (
+        <div className="space-y-1.5 rounded-xl bg-cream-soft px-4 py-3 text-sm">
+          <div className="flex items-center justify-between gap-4 text-sand-600">
+            <span>{promoDiscount > 0 ? "Harga produk sebelum promo" : "Harga produk dipilih"}</span>
+            <span>{formatRupiah(priceBeforePromo)}</span>
           </div>
-          {includeShopee && (
-            <div className="mt-1 flex items-center justify-between gap-4 border-t border-sand-200 pt-1 text-xs text-sand-500">
-              <span>Via Shopee: {formatRupiah(shopeeAmount)}</span>
-              <span>Via {gateway ? "gateway" : "transfer"}: {formatRupiah(bankAmount)}</span>
+          {promoDiscount > 0 && (
+            <div className="flex items-center justify-between gap-4 text-emerald-700">
+              <span>Promo produk dipilih</span>
+              <span>−{formatRupiah(promoDiscount)}</span>
             </div>
           )}
+          <div className="flex items-center justify-between gap-4 text-sand-600">
+            <span>DP diperhitungkan</span>
+            <span>−{formatRupiah(dpCovered)}</span>
+          </div>
+          {includeShopee && (
+            <div className="flex items-center justify-between gap-4 text-orange-800">
+              <span>Checkout Shopee</span>
+              <span>−{formatRupiah(shopeeAmount)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-4 border-t border-sand-200 pt-2">
+            <span className="font-bold text-sand-800">{gateway ? "Tagihan QRIS / Virtual Account" : "Nominal transfer manual"}</span>
+            <span className="text-lg font-extrabold text-sand-900">{formatRupiah(bankAmount)}</span>
+          </div>
+          {gateway && <p className="text-xs text-sand-500">Biaya layanan metode pembayaran, jika ada, ditampilkan saat tagihan dibuat.</p>}
         </div>
       )}
 
@@ -399,7 +436,7 @@ export function PortalSettlementForm({
       <Button
         type="submit"
         className="w-full"
-        disabled={pending || selected.size === 0 || (gateway ? !gatewayAvailable : !manualAccountReady)}
+        disabled={pending || !previewReady || (gateway ? !gatewayAvailable : !manualAccountReady)}
       >
         {pending ? "Mengirim…" : "Kirim pelunasan"}
       </Button>
