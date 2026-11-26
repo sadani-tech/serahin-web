@@ -41,11 +41,11 @@ function AvatarForm({ name, avatarUrl }: { name: string; avatarUrl: string | nul
   const shown = preview ?? avatarUrl;
 
   return (
-    <div className="rounded-2xl border border-sand-200 bg-white p-6">
+    <div className="rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="font-extrabold">Foto profil</h2>
       <Notice state={state} />
       {localError && <p className="mt-2 text-sm font-bold text-rose-600">{localError}</p>}
-      <form action={action} className="mt-4 flex items-center gap-4">
+      <form action={action} className="mt-4 flex flex-wrap items-center gap-4">
         {shown ? (
           // eslint-disable-next-line @next/next/no-img-element -- avatar Buyer bisa dari S3/CDN eksternal
           <img src={shown} alt={name} className="h-16 w-16 rounded-full object-cover ring-1 ring-sand-200" />
@@ -54,7 +54,7 @@ function AvatarForm({ name, avatarUrl }: { name: string; avatarUrl: string | nul
             {initials(name)}
           </div>
         )}
-        <div className="flex-1">
+        <div className="min-w-0 flex-[1_1_12rem]">
           <input
             ref={inputRef}
             type="file"
@@ -78,19 +78,19 @@ export function ProfileForms({ profile, callbackUrl }: { profile: { name: string
   const [passwordState, passwordAction, passwordPending] = useActionState(changeBuyerPasswordAction, undefined);
   const input = "mt-1 min-h-11 w-full rounded-xl border border-sand-300 px-3";
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       <AvatarForm name={profile.name} avatarUrl={profile.avatarUrl} />
-      <form action={profileAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-6">
+      <form action={profileAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
         {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
         <h2 className="font-extrabold">Data profil</h2>
         <Notice state={profileState} />
         <label className="block text-sm font-bold">Nama<input name="name" defaultValue={profile.name} required className={input} /></label>
         <label className="block text-sm font-bold">Email<input value={profile.email ?? ""} disabled className={input} /></label>
         <label className="block text-sm font-bold">Nomor WhatsApp<input name="phone" defaultValue={profile.phone ?? ""} required className={input} /></label>
-        <button disabled={profilePending} className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">{callbackUrl ? "Simpan & Kembali ke Checkout" : "Simpan profil"}</button>
+        <button disabled={profilePending} className="min-h-11 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white disabled:opacity-60 sm:w-auto">{callbackUrl ? "Simpan & Kembali ke Checkout" : "Simpan profil"}</button>
       </form>
       {profile.hasPassword ? (
-        <form action={passwordAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-6">
+        <form action={passwordAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2">
           <h2 className="font-extrabold">Ganti kata sandi</h2>
           <Notice state={passwordState} />
           {[["currentPassword", "Kata sandi saat ini"], ["newPassword", "Kata sandi baru"], ["confirmPassword", "Ulangi kata sandi baru"]].map(([name, label]) => (
