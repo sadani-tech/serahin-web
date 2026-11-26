@@ -77,25 +77,30 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
     });
   }
 
-  return <div className="grid gap-5 lg:grid-cols-[1fr_.8fr]">
-    <div className="space-y-4 rounded-2xl border border-sand-200 bg-white p-5">
-      <div><h2 className="text-lg font-extrabold text-sand-900">Buat broadcast</h2><p className="mt-1 text-sm text-sand-500">Khusus pemberitahuan operasional kepada Buyer yang benar-benar membeli produk terkait.</p></div>
+  return <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,.72fr)] lg:items-start">
+    <div className="space-y-5 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
+      <div><p className="text-xs font-extrabold uppercase tracking-wide text-brand-700">Langkah 1 · Susun pesan</p><h2 className="mt-1 text-xl font-extrabold text-sand-900">Buat broadcast</h2><p className="mt-1 text-sm leading-6 text-sand-500">Pilih penerima berdasarkan produk, lalu tulis isi email. Preview akan menghitung penerima sebelum pengiriman.</p></div>
+      <div className="border-t border-sand-100 pt-4"><h3 className="mb-3 text-sm font-extrabold text-sand-900">1. Pilih penerima</h3>
       {sellers.length > 0 && <Field label="Seller"><Select value={sellerId} onChange={(event) => changeSeller(event.target.value)}><option value="">Pilih Seller</option>{sellers.map((seller) => <option value={seller.id} key={seller.id}>{seller.name}</option>)}</Select></Field>}
       <div className="grid gap-3 md:grid-cols-2">
         <Field label="Batch PO"><Select value={campaignId} onChange={(event) => { setCampaignId(event.target.value); setPreview(undefined); }} disabled={!options}><option value="">Semua Batch PO produk terpilih</option>{options?.campaigns.map((campaign) => <option value={campaign.id} key={campaign.id}>{campaign.name}</option>)}</Select></Field>
         <Field label="Produk"><Select value={productId} onChange={(event) => { setProductId(event.target.value); setVariantId(""); setPreview(undefined); }} disabled={!options}><option value="">Pilih produk</option>{options?.products.map((product) => <option value={product.id} key={product.id}>{product.name}</option>)}</Select></Field>
       </div>
       {selectedProduct && <Field label="Varian (opsional)"><Select value={variantId} onChange={(event) => { setVariantId(event.target.value); setPreview(undefined); }}><option value="">Semua varian</option>{selectedProduct.variants.map((variant) => <option value={variant.id} key={variant.id}>{variant.name}</option>)}</Select></Field>}
+      </div>
+      <div className="space-y-4 border-t border-sand-100 pt-4"><h3 className="text-sm font-extrabold text-sand-900">2. Tulis email</h3>
       <Field label="Nama internal"><input value={name} onChange={(event) => { setName(event.target.value); setPreview(undefined); }} className="input" placeholder="Pelunasan Produk A — September" /></Field>
       <Field label="Subjek email"><input value={subject} onChange={(event) => { setSubject(event.target.value); setPreview(undefined); }} className="input" placeholder="Produkmu sudah siap dilunasi" /></Field>
       <Field label="Pesan singkat"><textarea value={body} onChange={(event) => { setBody(event.target.value); setPreview(undefined); }} className="input min-h-28 py-3" placeholder="Kabar baik! Produk pesananmu sudah masuk tahap pelunasan." /></Field>
-      <label className="flex items-start gap-3 rounded-xl bg-cream-soft p-3 text-sm"><input type="checkbox" checked={readyForSettlement} onChange={(event) => { setReadyForSettlement(event.target.checked); setPreview(undefined); }} className="mt-1" /><span><b>Siap dilunasi</b><small className="block text-sand-500">Hanya Buyer dengan DP terverifikasi dan sisa tagihan.</small></span></label>
+      </div>
+      <div className="space-y-3 border-t border-sand-100 pt-4"><h3 className="text-sm font-extrabold text-sand-900">3. Atur kriteria</h3><label className="flex items-start gap-3 rounded-xl bg-cream-soft p-3 text-sm"><input type="checkbox" checked={readyForSettlement} onChange={(event) => { setReadyForSettlement(event.target.checked); setPreview(undefined); }} className="mt-1" /><span><b>Siap dilunasi</b><small className="block text-sand-500">Hanya Buyer dengan DP terverifikasi dan sisa tagihan.</small></span></label>
       <label className="flex items-start gap-3 rounded-xl bg-cream-soft p-3 text-sm"><input type="checkbox" checked={excludePendingPayment} onChange={(event) => { setExcludePendingPayment(event.target.checked); setPreview(undefined); }} className="mt-1" /><span><b>Kecualikan pembayaran pending</b><small className="block text-sand-500">Mencegah Buyer membayar dua kali saat bukti sedang diperiksa.</small></span></label>
+      </div>
       <ToastFeedback error={error} />
-      <button type="button" disabled={pending || !options} onClick={doPreview} className="min-h-11 rounded-xl bg-brand-600 px-5 font-extrabold text-white disabled:opacity-50">{pending ? "Menghitung..." : "Preview audience"}</button>
+      <button type="button" disabled={pending || !options} onClick={doPreview} className="min-h-11 w-full rounded-xl bg-brand-600 px-5 font-extrabold text-white disabled:opacity-50 sm:w-auto">{pending ? "Menghitung..." : "Hitung penerima →"}</button>
     </div>
-    <aside className="rounded-2xl border border-sand-200 bg-cream-soft p-5">
-      <h2 className="text-lg font-extrabold text-sand-900">Preview recipient</h2>
+    <aside className="rounded-2xl border border-sand-200 bg-cream-soft p-5 lg:sticky lg:top-5">
+      <p className="text-xs font-extrabold uppercase tracking-wide text-brand-700">Langkah 2 · Periksa</p><h2 className="mt-1 text-lg font-extrabold text-sand-900">Preview penerima</h2>
       {!preview ? <p className="mt-3 text-sm leading-6 text-sand-500">Pilih Seller dan produk, isi pesan, lalu hitung audience sebelum mengirim.</p> : <div className="mt-4 space-y-4">
         <div className="rounded-2xl bg-brand-700 p-5 text-white"><p className="text-xs font-bold uppercase tracking-wide text-brand-100">Recipient unik</p><strong className="mt-2 block text-4xl">{preview.recipientCount}</strong><small>Maksimum {preview.maximumRecipients}</small></div>
         <div className="grid grid-cols-2 gap-2 text-xs">{Object.entries(preview.excluded).map(([key, value]) => <div key={key} className="rounded-xl bg-white p-3"><b className="block text-lg text-sand-900">{value}</b><span className="text-sand-500">{excludedLabel[key] ?? key}</span></div>)}</div>

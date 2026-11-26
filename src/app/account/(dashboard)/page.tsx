@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { formatRupiah, formatTanggal } from "@/lib/format";
 import { getSession } from "@/lib/session";
+import { MoreBuyerOrders, OrderCard } from "./MoreBuyerOrders";
 
 type StatusGroup = "ALL" | "TO_PAY" | "PROCESSING" | "TO_SHIP" | "SHIPPED" | "COMPLETED" | "CANCELLED";
-type Dashboard = {
+export type Dashboard = {
   summary: {
     total: number; active: number; awaitingPayment: number; completed: number;
     toPay: number; processing: number; toShip: number; shipped: number; cancelled: number;
@@ -22,25 +22,6 @@ type Dashboard = {
     billing: { total: number; paid: number; pending: number; remaining: number };
   }>;
   pagination: { page: number; total: number; totalPages: number };
-};
-
-const NEXT_ACTION: Record<string, string> = {
-  PAY_DOWN_PAYMENT: "Bayar DP",
-  WAIT_VERIFICATION: "Menunggu verifikasi",
-  REUPLOAD_PAYMENT: "Unggah ulang bukti",
-  PAY_SETTLEMENT: "Bayar pelunasan",
-  COMPLETE_SHIPPING: "Lengkapi pengiriman",
-  TRACK_SHIPMENT: "Lacak pesanan",
-  NONE: "Lihat detail",
-};
-
-const PAYMENT_STATUS_LABEL: Record<string, string> = { UNPAID: "Belum Bayar", DOWN_PAYMENT: "DP Diterima", PAID: "Lunas" };
-const ORDER_PROGRESS_LABEL: Record<string, string> = {
-  OPEN: "Open", CLOSED: "Closed", PRODUCTION: "Produksi", SHIPMENT: "Shipment", PACKING: "Siap Kirim",
-  DELIVERED: "Terkirim", COMPLETED: "Selesai", SUPPLIER_PROCESSING: "Diproses Supplier",
-  INTERNATIONAL_TRANSIT: "Transit Internasional", ARRIVED_INDONESIA: "Tiba di Indonesia",
-  QUALITY_CHECK: "Pemeriksaan Kualitas", READY_TO_SHIP: "Siap Dikirim", SHIPPED: "Dikirim",
-  CANCELLED: "Dibatalkan", REJECTED: "Ditolak",
 };
 
 const FILTERS = [
@@ -72,7 +53,7 @@ function accountHref(group: StatusGroup, page = 1) {
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ page?: string; status?: string }> }) {
   const query = await searchParams;
-  const page = Math.max(1, Number(query.page) || 1);
+  const page = 1;
   const requestedStatus = FILTERS.some((item) => item.key === query.status) ? query.status as StatusGroup : "ALL";
   const [data, session] = await Promise.all([
     api.get<Dashboard>("/buyer/dashboard", { page, limit: 10, statusGroup: requestedStatus === "ALL" ? undefined : requestedStatus }),
@@ -116,37 +97,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <span className="text-xs font-semibold text-sand-500">{data.pagination.total} pesanan</span>
         </div>
 
-        {data.orders.length ? <div className="space-y-3">{data.orders.map((order) => {
-          const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
-          const action = NEXT_ACTION[order.nextAction] ?? "Lihat detail";
-          const thumb = order.items[0]?.salesEventItem?.displayImages[0] ?? order.items[0]?.salesEventItem?.productVariant.images[0] ?? null;
-          return <article key={order.id} className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-md">
-            <div className="flex items-center justify-between gap-3 border-b border-sand-100 bg-sand-50/70 px-4 py-3 sm:px-5">
-              <p className="text-xs font-bold text-sand-500">Dipesan {formatTanggal(order.createdAt)}</p>
-              <div className="flex flex-wrap justify-end gap-1.5">
-                <span className="rounded-full bg-sun-100 px-2.5 py-1 text-[0.68rem] font-extrabold text-sun-900">Pembayaran: {PAYMENT_STATUS_LABEL[order.paymentStatus] ?? "Belum Bayar"}</span>
-                <span className="rounded-full bg-brand-100 px-2.5 py-1 text-[0.68rem] font-extrabold text-brand-800">Pesanan: {ORDER_PROGRESS_LABEL[order.orderProgressStatus] ?? order.orderProgressStatus}</span>
-              </div>
-            </div>
-            <div className="flex gap-3 p-4 sm:p-5">
-              {thumb ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={thumb} alt={order.salesEvent.title} className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-sand-200" />
-              ) : (
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-sand-100 text-xs text-sand-400">—</div>
-              )}
-              <div className="min-w-0 flex-1">
-                <Link href={`/account/orders/${order.id}`} className="block text-base font-extrabold text-sand-900 hover:text-brand-700">{order.salesEvent.title}</Link>
-                <p className="mt-1 text-sm text-sand-500">{itemCount} item{order.items[0]?.variantNameSnapshot ? ` · ${order.items[0].variantNameSnapshot}` : ""}</p>
-                {order.rejectionReason && <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800">Pembayaran ditolak: {order.rejectionReason}</p>}
-                <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-sand-100 pt-4">
-                  <div><p className="text-[0.68rem] font-bold uppercase tracking-wide text-sand-400">Total pesanan</p><p className="mt-0.5 text-xl font-extrabold text-brand-700">{formatRupiah(order.billing.total)}</p>{order.billing.remaining > 0 && <p className="mt-1 text-xs font-semibold text-sun-800">Sisa pembayaran {formatRupiah(order.billing.remaining)}</p>}</div>
-                  <Link href={`/account/orders/${order.id}`} className="inline-flex min-h-10 items-center rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white hover:bg-brand-700">{action}</Link>
-                </div>
-              </div>
-            </div>
-          </article>;
-        })}</div> : <div className="rounded-2xl border border-dashed border-sand-300 bg-white px-6 py-12 text-center shadow-sm">
+        {data.orders.length ? <div className="space-y-3">{data.orders.map((order) => <OrderCard key={order.id} order={order} />)}</div> : <div className="rounded-2xl border border-dashed border-sand-300 bg-white px-6 py-12 text-center shadow-sm">
           <div className="mx-auto h-12 w-12 text-brand-600 [&_svg]:h-full [&_svg]:w-full [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]"><StatusIcon name={activeFilter.icon} /></div>
           <p className="mt-4 text-lg font-extrabold text-sand-900">Belum ada pesanan di status ini</p>
           <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-sand-500">Pilih status lain atau temukan produk baru dari katalog Serahin.</p>
@@ -154,11 +105,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </div>}
       </section>
 
-      {data.pagination.totalPages > 1 && <nav aria-label="Navigasi halaman pesanan" className="mt-7 flex items-center justify-center gap-3 text-sm font-bold">
-        {page > 1 ? <Link className="rounded-xl border border-sand-200 bg-white px-3 py-2 text-sand-700 hover:border-brand-300" href={accountHref(data.activeStatusGroup, page - 1)}>← Sebelumnya</Link> : <span />}
-        <span className="rounded-xl bg-brand-50 px-3 py-2 text-brand-700">{page} / {data.pagination.totalPages}</span>
-        {page < data.pagination.totalPages ? <Link className="rounded-xl border border-sand-200 bg-white px-3 py-2 text-sand-700 hover:border-brand-300" href={accountHref(data.activeStatusGroup, page + 1)}>Berikutnya →</Link> : <span />}
-      </nav>}
+      <MoreBuyerOrders key={data.activeStatusGroup} status={data.activeStatusGroup} initialPage={page} totalPages={data.pagination.totalPages} initialCount={data.orders.length} total={data.pagination.total} />
     </main>
   );
 }

@@ -55,6 +55,16 @@ export async function reactivateSeller(id: string) {
   refreshSeller(id);
 }
 
+export async function decideSellerPhoneChange(id: string, decision: "approve" | "reject", reason?: string): Promise<{ error?: string }> {
+  try {
+    await api.post(`/sellers/phone-change-requests/${id}/${decision}`, decision === "reject" ? { reason } : {});
+    revalidatePath("/penjual");
+    return {};
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : "Gagal memproses permintaan nomor." };
+  }
+}
+
 // v2.3.9 FR-42.7: hapus pesanan satu klik (ikon tong sampah + modal
 // yakin/tidak) — tidak perlu lagi alasan tertulis/konfirmasi ketik ulang.
 export async function removeOrder(campaignId: string, orderId: string): Promise<{ error?: string }> {

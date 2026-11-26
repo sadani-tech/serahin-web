@@ -1,11 +1,9 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { deleteBankAccount, saveBankAccount } from "./actions";
 import { DeleteBankAccountButton } from "./DeleteBankAccountButton";
 import { Select } from "@/components/ui";
-import { useSort } from "@/hooks/useSort";
-import { SortableTh } from "@/components/SortableTh";
 
 type BankAccount = {
   id: string;
@@ -32,7 +30,7 @@ function EditForm({ account, onCancel }: { account: BankAccount; onCancel: () =>
         </Select>
       </label>
       <label className="text-xs font-bold text-sand-700">
-        Nama bank
+        Bank atau penyedia e-wallet
         <input name="bankName" required defaultValue={account.bankName} className={inputClass} />
       </label>
       <label className="text-xs font-bold text-sand-700">
@@ -81,37 +79,26 @@ function Badges({ account }: { account: BankAccount }) {
 
 export function BankAccountsTable({ accounts }: { accounts: BankAccount[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const { sorted, sortKey, direction, toggle: toggleSort } = useSort(accounts, (a, key) => {
-    switch (key) {
-      case "bank": return a.bankName;
-      case "nomor": return a.accountNumber;
-      case "nama": return a.accountHolderName;
-      case "status": return a.isActive ? 1 : 0;
-      default: return null;
-    }
-  });
 
   return (
     <>
-      {/* Mobile: compact card list */}
-      <ul className="divide-y divide-sand-100 md:hidden">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {accounts.map((account) => (
-          <li key={account.id} className="py-3">
+          <li key={account.id} className={`min-w-0 rounded-2xl border p-4 ${account.isPrimary ? "border-brand-300 bg-brand-50/50" : "border-sand-200 bg-white"}`}>
             {editingId === account.id ? (
               <div className="rounded-xl border border-sand-200 bg-sand-50 p-3">
                 <EditForm account={account} onCancel={() => setEditingId(null)} />
               </div>
             ) : (
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-4">
                 <div className="min-w-0">
-                  <p className="truncate font-extrabold text-sand-900">
-                    {account.bankName} · <span className="font-mono">{account.accountNumber}</span>
-                  </p>
-                  <p className="mt-0.5 truncate text-sm text-sand-500">a.n. {account.accountHolderName}</p>
-                  <div className="mt-1.5"><Badges account={account} /></div>
+                  <div className="mb-3"><Badges account={account} /></div>
+                  <p className="text-lg font-extrabold text-sand-900">{account.bankName}</p>
+                  <p className="mt-1 break-all font-mono text-sm text-sand-700">{account.accountNumber}</p>
+                  <p className="mt-3 text-xs text-sand-500">Atas nama</p><p className="font-bold text-sand-800">{account.accountHolderName}</p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <button onClick={() => setEditingId(account.id)} className="text-xs font-bold text-brand-700 underline underline-offset-2">
+                <div className="flex items-center gap-2 border-t border-sand-200 pt-3">
+                  <button onClick={() => setEditingId(account.id)} className="min-h-10 flex-1 rounded-xl border border-brand-300 px-3 text-sm font-bold text-brand-700">
                     Edit
                   </button>
                   <DeleteBankAccountButton action={deleteBankAccount.bind(null, account.id)} />
@@ -122,48 +109,7 @@ export function BankAccountsTable({ accounts }: { accounts: BankAccount[] }) {
         ))}
       </ul>
 
-      {/* Desktop: table */}
-      <table className="hidden w-full text-sm md:table">
-        <thead>
-          <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
-            <SortableTh label="Bank / E-wallet" sortKey="bank" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
-            <SortableTh label="Nomor" sortKey="nomor" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
-            <SortableTh label="Atas nama" sortKey="nama" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
-            <SortableTh label="Status" sortKey="status" activeKey={sortKey} direction={direction} onSort={toggleSort} className="py-2 pr-3 font-medium" />
-            <th className="py-2 pr-3 font-medium" />
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-sand-100">
-          {sorted.map((account) => (
-            <Fragment key={account.id}>
-              <tr className="align-top">
-                <td className="py-3 pr-3 font-bold text-sand-900">{account.bankName}</td>
-                <td className="py-3 pr-3 font-mono text-sand-700">{account.accountNumber}</td>
-                <td className="py-3 pr-3 text-sand-700">{account.accountHolderName}</td>
-                <td className="py-3 pr-3"><Badges account={account} /></td>
-                <td className="py-3 pr-3 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setEditingId(editingId === account.id ? null : account.id)}
-                      className="min-h-9 rounded-lg border border-sand-300 px-3 text-xs font-bold text-sand-700 hover:bg-sand-50"
-                    >
-                      {editingId === account.id ? "Tutup" : "Edit"}
-                    </button>
-                    <DeleteBankAccountButton action={deleteBankAccount.bind(null, account.id)} />
-                  </div>
-                </td>
-              </tr>
-              {editingId === account.id && (
-                <tr>
-                  <td colSpan={5} className="bg-sand-50 px-3 py-4">
-                    <EditForm account={account} onCancel={() => setEditingId(null)} />
-                  </td>
-                </tr>
-              )}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
+
     </>
   );
 }

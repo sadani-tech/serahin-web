@@ -62,7 +62,8 @@ export function CheckoutGroupVerificationTable({ rows }: { rows: CheckoutGroupVe
   return (
     <div>
       {error && <div className="p-4"><ToastFeedback error={error} /></div>}
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-sand-100 md:hidden">{rows.map((row) => <article key={row.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-2"><div><p className="text-xs text-sand-500">{row.orders.length} pesanan gabungan</p><p className="mt-1 text-lg font-extrabold text-sand-900">{rupiah(row.totalAmountTarget)}</p></div>{row.paymentProofFile ? <ProofViewerButton url={row.paymentProofFile} className="text-sm font-bold text-brand-700"/> : <span className="text-sm text-rose-700">Tanpa bukti</span>}</div><ul className="space-y-1 rounded-xl bg-sand-50 p-3 text-sm">{row.orders.map((order) => <li key={order.orderId} className="flex justify-between gap-2"><Link href={`/pesanan/${order.orderId}`} className="font-bold text-brand-700">{order.campaignTitle}</Link><span>{rupiah(order.allocatedAmount)}</span></li>)}</ul><div className="grid grid-cols-2 gap-2"><button disabled={busyId === row.id} onClick={() => onVerify(row)} className="min-h-11 rounded-xl bg-brand-600 text-sm font-bold text-white">Verifikasi</button><button disabled={busyId === row.id} onClick={() => onReject(row)} className="min-h-11 rounded-xl border border-rose-300 text-sm font-bold text-rose-700">Tolak</button></div></article>)}</div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[900px] text-sm">
           <thead><tr className="border-b text-left text-xs uppercase text-sand-500">
             <th className="px-4 py-3 font-medium">Rincian Batch PO</th>
