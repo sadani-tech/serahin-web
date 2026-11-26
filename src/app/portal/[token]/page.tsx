@@ -33,6 +33,7 @@ type PortalOrder = {
     id: string;
     jumlah: number;
     hargaSaatPesan: string;
+    hargaSebelumPromo: number | null;
     warna: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
@@ -49,6 +50,7 @@ type PortalOrder = {
     nominalCheckoutShopee: number | null;
   };
   billing: Billing;
+  promotion: { name: string; originalTotal: number; discountTotal: number } | null;
   payments: Array<{
     id: string;
     jenis: string;
@@ -393,7 +395,9 @@ export default async function PortalPage({
                       )}
                     </p>
                     <p className="text-xs text-sand-500">
-                      {it.jumlah} × {formatRupiah(it.hargaSaatPesan)}
+                      {it.jumlah} × {it.hargaSebelumPromo != null && (
+                        <span className="mr-1 line-through">{formatRupiah(it.hargaSebelumPromo)}</span>
+                      )}{formatRupiah(it.hargaSaatPesan)}
                     </p>
                   </div>
                 </div>
@@ -443,6 +447,17 @@ export default async function PortalPage({
               </dd>
             </div>
           </dl>
+          {order.promotion && (
+            <div className="border-t border-emerald-100 bg-emerald-50 px-5 py-3 text-sm text-emerald-950">
+              <div className="flex flex-wrap justify-between gap-2">
+                <span>Harga sebelum promo</span><span>{formatRupiah(order.promotion.originalTotal)}</span>
+              </div>
+              <div className="mt-1 flex flex-wrap justify-between gap-2 font-semibold">
+                <span>{order.promotion.name}</span><span>−{formatRupiah(order.promotion.discountTotal)}</span>
+              </div>
+              <p className="mt-1 text-xs text-emerald-800">Total dan sisa tagihan di atas sudah termasuk potongan promo. DP terbayar mengurangi total tersebut.</p>
+            </div>
+          )}
           {shopeeTotal > 0 && (
             <div className="border-t border-orange-100 bg-orange-50 px-5 py-3 text-sm text-orange-950">
               <div className="flex flex-wrap justify-between gap-2"><span>Checkout Shopee ({formatRupiah(shopeePerUnit)} × {totalQty} barang)</span><strong>{formatRupiah(shopeeTotal)}</strong></div>
