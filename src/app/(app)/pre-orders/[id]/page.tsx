@@ -404,7 +404,9 @@ export default async function CampaignDetailPage({
         <div className={`rounded-xl border p-4 text-sm ${campaign.promotion.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-sand-200 bg-sand-50 text-sand-600"}`}>
           <p className="font-bold">Promo {campaign.promotion.isActive ? "aktif" : "nonaktif"}: {campaign.promotion.name}</p>
           <p className="mt-1">Beli minimal {campaign.promotion.promoMinQuantity} unit dari produk apa pun dalam satu pesanan, potongan {formatRupiah(campaign.promotion.promoDiscountPerUnit)} per unit. Harga produk di bawah adalah harga katalog sebelum promo.</p>
-          <Link href="/seller/promotions" className="mt-2 inline-block font-bold underline">Kelola promo</Link>
+          {session?.role === "SELLER" && (
+            <Link href="/seller/promotions" className="mt-2 inline-block font-bold underline">Kelola promo</Link>
+          )}
         </div>
       )}
 
