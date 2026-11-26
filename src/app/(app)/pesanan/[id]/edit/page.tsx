@@ -11,11 +11,12 @@ type OrderDetail = {
   namaPembeli: string;
   kontak: string;
   catatan: string | null;
-  items: { variantId: string; jumlah: number; warna: string | null }[];
+  items: { variantId: string; jumlah: number; warna: string | null; hargaSaatPesan: string }[];
   campaign: { id: string };
 };
 
 type CampaignDetail = {
+  promotion: { name: string; promoMinQuantity: number; promoDiscountPerUnit: string; isActive: boolean } | null;
   variants: {
     id: string;
     namaVarian: string;
@@ -76,6 +77,7 @@ export default async function EditOrderPage({
       <OrderForm
         action={action}
         variants={variantOptions}
+        promotion={campaign.promotion && { ...campaign.promotion, promoDiscountPerUnit: toNumber(campaign.promotion.promoDiscountPerUnit) }}
         submitLabel="Simpan Perubahan"
         initial={{
           namaPembeli: order.namaPembeli,
@@ -85,6 +87,7 @@ export default async function EditOrderPage({
             variantId: it.variantId,
             jumlah: it.jumlah,
             warna: it.warna ?? undefined,
+            hargaSaatPesan: toNumber(it.hargaSaatPesan),
           })),
         }}
       />

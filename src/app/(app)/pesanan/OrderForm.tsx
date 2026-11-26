@@ -17,6 +17,7 @@ import { FileUploadField } from "@/components/FileUploadField";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { VariantPickerModal } from "@/components/VariantPickerModal";
 import { formatRupiah } from "@/lib/format";
+import { effectiveUnitPrice } from "@/lib/quantity-promo";
 import type { OrderFormState } from "./actions";
 
 export type VariantOption = {
@@ -53,6 +54,7 @@ export function OrderForm({
   action,
   variants,
   initial,
+  promotion,
   submitLabel,
   withBuktiPembayaran = false,
 }: {
@@ -61,11 +63,12 @@ export function OrderForm({
     formData: FormData,
   ) => Promise<OrderFormState>;
   variants: VariantOption[];
+  promotion?: { name: string; promoMinQuantity: number; promoDiscountPerUnit: number; isActive: boolean } | null;
   initial?: {
     namaPembeli?: string;
     kontak?: string;
     catatan?: string;
-    items?: Row[];
+    items?: (Row & { hargaSaatPesan?: number })[];
   };
   submitLabel: string;
   /** Tampilkan field unggah bukti pembayaran (hanya saat buat pesanan baru). */
@@ -106,10 +109,34 @@ export function OrderForm({
   const setWarna = (rowId: string, warna: string) =>
     setCart((c) => c.map((r) => (r.rowId === rowId ? { ...r, warna } : r)));
 
-  const total = cart.reduce((s, r) => {
+  const totalQuantity = cart.reduce((sum, row) => sum + row.jumlah, 0);
+  const rowKey = (row: Row) => JSON.stringify([row.variantId, row.warna ?? null, row.jumlah]);
+  const unchangedItems = Boolean(initial?.items &&
+    initial.items.length === cart.length &&
+    initial.items.map(rowKey).sort().join("|") === cart.map(rowKey).sort().join("|"));
+  const unitPrice = (row: Row): number => {
+    const variant = varById.get(row.variantId);
+    if (!variant) return 0;
+    if (unchangedItems) {
+      const saved = initial?.items?.find((item) => rowKey(item) === rowKey(row))?.hargaSaatPesan;
+      if (saved !== undefined) return saved;
+    }
+    return effectiveUnitPrice({
+      price: variant.harga,
+      promoMinQuantity: promotion?.isActive ? promotion.promoMinQuantity : null,
+      promoDiscountPerUnit: promotion?.isActive ? promotion.promoDiscountPerUnit : null,
+    }, totalQuantity);
+  };
+  const originalTotal = cart.reduce((s, r) => {
     const v = varById.get(r.variantId);
     return s + (v ? v.harga * r.jumlah : 0);
   }, 0);
+  const total = cart.reduce((sum, row) => sum + unitPrice(row) * row.jumlah, 0);
+  const promoApplied = Boolean(promotion?.isActive && totalQuantity >= promotion.promoMinQuantity &&
+    cart.every((row) => {
+      const variant = varById.get(row.variantId);
+      return variant && unitPrice(row) === Math.max(0, variant.harga - promotion.promoDiscountPerUnit);
+    }));
 
   // Ada item berwarna yang belum memilih warna → blokir simpan.
   const warnaBelumLengkap = cart.some((r) => {
@@ -214,7 +241,7 @@ export function OrderForm({
                       {v ? v.namaVarian : "Varian tidak tersedia"}
                     </p>
                     <p className="text-xs text-sand-500">
-                      {v ? formatRupiah(v.harga) : "—"}
+                      {v ? formatRupiah(unitPrice(r)) : "—"}
                       {v ? ` · sisa ${Math.max(0, v.sisa)}` : ""}
                     </p>
                     {v?.warna && v.warna.length > 0 && (
@@ -260,7 +287,7 @@ export function OrderForm({
                   </div>
 
                   <div className="w-28 text-right text-sm font-medium text-sand-900">
-                    {v ? formatRupiah(v.harga * r.jumlah) : "—"}
+                    {v ? formatRupiah(unitPrice(r) * r.jumlah) : "—"}
                   </div>
 
                   <button
@@ -283,6 +310,12 @@ export function OrderForm({
           </ScrollList>
         )}
 
+        {promotion?.isActive && (
+          <p className="mt-4 text-sm text-emerald-700">
+            Promo {promotion.name}: minimal {promotion.promoMinQuantity} unit, potongan {formatRupiah(promotion.promoDiscountPerUnit)} per unit.
+            {promoApplied && originalTotal > total ? ` Hemat ${formatRupiah(originalTotal - total)}.` : ""}
+          </p>
+        )}
         <div className="mt-4 flex justify-between border-t border-sand-100 pt-3 text-sm">
           <span className="text-sand-500">
             {cart.length} item · {cart.reduce((s, r) => s + r.jumlah, 0)} unit

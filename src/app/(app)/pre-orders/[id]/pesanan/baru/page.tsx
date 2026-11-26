@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 type CampaignDetail = {
   namaProduk: string;
+  promotion: { name: string; promoMinQuantity: number; promoDiscountPerUnit: string; isActive: boolean } | null;
   deskripsi: string | null;
   status: CampaignStatus;
   tanggalTutup: string;
@@ -106,6 +107,7 @@ export default async function TambahPesananPage({
         <OrderForm
           action={action}
           variants={variantOptions}
+          promotion={campaign.promotion && { ...campaign.promotion, promoDiscountPerUnit: toNumber(campaign.promotion.promoDiscountPerUnit) }}
           submitLabel="Simpan Pesanan"
           withBuktiPembayaran
         />
