@@ -41,6 +41,7 @@ function parseProduk(formData: FormData) {
       ...parsed.data,
       images: parseJsonArray(formData, "imagesJson"),
       warna: parseJsonArray(formData, "warnaJson"),
+      ukuranPilihan: parseJsonArray(formData, "ukuranPilihanJson"),
     },
   };
 }

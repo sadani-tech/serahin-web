@@ -11,8 +11,10 @@ export type CartItem = {
   promoDiscountPerUnit?: number | null;
   quantity: number;
   selectedColor?: string;
+  selectedSize?: string;
   image?: string | null;
   colors?: string[];
+  sizes?: string[];
   eligible?: boolean;
   invalidReason?: string | null;
 };
@@ -38,10 +40,11 @@ type CartContextValue = {
   ready: boolean;
   authenticated: boolean;
   addItem: (event: Omit<CartDraft, "items">, item: CartItem) => Promise<boolean>;
-  setQuantity: (salesEventId: string, variantId: string, selectedColor: string | undefined, quantity: number) => void;
+  setQuantity: (salesEventId: string, variantId: string, selectedColor: string | undefined, selectedSize: string | undefined, quantity: number) => void;
   syncCart: (salesEventId: string) => Promise<void>;
-  setColor: (salesEventId: string, variantId: string, selectedColor: string | undefined, nextColor: string) => void;
-  removeItem: (salesEventId: string, variantId: string, selectedColor?: string) => void;
+  setColor: (salesEventId: string, variantId: string, selectedColor: string | undefined, selectedSize: string | undefined, nextColor: string) => void;
+  setSize: (salesEventId: string, variantId: string, selectedColor: string | undefined, selectedSize: string | undefined, nextSize: string) => void;
+  removeItem: (salesEventId: string, variantId: string, selectedColor?: string, selectedSize?: string) => void;
   clearOne: (salesEventId: string) => void;
   clearAll: () => void;
 };
@@ -62,8 +65,10 @@ type RemoteCart = {
     promoDiscountPerUnit?: number | null;
     quantity: number;
     selectedColor: string | null;
+    selectedSize: string | null;
     image: string | null;
     colors?: string[];
+    sizes?: string[];
     eligible?: boolean;
     invalidReason?: string | null;
   }>;
@@ -72,8 +77,18 @@ type RemoteCart = {
 const STORAGE_KEY = "serahin:cart:v2.4";
 const CartContext = createContext<CartContextValue | null>(null);
 
-function sameItem(a: CartItem, b: Pick<CartItem, "variantId" | "selectedColor">) {
-  return a.variantId === b.variantId && (a.selectedColor ?? "") === (b.selectedColor ?? "");
+function sameItem(a: CartItem, b: Pick<CartItem, "variantId" | "selectedColor" | "selectedSize">) {
+  return a.variantId === b.variantId && (a.selectedColor ?? "") === (b.selectedColor ?? "") && (a.selectedSize ?? "") === (b.selectedSize ?? "");
+}
+
+function mergeSelections(items: CartItem[]): CartItem[] {
+  const merged: CartItem[] = [];
+  for (const item of items) {
+    const existing = merged.find((candidate) => sameItem(candidate, item));
+    if (existing) existing.quantity += item.quantity;
+    else merged.push({ ...item });
+  }
+  return merged;
 }
 
 function remoteToDraft(remote: RemoteCart): CartDraft {
@@ -87,7 +102,7 @@ function remoteToDraft(remote: RemoteCart): CartDraft {
     items: remote.items.filter((item) => item.price !== null).map((item) => ({
       variantId: item.variantId, name: item.name, price: item.price!, quantity: item.quantity,
       promoMinQuantity: item.promoMinQuantity, promoDiscountPerUnit: item.promoDiscountPerUnit,
-      selectedColor: item.selectedColor ?? undefined, image: item.image, colors: item.colors,
+      selectedColor: item.selectedColor ?? undefined, selectedSize: item.selectedSize ?? undefined, image: item.image, colors: item.colors, sizes: item.sizes,
       eligible: item.eligible, invalidReason: item.invalidReason,
     })),
   };
@@ -137,6 +152,7 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
             variantId: item.variantId,
             quantity: item.quantity,
             selectedColor: item.selectedColor,
+            selectedSize: item.selectedSize,
           })),
         }),
       });
@@ -147,13 +163,15 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
           if (cart.salesEventId !== draft.salesEventId) return cart;
           let changed = false;
           const items = cart.items.map((item) => {
-            const remote = data.items.find((candidate) => candidate.variantId === item.variantId && (candidate.selectedColor ?? "") === (item.selectedColor ?? ""));
+            const remote = data.items.find((candidate) => candidate.variantId === item.variantId && (candidate.selectedColor ?? "") === (item.selectedColor ?? "") && (candidate.selectedSize ?? "") === (item.selectedSize ?? ""));
             if (!remote || remote.price == null) return item;
             const promoMinQuantity = remote.promoMinQuantity ?? null;
             const promoDiscountPerUnit = remote.promoDiscountPerUnit ?? null;
-            if (item.price === remote.price && (item.promoMinQuantity ?? null) === promoMinQuantity && (item.promoDiscountPerUnit ?? null) === promoDiscountPerUnit) return item;
+            const colors = remote.colors ?? [];
+            const sizes = remote.sizes ?? [];
+            if (item.price === remote.price && (item.promoMinQuantity ?? null) === promoMinQuantity && (item.promoDiscountPerUnit ?? null) === promoDiscountPerUnit && JSON.stringify(item.colors ?? []) === JSON.stringify(colors) && JSON.stringify(item.sizes ?? []) === JSON.stringify(sizes) && item.eligible === remote.eligible && item.invalidReason === remote.invalidReason) return item;
             changed = true;
-            return { ...item, price: remote.price, promoMinQuantity, promoDiscountPerUnit };
+            return { ...item, price: remote.price, promoMinQuantity, promoDiscountPerUnit, colors, sizes, eligible: remote.eligible, invalidReason: remote.invalidReason };
           });
           return changed ? { ...cart, items } : cart;
         }));
@@ -222,12 +240,12 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     return true;
   }, [push, toast]);
 
-  const setQuantity = useCallback((salesEventId: string, variantId: string, selectedColor: string | undefined, quantity: number) => {
+  const setQuantity = useCallback((salesEventId: string, variantId: string, selectedColor: string | undefined, selectedSize: string | undefined, quantity: number) => {
     setCarts((current) => {
       const target = current.find((c) => c.salesEventId === salesEventId);
       if (!target) return current;
       const items = target.items
-        .map((item) => sameItem(item, { variantId, selectedColor }) ? { ...item, quantity: Math.max(0, quantity) } : item)
+        .map((item) => sameItem(item, { variantId, selectedColor, selectedSize }) ? { ...item, quantity: Math.max(0, quantity) } : item)
         .filter((item) => item.quantity > 0);
       if (!items.length) {
         if (authenticated) void fetch(`/api/cart?salesEventId=${encodeURIComponent(salesEventId)}`, { method: "DELETE" });
@@ -239,11 +257,11 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     });
   }, [authenticated, push]);
 
-  const removeItem = useCallback((salesEventId: string, variantId: string, selectedColor?: string) => {
+  const removeItem = useCallback((salesEventId: string, variantId: string, selectedColor?: string, selectedSize?: string) => {
     setCarts((current) => {
       const target = current.find((c) => c.salesEventId === salesEventId);
       if (!target) return current;
-      const items = target.items.filter((item) => !sameItem(item, { variantId, selectedColor }));
+      const items = target.items.filter((item) => !sameItem(item, { variantId, selectedColor, selectedSize }));
       if (!items.length) {
         if (authenticated) void fetch(`/api/cart?salesEventId=${encodeURIComponent(salesEventId)}`, { method: "DELETE" });
         return current.filter((c) => c.salesEventId !== salesEventId);
@@ -254,11 +272,22 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     });
   }, [authenticated, push]);
 
-  const setColor = useCallback((salesEventId: string, variantId: string, selectedColor: string | undefined, nextColor: string) => {
+  const setColor = useCallback((salesEventId: string, variantId: string, selectedColor: string | undefined, selectedSize: string | undefined, nextColor: string) => {
     setCarts((current) => {
       const target = current.find((c) => c.salesEventId === salesEventId);
       if (!target) return current;
-      const items = target.items.map((item) => sameItem(item, { variantId, selectedColor }) ? { ...item, selectedColor: nextColor } : item);
+      const items = mergeSelections(target.items.map((item) => sameItem(item, { variantId, selectedColor, selectedSize }) ? { ...item, selectedColor: nextColor } : item));
+      const nextDraft = { ...target, items };
+      void push(nextDraft).catch(() => undefined);
+      return current.map((c) => c.salesEventId === salesEventId ? nextDraft : c);
+    });
+  }, [push]);
+
+  const setSize = useCallback((salesEventId: string, variantId: string, selectedColor: string | undefined, selectedSize: string | undefined, nextSize: string) => {
+    setCarts((current) => {
+      const target = current.find((c) => c.salesEventId === salesEventId);
+      if (!target) return current;
+      const items = mergeSelections(target.items.map((item) => sameItem(item, { variantId, selectedColor, selectedSize }) ? { ...item, selectedSize: nextSize } : item));
       const nextDraft = { ...target, items };
       void push(nextDraft).catch(() => undefined);
       return current.map((c) => c.salesEventId === salesEventId ? nextDraft : c);
@@ -290,10 +319,11 @@ export function CartProvider({ authenticated, children }: { authenticated: boole
     setQuantity,
     syncCart,
     setColor,
+    setSize,
     removeItem,
     clearOne,
     clearAll,
-  }), [activeEventId, addItem, authenticated, carts, clearAll, clearOne, ready, removeItem, setActiveEvent, setColor, setQuantity, syncCart]);
+  }), [activeEventId, addItem, authenticated, carts, clearAll, clearOne, ready, removeItem, setActiveEvent, setColor, setSize, setQuantity, syncCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

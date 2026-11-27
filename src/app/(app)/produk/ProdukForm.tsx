@@ -18,6 +18,7 @@ export function ProdukForm({
     sku?: string;
     kategori?: string;
     ukuran?: string;
+    ukuranPilihan?: string[];
     material?: string;
     deskripsi?: string;
     images?: string[];
@@ -28,6 +29,7 @@ export function ProdukForm({
   const [state, formAction, pending] = useActionState(action, undefined);
   const [images, setImages] = useState(initial?.images ?? []);
   const [warna, setWarna] = useState(initial?.warna ?? []);
+  const [ukuranPilihan, setUkuranPilihan] = useState(initial?.ukuranPilihan ?? []);
   useOverlayWhilePending(pending);
 
   return (
@@ -46,7 +48,7 @@ export function ProdukForm({
           <Field label="Kategori">
             <Input name="kategori" defaultValue={initial?.kategori} placeholder="mis. Inner" />
           </Field>
-          <Field label="Ukuran">
+          <Field label="Ukuran tetap (opsional)" hint="Contoh: All Size. Jika Buyer perlu memilih S/M/L atau 39/40/41, isi Pilihan ukuran di bawah.">
             <Input name="ukuran" defaultValue={initial?.ukuran} placeholder="mis. All Size" />
           </Field>
           <Field label="Material">
@@ -61,6 +63,11 @@ export function ProdukForm({
             <VariantImagesInput value={images} onChange={setImages} />
           </div>
           <div className="sm:col-span-2">
+            <Field label="Pilihan ukuran" hint="Isi satu per satu agar Buyer bisa memilih ukuran sebelum memesan. Kosongkan jika produk hanya punya satu ukuran.">
+              <VariantColorsInput kind="ukuran" value={ukuranPilihan} onChange={setUkuranPilihan} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
             <Field label="Opsi warna">
               <VariantColorsInput value={warna} onChange={setWarna} />
             </Field>
@@ -68,6 +75,7 @@ export function ProdukForm({
         </div>
         <input type="hidden" name="imagesJson" value={JSON.stringify(images)} />
         <input type="hidden" name="warnaJson" value={JSON.stringify(warna)} />
+        <input type="hidden" name="ukuranPilihanJson" value={JSON.stringify(ukuranPilihan)} />
       </Card>
       <p className="text-xs text-sand-500">
         Harga, kuota, dan HPP diatur per Batch PO saat Produk ini ditempelkan ke sebuah Pre-Order — bukan di sini.

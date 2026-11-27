@@ -9,12 +9,12 @@ import { useCart } from "@/components/CartProvider";
 export function CatalogQuickAdd({ detailHref, event, item, role }: {
   detailHref: string;
   event: { salesEventId: string; eventTitle: string; formToken: string; sellerId?: string | null; sellerName: string; endsAt: string };
-  item: { variantId: string; name: string; price: number; promoMinQuantity?: number | null; promoDiscountPerUnit?: number | null; image?: string | null; colors?: string[]; quotaRemaining: number };
+  item: { variantId: string; name: string; price: number; promoMinQuantity?: number | null; promoDiscountPerUnit?: number | null; image?: string | null; colors?: string[]; sizes?: string[]; quotaRemaining: number };
   role?: string;
 }) {
   const { addItem } = useCart();
   if (role === "SELLER") return null;
-  if (item.colors?.length) {
+  if (item.colors?.length || item.sizes?.length) {
     return (
       <Link href={detailHref} className="pcard__cart" aria-label={`Pilih opsi ${item.name}`} title="Pilih opsi">
         <CartIcon />

@@ -22,6 +22,7 @@ type SettlementItem = {
   hargaSaatPesan: string;
   hargaSebelumPromo: number | null;
   warna: string | null;
+  ukuran: string | null;
   variant: { namaVarian: string; gambarUrl: string | null };
 };
 
@@ -267,6 +268,7 @@ export function PortalSettlementForm({
                   <span className="block font-medium text-sand-800">
                     {item.variant.namaVarian}
                     {item.warna && <span className="ml-2 text-xs text-sand-500">({item.warna})</span>}
+                    {item.ukuran && <span className="ml-2 text-xs text-sand-500">Ukuran {item.ukuran}</span>}
                   </span>
                   <span className="text-xs text-sand-500">
                     {item.jumlah} × {formatRupiah(item.hargaSaatPesan)}

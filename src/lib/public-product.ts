@@ -34,6 +34,7 @@ export type PublicProduct = {
     sku: string | null;
     category: string;
     size: string | null;
+    sizes: string[];
     material: string | null;
     description: string | null;
     images: string[];

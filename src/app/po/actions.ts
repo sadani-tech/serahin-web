@@ -20,6 +20,7 @@ function parseCart(formData: FormData) {
     jumlah: number;
     expectedHarga?: number;
     warna?: string;
+    ukuran?: string;
   }[] = [];
   if (Array.isArray(parsed)) {
     for (const it of parsed) {
@@ -31,6 +32,8 @@ function parseCart(formData: FormData) {
       );
       const warna =
         String((it as { warna?: unknown })?.warna ?? "").trim() || undefined;
+      const ukuran =
+        String((it as { ukuran?: unknown })?.ukuran ?? "").trim() || undefined;
       const hargaRaw = (it as { expectedHarga?: unknown })?.expectedHarga;
       const expectedHarga = Number(hargaRaw);
       const validExpectedHarga =
@@ -38,7 +41,7 @@ function parseCart(formData: FormData) {
           ? expectedHarga
           : undefined;
       const ex = items.find(
-        (x) => x.variantId === vid && (x.warna ?? "") === (warna ?? ""),
+        (x) => x.variantId === vid && (x.warna ?? "") === (warna ?? "") && (x.ukuran ?? "") === (ukuran ?? ""),
       );
       if (ex) ex.jumlah = ex.jumlah + j;
       else {
@@ -47,6 +50,7 @@ function parseCart(formData: FormData) {
           jumlah: j,
           expectedHarga: validExpectedHarga,
           warna,
+          ukuran,
         });
       }
     }

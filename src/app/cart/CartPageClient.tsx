@@ -17,7 +17,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   buyerProfile?: { name: string; email: string | null; phone: string | null } | null;
 }) {
   const router = useRouter();
-  const { carts, activeEventId, setActiveEvent, ready, authenticated, setQuantity, setColor, removeItem, clearOne, syncCart } = useCart();
+  const { carts, activeEventId, setActiveEvent, ready, authenticated, setQuantity, setColor, setSize, removeItem, clearOne, syncCart } = useCart();
   const cart = carts.find((c) => c.salesEventId === activeEventId) ?? null;
   const siblingsSameSeller = cart ? carts.filter((c) => c.sellerId && c.sellerId === cart.sellerId) : [];
   const [paymentMethod, setPaymentMethod] = useState<"GATEWAY" | "MANUAL">("GATEWAY");
@@ -46,7 +46,7 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
   const total = cart ? cartTotal(cart.items) : 0;
   const originalTotal = cart?.items.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? 0;
   const selectedGatewayMethod = gatewayMethods.find((method) => method.code === gatewayMethod);
-  const cartRevision = cart?.items.map((item) => `${item.variantId}:${item.selectedColor ?? ""}:${item.quantity}`).join("|") ?? "";
+  const cartRevision = cart?.items.map((item) => JSON.stringify([item.variantId, item.selectedColor, item.selectedSize, item.quantity])).join("|") ?? "";
 
   useEffect(() => {
     if (!authenticated || !cart) return;
@@ -212,14 +212,14 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
       )}
 
       <div className="cart-page__items">{cart.items.map((item) => (
-        <article key={`${item.variantId}:${item.selectedColor ?? ""}`} className="cart-page__item">
+        <article key={JSON.stringify([item.variantId, item.selectedColor, item.selectedSize])} className="cart-page__item">
           <div className="cart-page__item-media"><ProductImage src={item.image} alt={item.name} className="h-full w-full object-cover" /></div>
           <div className="cart-page__item-body">
             <h2 className="cart-page__item-name">{item.name}</h2>
             {item.colors?.length ? (
               <label className="cart-page__item-color">
                 Warna
-                <Select value={item.selectedColor ?? ""} onChange={(event) => setColor(cart.salesEventId, item.variantId, item.selectedColor, event.target.value)} className="ml-2 min-h-9 text-sm">
+                <Select value={item.selectedColor ?? ""} onChange={(event) => setColor(cart.salesEventId, item.variantId, item.selectedColor, item.selectedSize, event.target.value)} className="ml-2 min-h-9 text-sm">
                   <option value="" disabled>Pilih warna</option>
                   {item.colors.map((color) => <option key={color} value={color}>{color}</option>)}
                 </Select>
@@ -227,14 +227,23 @@ export function CartPageClient({ resumeCheckout = false, switchingAccount = fals
             ) : item.selectedColor ? (
               <p className="cart-page__item-color-text">Warna: {item.selectedColor}</p>
             ) : null}
+            {item.sizes?.length ? (
+              <label className="cart-page__item-color">
+                Ukuran
+                <Select value={item.selectedSize ?? ""} onChange={(event) => setSize(cart.salesEventId, item.variantId, item.selectedColor, item.selectedSize, event.target.value)} className="ml-2 min-h-9 text-sm">
+                  <option value="" disabled>Pilih ukuran</option>
+                  {item.sizes.map((size) => <option key={size} value={size}>{size}</option>)}
+                </Select>
+              </label>
+            ) : item.selectedSize ? <p className="cart-page__item-color-text">Ukuran: {item.selectedSize}</p> : null}
             <p className="cart-page__item-price">{formatRupiah(effectiveUnitPrice(item, cart.items.reduce((sum, row) => sum + row.quantity, 0)))} / unit</p>
             {item.promoMinQuantity && item.promoDiscountPerUnit ? <p className="text-xs text-emerald-700">Promo Batch PO: potongan {formatRupiah(item.promoDiscountPerUnit)} per unit mulai {item.promoMinQuantity} unit dalam keranjang</p> : null}
             {item.invalidReason && <p className="cart-page__item-warn">{item.invalidReason}</p>}
             <div className="cart-page__item-row">
-              <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.quantity - 1)} className="cart-page__qty-btn" aria-label="Kurangi jumlah">−</button>
+              <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.selectedSize, item.quantity - 1)} className="cart-page__qty-btn" aria-label="Kurangi jumlah">−</button>
               <span className="cart-page__qty-value">{item.quantity}</span>
-              <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.quantity + 1)} className="cart-page__qty-btn" aria-label="Tambah jumlah">+</button>
-              <button type="button" onClick={() => removeItem(cart.salesEventId, item.variantId, item.selectedColor)} className="cart-page__item-remove">Hapus</button>
+              <button type="button" onClick={() => setQuantity(cart.salesEventId, item.variantId, item.selectedColor, item.selectedSize, item.quantity + 1)} className="cart-page__qty-btn" aria-label="Tambah jumlah">+</button>
+              <button type="button" onClick={() => removeItem(cart.salesEventId, item.variantId, item.selectedColor, item.selectedSize)} className="cart-page__item-remove">Hapus</button>
             </div>
           </div>
         </article>

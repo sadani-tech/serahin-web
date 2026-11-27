@@ -25,6 +25,7 @@ export type ProductEditorValues = {
   kategori?: string | null;
   label?: string | null;
   ukuran?: string | null;
+  ukuranPilihan?: string[];
   material?: string | null;
   sku?: string | null;
   deskripsi?: string | null;
@@ -74,6 +75,7 @@ export function ProductEditor({
   const [state, formAction, pending] = useActionState(action, undefined);
   const [images, setImages] = useState(initial?.images ?? []);
   const [warna, setWarna] = useState(initial?.warna ?? []);
+  const [ukuranPilihan, setUkuranPilihan] = useState(initial?.ukuranPilihan ?? []);
   const [dpKustom, setDpKustom] = useState(Boolean(initial?.dpTipe));
   const [dpTipe, setDpTipe] = useState<"PERSEN" | "NOMINAL">(
     initial?.dpTipe ?? "PERSEN",
@@ -158,7 +160,7 @@ export function ProductEditor({
               placeholder="mis. New Arrival"
             />
           </Field>
-          <Field label="Ukuran">
+          <Field label="Ukuran tetap (opsional)" hint="Contoh: All Size. Untuk beberapa ukuran yang dipilih Buyer, isi Pilihan ukuran di bawah.">
             <Input
               name="ukuran"
               defaultValue={initial?.ukuran ?? ""}
@@ -243,6 +245,11 @@ export function ProductEditor({
             <VariantImagesInput value={images} onChange={setImages} campaignId={campaignId} />
           </div>
           <div className="sm:col-span-2">
+            <Field label="Pilihan ukuran" hint="Buyer memilih satu ukuran saat memesan. Kosongkan jika tidak ada pilihan ukuran.">
+              <VariantColorsInput kind="ukuran" value={ukuranPilihan} onChange={setUkuranPilihan} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
             <Field label="Opsi warna">
               <VariantColorsInput value={warna} onChange={setWarna} />
             </Field>
@@ -250,6 +257,7 @@ export function ProductEditor({
         </div>
         <input type="hidden" name="imagesJson" value={JSON.stringify(images)} />
         <input type="hidden" name="warnaJson" value={JSON.stringify(warna)} />
+        <input type="hidden" name="ukuranPilihanJson" value={JSON.stringify(ukuranPilihan)} />
         <datalist id="kategori-umum">
           <option value="Sepatu" />
           <option value="Tas" />
