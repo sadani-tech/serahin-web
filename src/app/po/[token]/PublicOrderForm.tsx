@@ -31,6 +31,7 @@ export type PublicVariantOption = {
   gambarUrl?: string | null;
   images?: string[];
   warna?: string[];
+  ukuranPilihan?: string[];
   kategori?: string | null;
   label?: string | null;
   ukuran?: string | null;
@@ -149,6 +150,7 @@ export function PublicOrderForm({
   // punya beberapa baris sekaligus dalam satu pesanan (v2.3.7 FR-37.14/37.15),
   // mis. Merah 2 + Kuning 1. Varian tanpa opsi warna tetap memakai `qty`.
   const [colorQty, setColorQty] = useState<Record<string, Record<string, number>>>({});
+  const [sizeQty, setSizeQty] = useState<Record<string, Record<string, number>>>({});
   const [variantImageIndex, setVariantImageIndex] = useState<Record<string, number>>({});
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategory, setCatalogCategory] = useState("Semua");
@@ -175,6 +177,7 @@ export function PublicOrderForm({
           expiresAt?: number;
           qty?: Record<string, number>;
           colorQty?: Record<string, Record<string, number>>;
+          sizeQty?: Record<string, Record<string, number>>;
           colors?: Record<string, string>; // draft lama (satu warna per varian)
         };
         if (draftIsExpired(draft.expiresAt)) {
@@ -192,6 +195,7 @@ export function PublicOrderForm({
           }
           setColorQty(migrated);
         }
+        if (draft.sizeQty) setSizeQty(draft.sizeQty);
       } catch { localStorage.removeItem(`serahin:checkout:${formToken}`); }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -223,9 +227,42 @@ export function PublicOrderForm({
     setQty((current) => ({ ...current, [id]: Math.max(0, value) }));
   /** Total kuantitas suatu varian, gabungan seluruh baris warna bila ada. */
   const variantTotalQty = (v: PublicVariantOption) =>
-    v.warna?.length
-      ? Object.values(colorQty[v.id] ?? {}).reduce((sum, n) => sum + n, 0)
-      : qty[v.id] ?? 0;
+    v.ukuranPilihan?.length
+      ? Object.values(sizeQty[v.id] ?? {}).reduce((sum, n) => sum + n, 0)
+      : v.warna?.length
+        ? Object.values(colorQty[v.id] ?? {}).reduce((sum, n) => sum + n, 0)
+        : qty[v.id] ?? 0;
+  const setSizeQ = (v: PublicVariantOption, warna: string, ukuran: string, value: number) =>
+    setSizeQty((current) => {
+      const forVariant = { ...(current[v.id] ?? {}) };
+      const key = JSON.stringify([warna, ukuran]);
+      const othersTotal = Object.entries(forVariant).reduce((sum, [other, q]) => sum + (other === key ? 0 : q), 0);
+      forVariant[key] = Math.max(0, Math.min(value, v.sisa - othersTotal));
+      return { ...current, [v.id]: forVariant };
+    });
+  function renderSizeRows(v: PublicVariantOption, disabled: boolean) {
+    if (!v.ukuranPilihan?.length) return null;
+    const colors = v.warna?.length ? v.warna : [""];
+    return <div className="space-y-4">
+      {colors.map((warna) => <div key={warna || "no-color"}>
+        {warna && <p className="mb-2 text-sm font-bold text-sand-700">Warna {warna}</p>}
+        <div className="grid grid-cols-2 gap-2">
+          {v.ukuranPilihan!.map((ukuran) => {
+            const key = JSON.stringify([warna, ukuran]);
+            const count = sizeQty[v.id]?.[key] ?? 0;
+            return <div key={ukuran} className="rounded-xl border border-sand-200 p-2.5">
+              <p className="mb-2 text-center text-sm font-bold text-sand-800">{ukuran}</p>
+              <div className="flex items-center justify-between gap-2">
+                <button type="button" onClick={() => setSizeQ(v, warna, ukuran, count - 1)} disabled={disabled || count === 0} aria-label={`Kurangi ${v.namaVarian} ${warna} ukuran ${ukuran}`} className="min-h-10 min-w-10 rounded-lg bg-sand-100 text-lg disabled:opacity-40">−</button>
+                <output className="text-sm font-bold">{count}</output>
+                <button type="button" onClick={() => setSizeQ(v, warna, ukuran, count + 1)} disabled={disabled || variantTotalQty(v) >= v.sisa} aria-label={`Tambah ${v.namaVarian} ${warna} ukuran ${ukuran}`} className="min-h-10 min-w-10 rounded-lg bg-brand-600 text-lg text-white disabled:opacity-40">+</button>
+              </div>
+            </div>;
+          })}
+        </div>
+      </div>)}
+    </div>;
+  }
   const setColorQ = (v: PublicVariantOption, warna: string, value: number) =>
     setColorQty((current) => {
       const forVariant = { ...(current[v.id] ?? {}) };
@@ -272,19 +309,28 @@ export function PublicOrderForm({
   // kombinasi varian+warna (v2.3.7 FR-37.14/37.15), sumber kebenaran untuk
   // ringkasan, payload `items`, dan total harga.
   const rows = variants.flatMap((v) => {
+    if (v.ukuranPilihan?.length) {
+      return Object.entries(sizeQty[v.id] ?? {})
+        .filter(([, q]) => q > 0)
+        .map(([key, q]) => {
+          const [warna, ukuran] = JSON.parse(key) as [string, string];
+          return { variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: warna || undefined, ukuran, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal };
+        });
+    }
     if (v.warna?.length) {
       return Object.entries(colorQty[v.id] ?? {})
         .filter(([, q]) => q > 0)
-        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: warna as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }));
+        .map(([warna, q]) => ({ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: warna as string | undefined, ukuran: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }));
     }
     const q = qty[v.id] ?? 0;
-    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }] : [];
+    return q > 0 ? [{ variantId: v.id, namaVarian: v.namaVarian, harga: v.harga, promoMinQuantity: v.promoMinQuantity, promoDiscountPerUnit: v.promoDiscountPerUnit, jumlah: q, warna: undefined as string | undefined, ukuran: undefined as string | undefined, dpTipe: v.dpTipe, dpPercent: v.dpPercent, dpNominal: v.dpNominal }] : [];
   });
   const items = rows.map((r) => ({
     variantId: r.variantId,
     jumlah: r.jumlah,
     expectedHarga: r.harga,
     warna: r.warna,
+    ukuran: r.ukuran,
   }));
   const totalQuantity = rows.reduce((sum, row) => sum + row.jumlah, 0);
   const discountedPrice = (row: typeof rows[number]) => effectiveUnitPrice({ price: row.harga, promoMinQuantity: row.promoMinQuantity, promoDiscountPerUnit: row.promoDiscountPerUnit }, totalQuantity);
@@ -424,7 +470,7 @@ export function PublicOrderForm({
   }
 
   function persistDraft() {
-    localStorage.setItem(`serahin:checkout:${formToken}`, JSON.stringify({ qty, colorQty, expiresAt: draftExpiresAt() }));
+    localStorage.setItem(`serahin:checkout:${formToken}`, JSON.stringify({ qty, colorQty, sizeQty, expiresAt: draftExpiresAt() }));
   }
 
   function scrollToCheckout() {
@@ -533,7 +579,7 @@ export function PublicOrderForm({
             const gambarUtama = images[activeImageIndex] ?? v.gambarUrl;
             const category = getCategory(v.kategori);
             const katalogMeta = [
-              v.ukuran && { label: "Ukuran", value: v.ukuran },
+              !v.ukuranPilihan?.length && v.ukuran && { label: "Ukuran", value: v.ukuran },
               v.material && { label: "Material", value: v.material },
               v.sku && { label: "SKU", value: v.sku },
             ].filter(Boolean) as { label: string; value: string }[];
@@ -640,7 +686,7 @@ export function PublicOrderForm({
                     </div>
                   )}
 
-                  {v.warna?.length ? (
+                  {v.warna?.length || v.ukuranPilihan?.length ? (
                     <div className="mt-auto border-t border-sand-100 pt-2.5">
                       <button
                         type="button"
@@ -649,7 +695,7 @@ export function PublicOrderForm({
                         className="flex w-full items-center justify-between gap-2 rounded-xl border border-sand-300 bg-white px-3 py-2.5 text-left transition hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <span className="min-w-0">
-                          <span className="block text-[0.65rem] font-bold uppercase tracking-wide text-sand-500">Pilih warna</span>
+                          <span className="block text-[0.65rem] font-bold uppercase tracking-wide text-sand-500">Pilih {v.warna?.length ? "warna" : "ukuran"}{v.warna?.length && v.ukuranPilihan?.length ? " & ukuran" : ""}</span>
                           <span className="block truncate text-sm font-extrabold text-sand-900">
                             {variantTotalQty(v) > 0 ? `${variantTotalQty(v)} dipilih` : "Belum dipilih"}
                           </span>
@@ -732,11 +778,11 @@ export function PublicOrderForm({
           {adaItem ? (
             <ul className="mt-4 space-y-3 border-y border-sand-100 py-4">
               {rows.map((r) => (
-                <li key={`${r.variantId}:${r.warna ?? ""}`} className="flex justify-between gap-3 text-sm">
+                <li key={JSON.stringify([r.variantId, r.warna, r.ukuran])} className="flex justify-between gap-3 text-sm">
                   <div className="min-w-0">
                     <p className="truncate font-bold text-sand-800">{r.namaVarian}</p>
                     <p className="text-xs text-sand-500">
-                      {r.jumlah} × {formatRupiah(discountedPrice(r))}{r.warna ? ` · ${r.warna}` : ""}
+                      {r.jumlah} × {formatRupiah(discountedPrice(r))}{r.warna ? ` · ${r.warna}` : ""}{r.ukuran ? ` · Ukuran ${r.ukuran}` : ""}
                     </p>
                   </div>
                   <span className="shrink-0 font-bold text-sand-800">{formatRupiah(discountedPrice(r) * r.jumlah)}</span>
@@ -759,7 +805,7 @@ export function PublicOrderForm({
           <Button type="button" variant="accent" className="mt-5 w-full" onClick={scrollToCheckout} disabled={orderingDisabled || !adaItem}>
             {buyerAuthenticated ? "Konfirmasi & Bayar" : "Lanjutkan Pesanan"}
           </Button>
-          {adaItem && <button type="button" onClick={() => { setQty({}); setColorQty({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
+          {adaItem && <button type="button" onClick={() => { setQty({}); setColorQty({}); setSizeQty({}); localStorage.removeItem(`serahin:checkout:${formToken}`); }} className="mt-3 w-full text-sm font-bold text-sand-500 hover:text-rose-700">Batalkan pilihan</button>}
         </div>
       </section>
 
@@ -1027,7 +1073,7 @@ export function PublicOrderForm({
                 </svg>
               </button>
             </div>
-            {renderColorRows(colorModalVariant, orderingDisabled || colorModalVariant.sisa <= 0)}
+            {colorModalVariant.ukuranPilihan?.length ? renderSizeRows(colorModalVariant, orderingDisabled || colorModalVariant.sisa <= 0) : renderColorRows(colorModalVariant, orderingDisabled || colorModalVariant.sisa <= 0)}
             <Button type="button" variant="accent" className="mt-5 w-full" onClick={() => setColorModalFor(null)}>
               Selesai
             </Button>

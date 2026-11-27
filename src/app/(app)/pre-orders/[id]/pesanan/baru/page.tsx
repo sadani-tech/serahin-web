@@ -24,6 +24,7 @@ type CampaignDetail = {
     sisa: number;
     harga: string;
     warna: string[];
+    ukuranPilihan: string[];
   }[];
 };
 
@@ -50,6 +51,7 @@ export default async function TambahPesananPage({
     sisa: v.sisa,
     harga: toNumber(v.harga),
     warna: v.warna ?? [],
+    ukuranPilihan: v.ukuranPilihan ?? [],
   }));
 
   const action = createOrder.bind(null, id);

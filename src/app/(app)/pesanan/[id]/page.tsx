@@ -55,6 +55,7 @@ type OrderDetail = {
     hargaSaatPesan: string;
     hargaKatalog: string;
     warna: string | null;
+    ukuran: string | null;
     // DP kustom Produk (v2.3.7 §3.18) — snapshot DP efektif saat pesanan
     // dibuat; null berarti mengikuti DP Batch PO (order.campaign.dp...).
     dpTipe: DpTipe | null;
@@ -322,6 +323,7 @@ export default async function OrderDetailPage({
                             {it.warna}
                           </span>
                         )}
+                        {it.ukuran && <span className="text-xs text-sand-600">Ukuran {it.ukuran}</span>}
                       </p>
                       <p className="text-xs text-sand-500">
                         {it.jumlah} × {formatRupiah(it.hargaSaatPesan)}

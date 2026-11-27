@@ -146,6 +146,7 @@ export default function ProdukTable({
                             sku: p.sku ?? undefined,
                             kategori: p.kategori ?? undefined,
                             ukuran: p.ukuran ?? undefined,
+                            ukuranPilihan: p.ukuranPilihan,
                             material: p.material ?? undefined,
                             deskripsi: p.deskripsi ?? undefined,
                             images: p.images,

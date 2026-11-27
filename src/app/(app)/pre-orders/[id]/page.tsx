@@ -163,6 +163,7 @@ type ProductRow = {
   images?: string[];
   warna?: string[];
   ukuran?: string | null;
+  ukuranPilihan?: string[];
   material?: string | null;
   sku?: string | null;
   deskripsi?: string | null;

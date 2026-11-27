@@ -26,9 +26,10 @@ export type VariantOption = {
   sisa: number; // sisa kuota
   harga: number;
   warna?: string[]; // opsi warna (bila ada)
+  ukuranPilihan?: string[];
 };
 
-type Row = { variantId: string; jumlah: number; warna?: string };
+type Row = { variantId: string; jumlah: number; warna?: string; ukuran?: string };
 /** Baris keranjang internal — `rowId` membedakan beberapa baris warna untuk
  * varian yang sama (v2.3.7 FR-37.18), karena `variantId` saja tidak lagi unik. */
 type CartRow = Row & { rowId: string };
@@ -96,7 +97,7 @@ export function OrderForm({
       // Varian tanpa opsi warna tetap satu baris per varian (perilaku lama).
       // Varian dengan opsi warna boleh punya beberapa baris sekaligus, mis.
       // Merah 2 + Kuning 1 dalam satu pesanan (v2.3.7 FR-37.18).
-      if (!variant?.warna?.length && c.some((r) => r.variantId === variantId))
+      if (!variant?.warna?.length && !variant?.ukuranPilihan?.length && c.some((r) => r.variantId === variantId))
         return c;
       return [...c, { rowId: nextRowId(), variantId, jumlah: 1 }];
     });
@@ -108,9 +109,11 @@ export function OrderForm({
     setCart((c) => c.filter((r) => r.rowId !== rowId));
   const setWarna = (rowId: string, warna: string) =>
     setCart((c) => c.map((r) => (r.rowId === rowId ? { ...r, warna } : r)));
+  const setUkuran = (rowId: string, ukuran: string) =>
+    setCart((c) => c.map((r) => (r.rowId === rowId ? { ...r, ukuran } : r)));
 
   const totalQuantity = cart.reduce((sum, row) => sum + row.jumlah, 0);
-  const rowKey = (row: Row) => JSON.stringify([row.variantId, row.warna ?? null, row.jumlah]);
+  const rowKey = (row: Row) => JSON.stringify([row.variantId, row.warna ?? null, row.ukuran ?? null, row.jumlah]);
   const unchangedItems = Boolean(initial?.items &&
     initial.items.length === cart.length &&
     initial.items.map(rowKey).sort().join("|") === cart.map(rowKey).sort().join("|"));
@@ -142,6 +145,10 @@ export function OrderForm({
   const warnaBelumLengkap = cart.some((r) => {
     const v = varById.get(r.variantId);
     return v?.warna && v.warna.length > 0 && !r.warna;
+  });
+  const ukuranBelumLengkap = cart.some((r) => {
+    const v = varById.get(r.variantId);
+    return v?.ukuranPilihan && v.ukuranPilihan.length > 0 && !r.ukuran;
   });
 
   return (
@@ -235,6 +242,7 @@ export function OrderForm({
                   <input type="hidden" name="itemVariantId" value={r.variantId} />
                   <input type="hidden" name="itemJumlah" value={r.jumlah} />
                   <input type="hidden" name="itemWarna" value={r.warna ?? ""} />
+                  <input type="hidden" name="itemUkuran" value={r.ukuran ?? ""} />
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-sand-900">
@@ -258,6 +266,12 @@ export function OrderForm({
                             {w}
                           </option>
                         ))}
+                      </Select>
+                    )}
+                    {v?.ukuranPilihan && v.ukuranPilihan.length > 0 && (
+                      <Select value={r.ukuran ?? ""} onChange={(e) => setUkuran(r.rowId, e.target.value)} className={`mt-1.5 !py-1 text-xs ${r.ukuran ? "" : "!border-rose-300"}`}>
+                        <option value="">— pilih ukuran —</option>
+                        {v.ukuranPilihan.map((size) => <option key={size} value={size}>{size}</option>)}
                       </Select>
                     )}
                   </div>
@@ -361,7 +375,7 @@ export function OrderForm({
         )}
         <Button
           type="submit"
-          disabled={pending || cart.length === 0 || warnaBelumLengkap}
+          disabled={pending || cart.length === 0 || warnaBelumLengkap || ukuranBelumLengkap}
         >
           {pending ? "Menyimpan…" : submitLabel}
         </Button>

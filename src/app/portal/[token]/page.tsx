@@ -35,6 +35,7 @@ type PortalOrder = {
     hargaSaatPesan: string;
     hargaSebelumPromo: number | null;
     warna: string | null;
+    ukuran: string | null;
     variant: { namaVarian: string; gambarUrl: string | null };
   }[];
   settlement: { stage: boolean; unsettledItemIds: string[]; pendingItemIds: string[] };
@@ -393,6 +394,7 @@ export default async function PortalPage({
                           {it.warna}
                         </span>
                       )}
+                      {it.ukuran && <span className="text-xs text-sand-500">Ukuran: {it.ukuran}</span>}
                     </p>
                     <p className="text-xs text-sand-500">
                       {it.jumlah} × {it.hargaSebelumPromo != null && (

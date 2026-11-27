@@ -130,7 +130,7 @@ export default async function StorePage({ params }: { params: Params }) {
                             role={session?.role}
                             detailHref={detailHref}
                             event={{ salesEventId: campaign.id, eventTitle: campaign.namaProduk, formToken: campaign.formToken, sellerId: profile.id, sellerName: profile.businessName, endsAt: campaign.tanggalTutup }}
-                            item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, promoMinQuantity: variant.promoMinQuantity, promoDiscountPerUnit: variant.promoDiscountPerUnit, image: variant.gambarUrl, colors: variant.warna, quotaRemaining: variant.sisa }}
+                            item={{ variantId: variant.id, name: `${campaign.namaProduk} — ${variant.namaVarian}`, price: variant.harga, promoMinQuantity: variant.promoMinQuantity, promoDiscountPerUnit: variant.promoDiscountPerUnit, image: variant.gambarUrl, colors: variant.warna, sizes: variant.ukuranPilihan, quotaRemaining: variant.sisa }}
                           />
                         </div>
                       </div>
