@@ -3,8 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ToastFeedback, useToast } from "@/components/Toast";
-import { useConfirm } from "@/components/ConfirmDialog";
 import { Select } from "@/components/ui";
+import { WorkspaceDialog } from "@/components/ui/WorkspaceDialog";
 import { createBroadcast, loadBroadcastOptions, previewBroadcast, type BroadcastOptions, type BroadcastPayload, type BroadcastPreview } from "./actions";
 
 type SellerOption = { id: string; name: string };
@@ -25,7 +25,6 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
   const [pending, startTransition] = useTransition();
   const toast = useToast();
   const router = useRouter();
-  const { confirm } = useConfirm();
   const selectedProduct = options?.products.find((product) => product.id === productId);
 
   const payload = useMemo<BroadcastPayload>(() => ({
@@ -60,13 +59,6 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
 
   async function send() {
     if (!preview) return;
-    const ok = await confirm({
-      title: `Antrekan email untuk ${preview.recipientCount} Buyer?`,
-      description: "Audience akan disimpan sebagai snapshot.",
-      confirmLabel: "Antrekan",
-      variant: "primary",
-    });
-    if (!ok) return;
     setError("");
     startTransition(async () => {
       const result = await createBroadcast(payload);
@@ -77,9 +69,9 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
     });
   }
 
-  return <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,.72fr)] lg:items-start">
-    <div className="space-y-5 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
-      <div><p className="text-xs font-extrabold uppercase tracking-wide text-brand-700">Langkah 1 · Susun pesan</p><h2 className="mt-1 text-xl font-extrabold text-sand-900">Buat broadcast</h2><p className="mt-1 text-sm leading-6 text-sand-500">Pilih penerima berdasarkan produk, lalu tulis isi email. Preview akan menghitung penerima sebelum pengiriman.</p></div>
+  return <div className="mx-auto max-w-4xl">
+    <div className="space-y-6 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-7">
+      <div><p className="text-xs font-extrabold uppercase tracking-wide text-brand-700">Kampanye email</p><h2 className="mt-1 text-xl font-extrabold text-sand-900">Buat broadcast</h2><p className="mt-1 text-sm leading-6 text-sand-500">Tentukan siapa yang menerima pesan, tulis email, lalu periksa hasilnya sebelum dikirim.</p></div>
       <div className="border-t border-sand-100 pt-4"><h3 className="mb-3 text-sm font-extrabold text-sand-900">1. Pilih penerima</h3>
       {sellers.length > 0 && <Field label="Seller"><Select value={sellerId} onChange={(event) => changeSeller(event.target.value)}><option value="">Pilih Seller</option>{sellers.map((seller) => <option value={seller.id} key={seller.id}>{seller.name}</option>)}</Select></Field>}
       <div className="grid gap-3 md:grid-cols-2">
@@ -97,17 +89,14 @@ export function BroadcastComposer({ sellers, initialOptions }: { sellers: Seller
       <label className="flex items-start gap-3 rounded-xl bg-cream-soft p-3 text-sm"><input type="checkbox" checked={excludePendingPayment} onChange={(event) => { setExcludePendingPayment(event.target.checked); setPreview(undefined); }} className="mt-1" /><span><b>Kecualikan pembayaran pending</b><small className="block text-sand-500">Mencegah Buyer membayar dua kali saat bukti sedang diperiksa.</small></span></label>
       </div>
       <ToastFeedback error={error} />
-      <button type="button" disabled={pending || !options} onClick={doPreview} className="min-h-11 w-full rounded-xl bg-brand-600 px-5 font-extrabold text-white disabled:opacity-50 sm:w-auto">{pending ? "Menghitung..." : "Hitung penerima →"}</button>
+      <div className="flex flex-col gap-3 border-t border-sand-100 pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-sand-500">Preview menampilkan tampilan email dan jumlah penerima akhir. Belum ada email yang dikirim.</p><button type="button" disabled={pending || !options} onClick={doPreview} className="min-h-11 w-full shrink-0 rounded-xl bg-brand-600 px-5 font-extrabold text-white disabled:opacity-50 sm:w-auto">{pending ? "Menghitung..." : "Preview & periksa →"}</button></div>
     </div>
-    <aside className="rounded-2xl border border-sand-200 bg-cream-soft p-5 lg:sticky lg:top-5">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-brand-700">Langkah 2 · Periksa</p><h2 className="mt-1 text-lg font-extrabold text-sand-900">Preview penerima</h2>
-      {!preview ? <p className="mt-3 text-sm leading-6 text-sand-500">Pilih Seller dan produk, isi pesan, lalu hitung audience sebelum mengirim.</p> : <div className="mt-4 space-y-4">
-        <div className="rounded-2xl bg-brand-700 p-5 text-white"><p className="text-xs font-bold uppercase tracking-wide text-brand-100">Recipient unik</p><strong className="mt-2 block text-4xl">{preview.recipientCount}</strong><small>Maksimum {preview.maximumRecipients}</small></div>
-        <div className="grid grid-cols-2 gap-2 text-xs">{Object.entries(preview.excluded).map(([key, value]) => <div key={key} className="rounded-xl bg-white p-3"><b className="block text-lg text-sand-900">{value}</b><span className="text-sand-500">{excludedLabel[key] ?? key}</span></div>)}</div>
-        <div className="space-y-2"><h3 className="text-xs font-extrabold uppercase tracking-wide text-sand-500">Sampel</h3>{preview.sample.map((item) => <div className="rounded-xl border border-sand-200 bg-white p-3 text-sm" key={item.email}><b>{item.name}</b><p className="text-xs text-sand-500">{item.email} · {item.orderCount} pesanan</p><p className="mt-1 text-xs text-sand-600">{item.products.join(", ")}</p></div>)}</div>
-        <button type="button" disabled={pending || preview.recipientCount === 0} onClick={send} className="min-h-11 w-full rounded-full bg-accent-600 px-5 font-extrabold text-white disabled:opacity-50">Konfirmasi & antrekan</button>
-      </div>}
-    </aside>
+    {preview && <WorkspaceDialog title="Periksa broadcast" eyebrow="Preview sebelum kirim" onClose={() => setPreview(undefined)} wide footer={<div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-sand-500">Pengiriman akan masuk antrean untuk {preview.recipientCount} penerima unik.</p><div className="flex gap-2"><button type="button" onClick={() => setPreview(undefined)} className="min-h-11 flex-1 rounded-xl border border-sand-300 px-4 text-sm font-bold sm:flex-none">Kembali edit</button><button type="button" disabled={pending || preview.recipientCount === 0} onClick={send} className="min-h-11 flex-1 rounded-xl bg-brand-600 px-5 text-sm font-extrabold text-white disabled:opacity-50 sm:flex-none">{pending ? "Mengantrekan..." : "Kirim broadcast"}</button></div></div>}>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="min-w-0 space-y-3"><p className="text-xs font-extrabold uppercase tracking-wide text-sand-500">Tampilan email</p><div className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm"><div className="space-y-2 border-b border-sand-100 bg-sand-50 px-5 py-4 text-sm"><p><span className="inline-block w-16 text-sand-500">Subjek</span><strong className="text-sand-900">{subject}</strong></p><p><span className="inline-block w-16 text-sand-500">Kepada</span><span>Buyer yang memenuhi kriteria</span></p></div><div className="min-h-48 whitespace-pre-wrap break-words px-5 py-6 text-sm leading-7 text-sand-800">{body}</div></div><p className="text-xs text-sand-500">Nama internal: {name}</p></div>
+        <aside className="space-y-4"><div className="rounded-2xl bg-brand-700 p-5 text-white"><p className="text-xs font-bold uppercase tracking-wide text-brand-100">Penerima unik</p><strong className="mt-2 block text-4xl">{preview.recipientCount}</strong><small>Maksimum {preview.maximumRecipients}</small></div><div><h3 className="text-xs font-extrabold uppercase tracking-wide text-sand-500">Tidak disertakan</h3><dl className="mt-2 space-y-2">{Object.entries(preview.excluded).map(([key, value]) => <div key={key} className="flex justify-between gap-2 text-xs"><dt className="text-sand-600">{excludedLabel[key] ?? key}</dt><dd className="font-extrabold text-sand-900">{value}</dd></div>)}</dl></div><div className="border-t border-sand-100 pt-3"><h3 className="text-xs font-extrabold uppercase tracking-wide text-sand-500">Contoh penerima</h3>{preview.sample.map((item) => <div className="mt-2 text-xs" key={item.email}><b className="text-sand-900">{item.name}</b><p className="break-all text-sand-500">{item.email} · {item.orderCount} pesanan</p></div>)}</div></aside>
+      </div><ToastFeedback error={error} />
+    </WorkspaceDialog>}
   </div>;
 }
 
