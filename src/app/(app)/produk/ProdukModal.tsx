@@ -10,6 +10,7 @@ type ProdukInitial = {
   sku?: string;
   kategori?: string;
   ukuran?: string;
+  ukuranPilihan?: string[];
   material?: string;
   deskripsi?: string;
   images?: string[];

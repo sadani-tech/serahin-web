@@ -10,6 +10,7 @@ export type ProdukRow = {
   sku: string | null;
   kategori: string | null;
   ukuran: string | null;
+  ukuranPilihan: string[];
   material: string | null;
   images: string[];
   warna: string[];

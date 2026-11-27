@@ -21,7 +21,7 @@ type BuyerOrder = {
   refundCompletedAt: string | null;
   salesEvent: { title: string; timelineEntries: Array<{ id: string; title: string; notes: string | null; milestoneCode: string | null; createdAt: string }> };
   items: Array<{
-    id: string; variantNameSnapshot: string; skuSnapshot: string | null; selectedColor: string | null; quantity: number; unitPrice: string;
+    id: string; variantNameSnapshot: string; skuSnapshot: string | null; selectedColor: string | null; selectedSize: string | null; quantity: number; unitPrice: string;
     salesEventItem: {
       label: string | null;
       displayImages: string[];
@@ -182,6 +182,7 @@ export default async function BuyerOrderPage({ params }: { params: Promise<{ id:
             </div>
             <p className="mt-0.5 text-xs text-sand-500">
               {item.selectedColor && `Warna: ${item.selectedColor} · `}
+              {item.selectedSize && `Ukuran: ${item.selectedSize} · `}
               {item.salesEventItem.productVariant.size && `Ukuran: ${item.salesEventItem.productVariant.size} · `}
               {sku && `SKU: ${sku} · `}
               {item.quantity} × {formatRupiah(Number(item.unitPrice))}

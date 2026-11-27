@@ -22,16 +22,18 @@ function parseCart(formData: FormData) {
   const vids = formData.getAll("itemVariantId").map(String);
   const qtys = formData.getAll("itemJumlah").map(String);
   const warnas = formData.getAll("itemWarna").map(String);
-  const items: { variantId: string; jumlah: number; warna?: string }[] = [];
+  const ukurans = formData.getAll("itemUkuran").map(String);
+  const items: { variantId: string; jumlah: number; warna?: string; ukuran?: string }[] = [];
   vids.forEach((vid, i) => {
     if (!vid) return;
     const j = Math.max(1, Math.round(Number(qtys[i] ?? 1)) || 1);
     const warna = (warnas[i] ?? "").trim() || undefined;
+    const ukuran = (ukurans[i] ?? "").trim() || undefined;
     const ex = items.find(
-      (it) => it.variantId === vid && (it.warna ?? "") === (warna ?? ""),
+      (it) => it.variantId === vid && (it.warna ?? "") === (warna ?? "") && (it.ukuran ?? "") === (ukuran ?? ""),
     );
     if (ex) ex.jumlah += j;
-    else items.push({ variantId: vid, jumlah: j, warna });
+    else items.push({ variantId: vid, jumlah: j, warna, ukuran });
   });
   return items;
 }

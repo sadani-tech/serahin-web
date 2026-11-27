@@ -173,6 +173,7 @@ function productPayload(formData: FormData) {
     deskripsi: String(formData.get("deskripsi") ?? "").trim(),
     images: array("imagesJson"),
     warna: array("warnaJson"),
+    ukuranPilihan: array("ukuranPilihanJson"),
     // DP kustom Produk (v2.3.7 §3.18) — kosong = ikuti DP Batch PO.
     dpTipe: getFormDataValue(formData, "dpTipe") as
       "PERSEN" | "NOMINAL" | undefined,
@@ -226,6 +227,7 @@ type CatalogProductOption = {
   sku: string | null;
   kategori: string | null;
   ukuran: string | null;
+  ukuranPilihan: string[];
   material: string | null;
   images: string[];
   warna: string[];

@@ -24,6 +24,7 @@ type ProdukDetail = {
   sku: string | null;
   kategori: string | null;
   ukuran: string | null;
+  ukuranPilihan: string[];
   material: string | null;
   images: string[];
   warna: string[];
@@ -87,6 +88,7 @@ export default async function ProdukDetailPage({
               sku: produk.sku ?? undefined,
               kategori: produk.kategori ?? undefined,
               ukuran: produk.ukuran ?? undefined,
+              ukuranPilihan: produk.ukuranPilihan,
               material: produk.material ?? undefined,
               deskripsi: produk.deskripsi ?? undefined,
               images: produk.images,

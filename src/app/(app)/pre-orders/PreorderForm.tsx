@@ -27,6 +27,7 @@ type VariantRow = {
   harga: number | string;
   images: string[]; // galeri gambar (URL); [0] = utama
   warna: string[]; // opsi warna
+  ukuranPilihan: string[];
   kategori: string;
   label: string;
   ukuran: string;
@@ -104,6 +105,7 @@ export function PreorderForm({
     harga: "",
     images: [],
     warna: [],
+    ukuranPilihan: [],
     kategori: "",
     label: "",
     ukuran: "",
@@ -571,7 +573,7 @@ export function PreorderForm({
                             placeholder="mis. New Arrival"
                           />
                         </Field>
-                        <Field label="Ukuran (opsional)">
+                        <Field label="Ukuran tetap (opsional)" hint="Contoh: All Size. Untuk beberapa ukuran, isi Pilihan ukuran.">
                           <Input
                             value={v.ukuran}
                             onChange={(e) =>
@@ -579,6 +581,9 @@ export function PreorderForm({
                             }
                             placeholder="mis. M atau 40 × 25 cm"
                           />
+                        </Field>
+                        <Field label="Pilihan ukuran (opsional)">
+                          <VariantColorsInput kind="ukuran" value={v.ukuranPilihan ?? []} onChange={(ukuranPilihan) => updateVariant(i, { ukuranPilihan })} />
                         </Field>
                         <Field label="Material (opsional)">
                           <Input

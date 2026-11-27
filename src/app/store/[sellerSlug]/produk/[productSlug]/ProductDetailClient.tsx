@@ -29,6 +29,7 @@ export function ProductDetailClient({
   const [salesEventId, setSalesEventId] = useState("");
   const variant = useMemo(() => product.variants.find((item) => item.id === variantId) ?? product.variants[0], [product.variants, variantId]);
   const [color, setColor] = useState("");
+  const [size, setSize] = useState("");
   const [imageIndex, setImageIndex] = useState(0);
   const [preview, setPreview] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -38,7 +39,7 @@ export function ProductDetailClient({
   const images = variant?.images ?? [];
   const image = images[imageIndex] ?? images[0] ?? null;
   const isSeller = role === "SELLER";
-  const canOrder = !isSeller && Boolean(offering?.orderable && offering.quotaRemaining > 0 && (!variant.colors.length || color));
+  const canOrder = !isSeller && Boolean(offering?.orderable && offering.quotaRemaining > 0 && (!variant.colors.length || color) && (!variant.sizes?.length || size));
 
   async function add(goToCheckout = false) {
     if (isSeller || !variant || !offering || !canOrder) return;
@@ -57,8 +58,10 @@ export function ProductDetailClient({
       promoDiscountPerUnit: offering.promoDiscountPerUnit,
       quantity,
       selectedColor: color || undefined,
+      selectedSize: size || undefined,
       image,
       colors: variant.colors,
+      sizes: variant.sizes,
     });
     if (!ok) return;
     if (goToCheckout) router.push("/cart?checkout=1");
@@ -116,7 +119,7 @@ export function ProductDetailClient({
             <div className="pd-variant-select">
               <label>
                 Pilihan produk
-                <select value={variantId} onChange={(e) => { setVariantId(e.target.value); setSalesEventId(""); setColor(""); setImageIndex(0); }}>
+                <select value={variantId} onChange={(e) => { setVariantId(e.target.value); setSalesEventId(""); setColor(""); setSize(""); setImageIndex(0); }}>
                   {product.variants.map((item) => (
                     <option key={item.id} value={item.id}>{item.name}{item.offering ? ` — ${formatRupiah(item.offering.price)}` : " — arsip"}</option>
                   ))}
@@ -145,6 +148,18 @@ export function ProductDetailClient({
                 ))}
               </fieldset>
             ) : null}
+
+            {variant?.sizes?.length ? (
+              <fieldset className="pd-variants">
+                <legend className="pd-variants__label">Ukuran: <strong>{size || "pilih"}</strong></legend>
+                {variant.sizes.map((item) => (
+                  <label key={item} className="pd-swatch pd-swatch--text">
+                    <input type="radio" name="size" value={item} checked={size === item} onChange={() => setSize(item)} />
+                    <span className="pd-swatch__chip">{item}</span>
+                  </label>
+                ))}
+              </fieldset>
+            ) : variant?.size ? <p className="text-sm text-sand-600">Ukuran: <strong>{variant.size}</strong></p> : null}
 
             {!isSeller && (
               <label className="pd-qty">

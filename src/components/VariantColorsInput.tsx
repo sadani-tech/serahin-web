@@ -7,9 +7,11 @@ import { Input } from "@/components/ui";
 export function VariantColorsInput({
   value,
   onChange,
+  kind = "warna",
 }: {
   value: string[];
   onChange: (warna: string[]) => void;
+  kind?: "warna" | "ukuran";
 }) {
   const [text, setText] = useState("");
 
@@ -54,7 +56,7 @@ export function VariantColorsInput({
               add();
             }
           }}
-          placeholder="mis. Merah, lalu Enter"
+          placeholder={kind === "ukuran" ? "mis. 39 atau XL, lalu Enter" : "mis. Merah, lalu Enter"}
         />
         <button
           type="button"

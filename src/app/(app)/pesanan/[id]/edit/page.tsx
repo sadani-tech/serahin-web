@@ -11,7 +11,7 @@ type OrderDetail = {
   namaPembeli: string;
   kontak: string;
   catatan: string | null;
-  items: { variantId: string; jumlah: number; warna: string | null; hargaSaatPesan: string }[];
+  items: { variantId: string; jumlah: number; warna: string | null; ukuran: string | null; hargaSaatPesan: string }[];
   campaign: { id: string };
 };
 
@@ -23,6 +23,7 @@ type CampaignDetail = {
     sisa: number;
     harga: string;
     warna: string[];
+    ukuranPilihan: string[];
   }[];
 };
 
@@ -56,6 +57,7 @@ export default async function EditOrderPage({
     sisa: v.sisa + (jumlahIni.get(v.id) ?? 0),
     harga: toNumber(v.harga),
     warna: v.warna ?? [],
+    ukuranPilihan: v.ukuranPilihan ?? [],
   }));
 
   const action = updateOrder.bind(null, id);
@@ -87,6 +89,7 @@ export default async function EditOrderPage({
             variantId: it.variantId,
             jumlah: it.jumlah,
             warna: it.warna ?? undefined,
+            ukuran: it.ukuran ?? undefined,
             hargaSaatPesan: toNumber(it.hargaSaatPesan),
           })),
         }}
