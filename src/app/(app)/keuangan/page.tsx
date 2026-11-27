@@ -28,9 +28,9 @@ type PiutangRow = {
 
 type Tab = "cashflow" | "ringkasan" | "piutang";
 const TABS: [Tab, string][] = [
-  ["cashflow", "Cashflow"],
-  ["ringkasan", "Ringkasan Pesanan"],
-  ["piutang", "Piutang"],
+  ["cashflow", "Gambaran keuangan"],
+  ["ringkasan", "Per Batch PO"],
+  ["piutang", "Tagihan Buyer"],
 ];
 
 export default async function KeuanganPage({
@@ -83,7 +83,7 @@ export default async function KeuanganPage({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <FinanceMetric label="Nilai pesanan" value={formatRupiah(summary.totalNilaiPesanan)} note="Total pesanan pada filter terpilih" />
-        <FinanceMetric label="Laba setelah HPP" value={formatRupiah(summary.labaSetelahHpp)} note="Belum termasuk biaya operasional" tone="green" />
+        <FinanceMetric label="Margin setelah HPP" value={formatRupiah(summary.labaSetelahHpp)} note="Belum dikurangi biaya operasional" tone="green" />
         <FinanceMetric label="Belum dilunasi Buyer" value={formatRupiah(totalPiutang)} note={`${piutang.length} pesanan memiliki sisa tagihan`} tone="amber" />
       </div>
 
@@ -135,19 +135,14 @@ export default async function KeuanganPage({
         <div className="space-y-6">
           {/* Laba Bersih Riil (PRD v2.3.8 §3.1/§5.1) */}
           <Card>
-            <CardHeader title="Laba Bersih Riil" subtitle="Nilai pesanan terverifikasi − HPP (snapshot saat pesan), hanya dari pesanan yang HPP-nya sudah lengkap" />
+            <CardHeader title="Margin setelah HPP" subtitle="Perkiraan dari pesanan dengan pembayaran terverifikasi dan HPP lengkap" />
             <div className="grid grid-cols-2 divide-x divide-y divide-sand-100 sm:grid-cols-4 sm:divide-y-0">
               <StatItem label="Total Nilai Pesanan" value={formatRupiah(summary.totalNilaiPesanan)} />
               <StatItem label="Total HPP" value={formatRupiah(summary.totalHpp)} accent="text-amber-600" />
-              <StatItem label="Laba Bersih Riil" value={formatRupiah(summary.labaSetelahHpp)} accent="text-emerald-600" />
+              <StatItem label="Margin setelah HPP" value={formatRupiah(summary.labaSetelahHpp)} accent="text-emerald-600" />
               <StatItem label="HPP Belum Lengkap" value={`${summary.hppBelumLengkap} pesanan`} accent={summary.hppBelumLengkap > 0 ? "text-rose-600" : "text-sand-900"} />
             </div>
-            <p className="border-t border-sand-100 px-5 py-3 text-xs text-sand-500">
-              Ini laba kotor (harga jual − HPP) per pesanan yang sudah ada pembayaran terverifikasi — BELUM dikurangi
-              fee payment gateway, ongkir yang disubsidi, refund, atau biaya operasional lain. Pesanan yang Produknya
-              belum diisi HPP dikecualikan sepenuhnya dari angka di atas (lihat daftar di bawah), bukan dihitung
-              HPP = 0 — menghindari laba yang terlihat lebih besar dari sebenarnya.
-            </p>
+            <div className="border-t border-sand-100 bg-sand-50 px-5 py-4 text-sm"><p className="font-bold text-sand-800">Cara membaca angka ini</p><p className="mt-1 leading-6 text-sand-600">Nilai pesanan − HPP = margin. Angka ini belum mengurangi biaya payment, ongkir subsidi, refund, atau biaya operasional. Pesanan tanpa HPP lengkap tidak masuk perhitungan margin.</p></div>
           </Card>
 
           {summary.hppBelumLengkap > 0 && (
@@ -177,30 +172,33 @@ export default async function KeuanganPage({
           {summary.perKampanye.length === 0 ? (
             <EmptyState title="Belum ada data pada periode ini" />
           ) : (
-            <ScrollList className="overflow-x-auto" maxRows={10} rowHeight={2.75}>
-              <table className="w-full text-sm">
+            <>
+            <div className="divide-y divide-sand-100 md:hidden">{summary.perKampanye.map((row) => <article key={row.kampanye} className="space-y-3 p-4"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><h3 className="font-bold text-sand-900">{row.kampanye}</h3><p className="text-xs text-sand-500">{row.jumlahTransaksi} transaksi</p></div><strong className="shrink-0 text-right text-sm text-emerald-700">{formatRupiah(row.labaSetelahHpp)}<small className="block font-normal text-sand-500">Margin</small></strong></div><div className="grid grid-cols-2 gap-2 rounded-xl bg-sand-50 p-3 text-xs"><div className="min-w-0"><p className="text-sand-500">Nilai pesanan</p><b className="mt-1 block break-all text-sand-900">{formatRupiah(row.totalNilaiPesanan)}</b></div><div className="min-w-0"><p className="text-sand-500">HPP</p><b className="mt-1 block break-all text-sand-900">{formatRupiah(row.totalHpp)}</b></div></div></article>)}</div>
+            <ScrollList className="hidden overflow-x-auto md:block" maxRows={10} rowHeight={3.5}>
+              <table className="w-full min-w-[760px] text-sm">
                 <thead>
                   <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                     <th className="px-5 py-3 font-medium">Batch PO</th>
-                    <th className="px-5 py-3 font-medium">Transaksi</th>
-                    <th className="px-5 py-3 font-medium">Nilai Pesanan</th>
-                    <th className="px-5 py-3 font-medium">HPP</th>
-                    <th className="px-5 py-3 font-medium">Laba</th>
+                    <th className="px-5 py-3 text-right font-medium">Transaksi</th>
+                    <th className="px-5 py-3 text-right font-medium">Nilai Pesanan</th>
+                    <th className="px-5 py-3 text-right font-medium">HPP</th>
+                    <th className="px-5 py-3 text-right font-medium">Margin</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-sand-100">
                   {summary.perKampanye.map((row) => (
                     <tr key={row.kampanye} className="hover:bg-sand-50">
                       <td className="px-5 py-3 font-medium text-sand-900">{row.kampanye}</td>
-                      <td className="px-5 py-3 text-sand-600">{row.jumlahTransaksi}</td>
-                      <td className="px-5 py-3 text-sand-700">{formatRupiah(row.totalNilaiPesanan)}</td>
-                      <td className="px-5 py-3 text-amber-700">{formatRupiah(row.totalHpp)}</td>
-                      <td className="px-5 py-3 font-semibold text-emerald-700">{formatRupiah(row.labaSetelahHpp)}</td>
+                      <td className="px-5 py-3 text-right tabular-nums text-sand-600">{row.jumlahTransaksi}</td>
+                      <td className="px-5 py-3 text-right tabular-nums text-sand-700">{formatRupiah(row.totalNilaiPesanan)}</td>
+                      <td className="px-5 py-3 text-right tabular-nums text-amber-700">{formatRupiah(row.totalHpp)}</td>
+                      <td className="px-5 py-3 text-right font-semibold tabular-nums text-emerald-700">{formatRupiah(row.labaSetelahHpp)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </ScrollList>
+            </>
           )}
         </Card>
       )}
@@ -215,15 +213,17 @@ export default async function KeuanganPage({
           {piutang.length === 0 ? (
             <EmptyState title="Tidak ada piutang buyer pada periode ini" />
           ) : (
-            <ScrollList className="overflow-x-auto" maxRows={10} rowHeight={2.75}>
-              <table className="w-full text-sm">
+            <>
+            <div className="divide-y divide-sand-100 md:hidden">{piutang.map((row) => <article key={row.orderId} className="space-y-3 p-4"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><Link href={`/pesanan/${row.orderId}`} className="font-bold text-brand-700">{row.buyerNameSnapshot}</Link><p className="truncate text-xs text-sand-500">{row.kampanye}</p></div><strong className="shrink-0 text-sm text-rose-700">{formatRupiah(row.sisaPiutang)}</strong></div><div className="h-2 overflow-hidden rounded-full bg-sand-100"><div className="h-full rounded-full bg-brand-500" style={{ width: `${row.totalPesanan > 0 ? Math.min(100, Math.max(0, row.totalDibayar / row.totalPesanan * 100)) : 0}%` }} /></div><p className="text-xs text-sand-500">Dibayar {formatRupiah(row.totalDibayar)} dari {formatRupiah(row.totalPesanan)}</p></article>)}</div>
+            <ScrollList className="hidden overflow-x-auto md:block" maxRows={10} rowHeight={3.5}>
+              <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-b border-sand-200 text-left text-xs uppercase tracking-wide text-sand-500">
                     <th className="px-5 py-3 font-medium">Pesanan</th>
                     <th className="px-5 py-3 font-medium">Batch PO</th>
-                    <th className="px-5 py-3 font-medium">Total Pesanan</th>
-                    <th className="px-5 py-3 font-medium">Sudah Dibayar</th>
-                    <th className="px-5 py-3 font-medium">Sisa Piutang</th>
+                    <th className="px-5 py-3 text-right font-medium">Total Pesanan</th>
+                    <th className="px-5 py-3 text-right font-medium">Sudah Dibayar</th>
+                    <th className="px-5 py-3 text-right font-medium">Sisa Piutang</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-sand-100">
@@ -235,14 +235,15 @@ export default async function KeuanganPage({
                         </Link>
                       </td>
                       <td className="px-5 py-3 text-sand-600">{row.kampanye}</td>
-                      <td className="px-5 py-3 text-sand-700">{formatRupiah(row.totalPesanan)}</td>
-                      <td className="px-5 py-3 text-sand-700">{formatRupiah(row.totalDibayar)}</td>
-                      <td className="px-5 py-3 font-semibold text-rose-700">{formatRupiah(row.sisaPiutang)}</td>
+                      <td className="px-5 py-3 text-right tabular-nums text-sand-700">{formatRupiah(row.totalPesanan)}</td>
+                      <td className="px-5 py-3 text-right tabular-nums text-sand-700">{formatRupiah(row.totalDibayar)}</td>
+                      <td className="px-5 py-3 text-right font-semibold tabular-nums text-rose-700">{formatRupiah(row.sisaPiutang)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </ScrollList>
+            </>
           )}
         </Card>
       )}

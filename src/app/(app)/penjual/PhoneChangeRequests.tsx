@@ -13,9 +13,9 @@ export function PhoneChangeRequests({ requests }: { requests: PhoneChangeRequest
   const { confirm, prompt } = useConfirm();
   const router = useRouter();
   async function decide(request: PhoneChangeRequest, decision: "approve" | "reject") {
-    const reason = decision === "reject" ? await prompt({ title: `Tolak permintaan ${request.seller.businessName}`, description: `Nomor yang diajukan: ${request.newPhone}`, label: "Alasan penolakan untuk Seller", confirmLabel: "Tolak", variant: "danger" }) : undefined;
+    const reason = decision === "reject" ? await prompt({ title: `Tolak permintaan ${request.seller.businessName}`, description: <div className="space-y-2 text-left text-sm"><p>{request.oldPhone || "Belum tercatat"} → <b>{request.newPhone}</b></p><p className="rounded-xl bg-sand-50 p-3">Alasan Seller: {request.reason}</p></div>, label: "Alasan penolakan untuk Seller", confirmLabel: "Tolak", variant: "danger" }) : undefined;
     if (decision === "reject" && !reason) return;
-    if (decision === "approve" && !await confirm({ title: `Setujui nomor baru ${request.seller.businessName}?`, description: `${request.oldPhone || "Belum tercatat"} → ${request.newPhone}. Kontak toko langsung berubah setelah disetujui.`, confirmLabel: "Setujui", variant: "primary" })) return;
+    if (decision === "approve" && !await confirm({ title: `Setujui nomor baru ${request.seller.businessName}?`, description: <div className="space-y-2 text-left text-sm"><p>{request.oldPhone || "Belum tercatat"} → <b>{request.newPhone}</b></p><p className="rounded-xl bg-sand-50 p-3">Alasan Seller: {request.reason}</p><p>Kontak toko langsung berubah setelah disetujui.</p></div>, confirmLabel: "Setujui", variant: "primary" })) return;
     setBusy(request.id); setError("");
     const result = await decideSellerPhoneChange(request.id, decision, reason ?? undefined);
     setBusy(null);
