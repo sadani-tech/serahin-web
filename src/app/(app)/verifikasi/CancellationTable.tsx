@@ -44,7 +44,7 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
   async function approve(row: CancellationRow) {
     const ok = await confirm({
       title: `Setujui pembatalan pesanan ${row.namaPembeli}?`,
-      description: "Status pesanan akan menjadi Dibatalkan.",
+      description: <div className="space-y-3 text-left"><p className="text-sm text-sand-600">{row.campaign.namaProduk} · {row.namaPembeli}</p><div className="rounded-xl bg-sand-50 p-3"><p className="text-xs font-bold text-sand-500">Alasan Buyer</p><p className="mt-1 text-sm text-sand-900">{row.alasanBatal || "Tidak ada alasan"}</p></div>{row.billing.dibayar > 0 && <p className="text-sm font-bold text-amber-800">Dana sudah diterima: {formatRupiah(row.billing.dibayar)}. Refund perlu ditangani setelah persetujuan.</p>}</div>,
       confirmLabel: "Setujui",
       variant: "primary",
     });
@@ -61,6 +61,7 @@ export function CancellationTable({ rows }: { rows: CancellationRow[] }) {
   async function reject(row: CancellationRow) {
     const alasan = await prompt({
       title: "Tolak pengajuan pembatalan",
+      description: <div className="space-y-2 text-left"><p className="text-sm text-sand-600">{row.namaPembeli} · {row.campaign.namaProduk}</p><p className="rounded-xl bg-sand-50 p-3 text-sm text-sand-800">Alasan Buyer: {row.alasanBatal || "Tidak ada alasan"}</p></div>,
       label: "Alasan menolak pengajuan pembatalan",
       confirmLabel: "Tolak",
     });

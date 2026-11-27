@@ -76,30 +76,25 @@ function AvatarForm({ name, avatarUrl }: { name: string; avatarUrl: string | nul
 export function ProfileForms({ profile, callbackUrl }: { profile: { name: string; email: string | null; phone: string | null; hasPassword: boolean; avatarUrl: string | null }; callbackUrl?: string }) {
   const [profileState, profileAction, profilePending] = useActionState(updateBuyerProfileAction, undefined);
   const [passwordState, passwordAction, passwordPending] = useActionState(changeBuyerPasswordAction, undefined);
+  const [editing, setEditing] = useState(!!callbackUrl);
+  const [showPasswords, setShowPasswords] = useState(false);
   const input = "mt-1 min-h-11 w-full rounded-xl border border-sand-300 px-3";
   return (
-    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <section className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-sand-100 p-5 sm:p-6"><div><h2 className="text-lg font-extrabold text-sand-900">Informasi pribadi</h2><p className="mt-1 text-sm text-sand-500">Data untuk pesanan dan pemberitahuan pembayaran.</p></div>{!editing && <button type="button" onClick={() => setEditing(true)} className="min-h-10 rounded-xl border border-brand-300 px-4 text-sm font-bold text-brand-700">Ubah data</button>}</div>
+        <div className="p-5 sm:p-6"><Notice state={profileState} />{editing ? <form action={profileAction} className="space-y-4">
+          {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
+          <label className="block text-sm font-bold">Nama lengkap<input name="name" defaultValue={profile.name} required className={input} /></label>
+          <label className="block text-sm font-bold">Nomor WhatsApp<input name="phone" defaultValue={profile.phone ?? ""} required inputMode="tel" autoComplete="tel" className={input} /><span className="mt-1 block text-xs font-normal text-sand-500">Dipakai untuk informasi pesanan.</span></label>
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row">{!callbackUrl && <button type="button" onClick={() => setEditing(false)} className="min-h-11 rounded-xl border border-sand-300 px-4 text-sm font-bold">Batal</button>}<button disabled={profilePending} className="min-h-11 rounded-xl bg-brand-600 px-5 text-sm font-extrabold text-white disabled:opacity-60">{profilePending ? "Menyimpan..." : callbackUrl ? "Simpan & kembali ke checkout" : "Simpan perubahan"}</button></div>
+        </form> : <dl className="divide-y divide-sand-100 text-sm"><div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr]"><dt className="text-sand-500">Nama lengkap</dt><dd className="font-bold text-sand-900">{profile.name}</dd></div><div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr]"><dt className="text-sand-500">WhatsApp</dt><dd className="font-bold text-sand-900">{profile.phone || "Belum diisi"}</dd></div><div className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr]"><dt className="text-sand-500">Email akun</dt><dd className="break-all font-bold text-sand-900">{profile.email || "Belum tersedia"}<span className="mt-1 block text-xs font-normal text-sand-500">Email akun tidak diubah dari halaman ini.</span></dd></div></dl>}</div>
+      </section>
       <AvatarForm name={profile.name} avatarUrl={profile.avatarUrl} />
-      <form action={profileAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6">
-        {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
-        <h2 className="font-extrabold">Data profil</h2>
-        <Notice state={profileState} />
-        <label className="block text-sm font-bold">Nama<input name="name" defaultValue={profile.name} required className={input} /></label>
-        <label className="block text-sm font-bold">Email<input value={profile.email ?? ""} disabled className={input} /></label>
-        <label className="block text-sm font-bold">Nomor WhatsApp<input name="phone" defaultValue={profile.phone ?? ""} required className={input} /></label>
-        <button disabled={profilePending} className="min-h-11 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white disabled:opacity-60 sm:w-auto">{callbackUrl ? "Simpan & Kembali ke Checkout" : "Simpan profil"}</button>
-      </form>
       {profile.hasPassword ? (
-        <form action={passwordAction} className="space-y-4 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2">
-          <h2 className="font-extrabold">Ganti kata sandi</h2>
-          <Notice state={passwordState} />
-          {[["currentPassword", "Kata sandi saat ini"], ["newPassword", "Kata sandi baru"], ["confirmPassword", "Ulangi kata sandi baru"]].map(([name, label]) => (
-            <label key={name} className="block text-sm font-bold">{label}<input name={name} type="password" required minLength={8} className={input} /></label>
-          ))}
-          <button disabled={passwordPending} className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-extrabold text-white">Ganti kata sandi</button>
-        </form>
+        <section className="rounded-2xl border border-sand-200 bg-white p-5 shadow-sm sm:p-6 lg:col-span-2"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-extrabold text-sand-900">Keamanan akun</h2><p className="mt-1 text-sm text-sand-500">Perbarui kata sandi secara berkala.</p></div><button type="button" onClick={() => setShowPasswords((value) => !value)} className="min-h-10 rounded-xl border border-sand-300 px-4 text-sm font-bold text-sand-700">{showPasswords ? "Tutup" : "Ganti kata sandi"}</button></div><Notice state={passwordState} />{showPasswords && <form action={passwordAction} className="mt-5 grid gap-4 border-t border-sand-100 pt-5 sm:grid-cols-2"><label className="block text-sm font-bold sm:col-span-2">Kata sandi saat ini<input name="currentPassword" type="password" autoComplete="current-password" required className={input} /></label><label className="block text-sm font-bold">Kata sandi baru<input name="newPassword" type="password" autoComplete="new-password" required minLength={8} className={input} /></label><label className="block text-sm font-bold">Ulangi kata sandi baru<input name="confirmPassword" type="password" autoComplete="new-password" required minLength={8} className={input} /></label><p className="text-xs text-sand-500 sm:col-span-2">Gunakan minimal 8 karakter dan kata sandi yang belum pernah dipakai.</p><button disabled={passwordPending} className="min-h-11 rounded-xl bg-brand-600 px-4 text-sm font-extrabold text-white disabled:opacity-50 sm:justify-self-start">{passwordPending ? "Menyimpan..." : "Simpan kata sandi"}</button></form>}</section>
       ) : (
-        <section className="rounded-2xl border border-brand-200 bg-brand-50 p-6">
+        <section className="rounded-2xl border border-brand-200 bg-brand-50 p-6 lg:col-span-2">
           <p className="text-xs font-extrabold uppercase tracking-wider text-brand-700">Akun Google</p>
           <h2 className="mt-2 font-extrabold text-sand-900">Kamu masuk tanpa kata sandi</h2>
           <p className="mt-2 text-sm leading-6 text-sand-600">Gunakan tombol Google saat masuk. Jika ingin menambahkan kata sandi, kirim tautan melalui fitur lupa kata sandi.</p>
